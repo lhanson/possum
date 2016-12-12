@@ -1,4 +1,4 @@
-package io.github.lhanson
+package io.github.lhanson.possum
 
 import org.junit.Test
 import org.junit.runner.RunWith
