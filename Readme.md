@@ -1,5 +1,7 @@
 # Possum
 
+[![Build Status](https://travis-ci.org/lhanson/possum.svg?branch=master)](https://travis-ci.org/lhanson/possum)
+
 A trash-eating game engine.
 
 # Overview
