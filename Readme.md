@@ -7,6 +7,8 @@
 
 A trash-eating game engine.
 
+![Let's eat trash and get hit by a car](https://s-media-cache-ak0.pinimg.com/736x/ca/20/41/ca20415ef281931b9bbf8abc7144d6ea.jpg)
+
 # Overview
 
 A major guiding principle behind Possum is that the game engine is decoupled
@@ -21,4 +23,4 @@ a short list:
 
     * Main event loop
     * Decoupled messaging paradigm to avoid direct dependencies between components/modules
-    * ...
+    * Determine component breakdown
