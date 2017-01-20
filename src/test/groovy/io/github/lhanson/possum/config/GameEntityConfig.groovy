@@ -1,5 +1,6 @@
 package io.github.lhanson.possum.config
 
+import io.github.lhanson.possum.component.GameComponent
 import io.github.lhanson.possum.entity.GameEntity
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -10,7 +11,7 @@ class GameEntityConfig {
 	GameEntity entity() {
 		new GameEntity() {
 			String name = 'testGameEntity'
-			int id = -1
+			List<GameComponent> components = []
 		}
 	}
 }

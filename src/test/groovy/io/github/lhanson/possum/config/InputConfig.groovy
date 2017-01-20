@@ -1,7 +1,7 @@
 package io.github.lhanson.possum.config
 
 import io.github.lhanson.possum.entity.GameEntity
-import io.github.lhanson.possum.system.InputSystem
+import io.github.lhanson.possum.input.InputSystem
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 

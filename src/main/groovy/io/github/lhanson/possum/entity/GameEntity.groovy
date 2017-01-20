@@ -1,8 +1,11 @@
 package io.github.lhanson.possum.entity
 
+import io.github.lhanson.possum.component.GameComponent
+
 /**
- * An entity is a general-purpose game object. It possess various {@link io.github.lhanson.possum.component.GameComponent}s which
- * describe its capabilities and state. GameEntity behavior is processed by {@link io.github.lhanson.possum.system.GameSystem}s.
+ * An entity is a general-purpose game object. It possess various
+ * {@link GameComponent}s which describe its capabilities and state.
+ * {@code GameEntity} behavior is processed by {@link io.github.lhanson.possum.system.GameSystem}s.
  */
 interface GameEntity {
 	/**
@@ -11,7 +14,7 @@ interface GameEntity {
 	String getName()
 
 	/**
-	 * Unique identifier for this entity
+	 * The {@link GameComponent}s describing this entity's properties
 	 */
-	int getId()
+	List<GameComponent> getComponents()
 }
