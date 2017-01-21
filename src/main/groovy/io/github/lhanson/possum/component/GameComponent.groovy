@@ -8,5 +8,5 @@ interface GameComponent {
 	/**
 	 * @return the name of this {@code GameComponent}
 	 */
-	String getName()
+//	String getName()
 }

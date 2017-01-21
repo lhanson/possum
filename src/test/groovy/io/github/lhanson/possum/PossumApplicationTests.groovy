@@ -1,6 +1,6 @@
 package io.github.lhanson.possum
 
-import io.github.lhanson.possum.system.GameSystem
+import io.github.lhanson.possum.gameState.GameState
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -10,7 +10,7 @@ import org.springframework.test.context.junit4.SpringRunner
 @RunWith(SpringRunner)
 @SpringBootTest
 class PossumApplicationTests {
-	@Autowired GameSystem gameState
+	@Autowired GameState gameState
 
 	@Test
 	void contextLoads() {

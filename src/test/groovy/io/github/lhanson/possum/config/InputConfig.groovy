@@ -1,17 +1,17 @@
 package io.github.lhanson.possum.config
 
-import io.github.lhanson.possum.entity.GameEntity
-import io.github.lhanson.possum.input.InputSystem
+import io.github.lhanson.possum.input.InputAdapter
+import io.github.lhanson.possum.input.RawInput
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration
 class InputConfig {
 	@Bean
-	InputSystem testInputSystem() {
-		new InputSystem() {
+	InputAdapter testInputSystem() {
+		new InputAdapter() {
 			@Override
-			void processInput(List<GameEntity> entities) {
+			List<RawInput> collectInput() {
 				throw new IllegalStateException("Test bean not expected to invoke no-op input system")
 			}
 		}

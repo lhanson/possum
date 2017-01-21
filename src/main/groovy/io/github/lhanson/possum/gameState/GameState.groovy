@@ -1,15 +1,17 @@
 package io.github.lhanson.possum.gameState
 
-import io.github.lhanson.possum.component.GameComponent
-import io.github.lhanson.possum.component.PositionComponent
-import io.github.lhanson.possum.component.TextComponent
-import io.github.lhanson.possum.component.TimerComponent
+import io.github.lhanson.possum.component.*
 import io.github.lhanson.possum.entity.GameEntity
-import io.github.lhanson.possum.input.Input
+import io.github.lhanson.possum.input.InputContext
+import io.github.lhanson.possum.input.InputSystem
+import io.github.lhanson.possum.input.MappedInput
+import io.github.lhanson.possum.input.RawInput
+import mikera.vectorz.Vector2
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
+
+import java.text.DecimalFormat
 
 import static io.github.lhanson.possum.component.Alignment.CENTERED
 import static io.github.lhanson.possum.gameState.Mode.*
@@ -23,24 +25,37 @@ import static io.github.lhanson.possum.gameState.Mode.*
  */
 @Component
 class GameState {
+	private Logger log = LoggerFactory.getLogger(this.class)
 	private long lastTimestamp = System.currentTimeMillis()
-	Logger log = LoggerFactory.getLogger(this.class)
-	List<GameEntity> entities
-	Mode currentMode
-	Mode nextMode = MAIN_MENU
+	private List<GameEntity> entities
+	private Mode currentMode
+	private Mode nextMode = MAIN_MENU
+
+	List<InputContext> inputContexts
+	List<MappedInput> activeInput
 	long elapsedTicks
 
 	/**
 	 * For each iteration of the main loop, {@code GameStateSystem} has
 	 * an opportunity to set up state transitions between various game modes.
 	 *
+	 * // TODO: review docs
 	 * Systems will continue to act uniformly on whatever {@link GameEntity}s
 	 * are returned, so the only real difference between one game mode (e.g., main menu)
 	 * and the next (high scores) is the set of entities being acted upon.
 	 * @return the list of GameEntitys active in the current mode, or
 	 *         null if the game should quit
 	 */
-	List<GameEntity> entitiesForCurrentState() {
+	List<GameEntity> update(InputSystem inputSystem) {
+		// Update elapsed ticks
+		long now = System.currentTimeMillis()
+		elapsedTicks = now - lastTimestamp
+		lastTimestamp = now
+//		lag += elapsed;
+
+		log.debug "Elapsed ms: $elapsedTicks"
+
+		// Handle mode changes
 		if (nextMode != currentMode) {
 			switch (nextMode) {
 				case MAIN_MENU:
@@ -56,9 +71,40 @@ class GameState {
 								String name = 'pressStart'
 								List<GameComponent> components = [
 										new TextComponent(text: '-- press [enter] to start, [esc] to quit --'),
-										new PositionComponent(alignment: CENTERED, y: 22)
+										new PositionComponent(
+												// TODO: how do we get away with not knowing the dimensions of the world here?
+												// TODO: and how can 'centered' mean anything in that case?
+												alignment: CENTERED,
+												vector2: Vector2.of(10, 22))
 								]
 							},
+					]
+					inputContexts = [
+							// Main menu context
+							new InputContext() {
+								@Override
+								MappedInput mapInput(RawInput rawInput) {
+									// Menu contexts gobble all input, none pass through
+									switch (rawInput) {
+										case RawInput.ESCAPE:
+											modeChange(Mode.QUITTING)
+											break
+										case RawInput.ENTER:
+											modeChange(Mode.PLAYING)
+											break
+										/* No options yet, so why bother?
+										case RawInput.UP:
+											return MappedInput.UP
+										case RawInput.DOWN:
+											return MappedInput.DOWN
+										case RawInput.LEFT:
+											return MappedInput.LEFT
+										case RawInput.RIGHT:
+											return MappedInput.RIGHT
+											*/
+									}
+								}
+							}
 					]
 					break
 				case PLAYING:
@@ -67,9 +113,58 @@ class GameState {
 								String name = 'hero'
 								List<GameComponent> components = [
 										new TextComponent(text: '@'),
-										new PositionComponent(alignment: CENTERED)
+										// TODO: how to center?
+//										new PositionComponent(alignment: CENTERED),
+										new PositionComponent(vector2: Vector2.of(20, 20)),
+										new VelocityComponent(vector2: Vector2.of(0, 0)),
+										new FocusedComponent()
 								]
 							},
+							new GameEntity() {
+								String name = 'loopTimeDisplay'
+								def textComponent = new TextComponent()
+								List<GameComponent> components = [
+										textComponent,
+										new PositionComponent(vector2: Vector2.of(0, 0)),
+										new GaugeComponent(update: {
+											textComponent.text = "$elapsedTicks ms"
+										})
+								]
+							},
+							new GameEntity() {
+								String name = 'fpsDisplay'
+								def textComponent = new TextComponent()
+								List<GameComponent> components = [
+										textComponent,
+										new PositionComponent(vector2: Vector2.of(10, 0)),
+										new GaugeComponent(update: {
+											def fps = (1 / elapsedTicks) * 1000
+											def formatted = new DecimalFormat("##0.##").format(fps)
+											textComponent.text = "$formatted fps"
+										})
+								]
+							},
+					]
+					inputContexts = [
+							// Playing context
+							new InputContext() {
+								@Override
+								MappedInput mapInput(RawInput rawInput) {
+									switch (rawInput) {
+										case RawInput.UP:
+											return MappedInput.UP
+										case RawInput.DOWN:
+											return MappedInput.DOWN
+										case RawInput.LEFT:
+											return MappedInput.LEFT
+										case RawInput.RIGHT:
+											return MappedInput.RIGHT
+										case RawInput.ESCAPE:
+											modeChange(Mode.MAIN_MENU)
+											break
+									}
+								}
+							}
 					]
 					break
 				case QUITTING:
@@ -83,37 +178,35 @@ class GameState {
 								]
 							},
 					]
+					inputContexts = null
 					break
 				case EXIT:
 					entities = null
+					inputContexts = null
 					break
 				default:
 					throw new IllegalStateException("Unrecognized next state: $nextMode")
 			}
 			currentMode = nextMode
+			// Clear pending inputs before switching modes
+			activeInput?.clear()
 		}
 
-		// Update elapsed ticks
-		long now = System.currentTimeMillis()
-		elapsedTicks = now - lastTimestamp
-		lastTimestamp = now
+		// Collect input
+		activeInput = inputSystem.processInput(inputContexts)
 
 		return entities
 	}
 
 	/**
+	 * // TODO: document, and who can call it?
 	 * Receives messages regarding mode changes, which will be
 	 * enacted upon the next iteration of the main loop.
 	 * @param nextMode the mode which should be transitioned to
 	 */
-	@EventListener
 	void modeChange(Mode nextMode) {
-		log.debug "Received modeChange message: $nextMode"
+		log.debug "Changing game mode to $nextMode"
 		this.nextMode = nextMode
 	}
 
-	@EventListener
-	void input(Input input) {
-		log.debug "Received input message $input"
-	}
 }

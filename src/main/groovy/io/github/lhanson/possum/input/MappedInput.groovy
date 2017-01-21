@@ -1,8 +1,8 @@
 package io.github.lhanson.possum.input
 
-enum Input {
+enum MappedInput {
 	LEFT,
 	RIGHT,
 	UP,
-	DOWN
+	DOWN,
 }
