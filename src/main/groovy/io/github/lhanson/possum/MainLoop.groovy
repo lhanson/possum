@@ -8,11 +8,12 @@ import io.github.lhanson.possum.system.RenderingSystem
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.SpringApplication
-import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.ConfigurableApplicationContext
+import org.springframework.stereotype.Component
 
-@SpringBootApplication
+import static io.github.lhanson.possum.gameState.Mode.EXIT
+
+@Component
 class MainLoop {
 	@Autowired ConfigurableApplicationContext applicationContext
 	@Autowired GameState gameState
@@ -21,26 +22,47 @@ class MainLoop {
 	@Autowired(required = false) List<GameSystem> systems
 	Logger log = LoggerFactory.getLogger(MainLoop)
 
-	static void main(String[] args) {
-		SpringApplication.run(MainLoop, args)
-	}
+	//double MS_PER_UPDATE = 20
+	//double lag = MS_PER_UPDATE // TODO: locking this into a 1-1 update/render ratio for now
+	double elapsed = 0
+	double previous = System.currentTimeMillis()
 
 	void run() {
-		// The GameStateSystem determines what mode the game is in (main menu,
-		// cut scene, game level, high score screen, etc.) and therefore
-		// determines what entities are in play for the main loop at any
-		// given time.
 		List<GameEntity> entities
-		while (entities = gameState.update(inputSystem)) {
-			systems.each { system ->
-				log.debug "Processing ${system.name} system"
-				system.update(entities)
+		while (gameState.currentMode != EXIT) {
+			entities = gameState.getActiveEntities()
+			if (entities == null) {
+				break
 			}
+
+			gameState.collectInput(inputSystem)
+
+			//while (lag >= MS_PER_UPDATE) {
+				systems.each { it.update(entities, elapsed) }
+				gameState.activeInput.clear()
+			//	lag -= MS_PER_UPDATE
+			//}
 			renderers.each { it.render(entities) }
-			Thread.sleep(100)
+
+			// My Cosmological Constant. Without it, things don't work (rendering gets
+			// weird and flickery), and I don't yet know why.
+			Thread.sleep(45)
+			calculateElapsed()
 		}
+
 		log.debug "Exiting"
 		System.exit(0)
+	}
+
+	/*
+	 * Called each iteration of the main loop, computes
+	 * elapsed time taken by the previous iteration.
+	 */
+	double calculateElapsed() {
+		double current = System.currentTimeMillis()
+		elapsed = current - previous
+		previous = current
+		//lag += elapsed
 	}
 
 }

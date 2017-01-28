@@ -20,7 +20,7 @@ class MovementSystem implements GameSystem {
 	@Autowired GameState gameState
 
 	@Override
-	void update(List<GameEntity> entities) {
+	void update(List<GameEntity> entities, double ticks) {
 		def mobileEntities = findMobile(entities)
 		if (gameState.activeInput) {
 			findFocused(mobileEntities).each { focusedEntity ->

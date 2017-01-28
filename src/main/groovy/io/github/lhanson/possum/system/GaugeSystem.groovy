@@ -13,10 +13,9 @@ class GaugeSystem implements GameSystem {
 	String name = 'GaugeSystem'
 
 	@Override
-	void update(List<GameEntity> entities) {
+	void update(List<GameEntity> entities, double elapsed) {
 		findGauged(entities).each { entity ->
-			log.error "Updating gauges for ${entity.name}"
-			entity.gauges.each { it.update() }
+			entity.gauges.each { it.update(elapsed) }
 		}
 	}
 

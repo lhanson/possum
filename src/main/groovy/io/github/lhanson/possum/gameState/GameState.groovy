@@ -26,36 +26,28 @@ import static io.github.lhanson.possum.gameState.Mode.*
 @Component
 class GameState {
 	private Logger log = LoggerFactory.getLogger(this.class)
-	private long lastTimestamp = System.currentTimeMillis()
-	private List<GameEntity> entities
-	private Mode currentMode
 	private Mode nextMode = MAIN_MENU
 
+	Mode currentMode
+	List<GameEntity> entities
 	List<InputContext> inputContexts
 	List<MappedInput> activeInput
-	long elapsedTicks
 
 	/**
-	 * For each iteration of the main loop, {@code GameStateSystem} has
-	 * an opportunity to set up state transitions between various game modes.
+	 * For each iteration of the main loop, {@code GameState} has
+	 * an opportunity to set up state transitions between various game modes,
+	 * as advertised by {@code currentMode}.
 	 *
-	 * // TODO: review docs
 	 * Systems will continue to act uniformly on whatever {@link GameEntity}s
 	 * are returned, so the only real difference between one game mode (e.g., main menu)
 	 * and the next (high scores) is the set of entities being acted upon.
-	 * @return the list of GameEntitys active in the current mode, or
-	 *         null if the game should quit
+	 *
+	 * @return the list of GameEntitys active in the current mode
 	 */
-	List<GameEntity> update(InputSystem inputSystem) {
-		// Update elapsed ticks
-		long now = System.currentTimeMillis()
-		elapsedTicks = now - lastTimestamp
-		lastTimestamp = now
-//		lag += elapsed;
-
-		log.debug "Elapsed ms: $elapsedTicks"
-
+	List<GameEntity> getActiveEntities() {
 		// Handle mode changes
+		// TODO: Decouple the actual entity/inputContext retrieval from this class.
+		// TODO: Maybe create an interface clients can implement to get a "scene" for a given mode
 		if (nextMode != currentMode) {
 			switch (nextMode) {
 				case MAIN_MENU:
@@ -82,8 +74,7 @@ class GameState {
 					inputContexts = [
 							// Main menu context
 							new InputContext() {
-								@Override
-								MappedInput mapInput(RawInput rawInput) {
+								@Override MappedInput mapInput(RawInput rawInput) {
 									// Menu contexts gobble all input, none pass through
 									switch (rawInput) {
 										case RawInput.ESCAPE:
@@ -92,16 +83,6 @@ class GameState {
 										case RawInput.ENTER:
 											modeChange(Mode.PLAYING)
 											break
-										/* No options yet, so why bother?
-										case RawInput.UP:
-											return MappedInput.UP
-										case RawInput.DOWN:
-											return MappedInput.DOWN
-										case RawInput.LEFT:
-											return MappedInput.LEFT
-										case RawInput.RIGHT:
-											return MappedInput.RIGHT
-											*/
 									}
 								}
 							}
@@ -114,21 +95,10 @@ class GameState {
 								List<GameComponent> components = [
 										new TextComponent(text: '@'),
 										// TODO: how to center?
-//										new PositionComponent(alignment: CENTERED),
+										//new PositionComponent(alignment: CENTERED),
 										new PositionComponent(vector2: Vector2.of(20, 20)),
 										new VelocityComponent(vector2: Vector2.of(0, 0)),
 										new FocusedComponent()
-								]
-							},
-							new GameEntity() {
-								String name = 'loopTimeDisplay'
-								def textComponent = new TextComponent()
-								List<GameComponent> components = [
-										textComponent,
-										new PositionComponent(vector2: Vector2.of(0, 0)),
-										new GaugeComponent(update: {
-											textComponent.text = "$elapsedTicks ms"
-										})
 								]
 							},
 							new GameEntity() {
@@ -136,10 +106,10 @@ class GameState {
 								def textComponent = new TextComponent()
 								List<GameComponent> components = [
 										textComponent,
-										new PositionComponent(vector2: Vector2.of(10, 0)),
-										new GaugeComponent(update: {
-											def fps = (1 / elapsedTicks) * 1000
-											def formatted = new DecimalFormat("##0.##").format(fps)
+										new PositionComponent(vector2: Vector2.of(69, 23)),
+										new GaugeComponent(update: { ticks ->
+											def fps = (1 / ticks) * 1000
+											def formatted = new DecimalFormat("#0").format(fps)
 											textComponent.text = "$formatted fps"
 										})
 								]
@@ -148,8 +118,7 @@ class GameState {
 					inputContexts = [
 							// Playing context
 							new InputContext() {
-								@Override
-								MappedInput mapInput(RawInput rawInput) {
+								@Override MappedInput mapInput(RawInput rawInput) {
 									switch (rawInput) {
 										case RawInput.UP:
 											return MappedInput.UP
@@ -174,7 +143,7 @@ class GameState {
 								List<GameComponent> components = [
 										new TextComponent(text: 'See you next time!'),
 										new PositionComponent(alignment: CENTERED),
-										new TimerComponent(ticksRemaining: 1000, alarm: { nextMode = EXIT })
+										new TimerComponent(ticksRemaining: 1000, alarm: { modeChange(Mode.EXIT) })
 								]
 							},
 					]
@@ -182,26 +151,30 @@ class GameState {
 					break
 				case EXIT:
 					entities = null
-					inputContexts = null
 					break
 				default:
 					throw new IllegalStateException("Unrecognized next state: $nextMode")
+				case Mode.PLAYING:
+					break
+				case Mode.QUITTING:
+					break
+				case Mode.EXIT:
+					break
 			}
 			currentMode = nextMode
 			// Clear pending inputs before switching modes
 			activeInput?.clear()
 		}
 
-		// Collect input
-		activeInput = inputSystem.processInput(inputContexts)
-
 		return entities
 	}
 
+	void collectInput(InputSystem inputSystem) {
+		activeInput = inputSystem.processInput(inputContexts)
+	}
+
 	/**
-	 * // TODO: document, and who can call it?
-	 * Receives messages regarding mode changes, which will be
-	 * enacted upon the next iteration of the main loop.
+	 * Signals a mode change for the next main loop iteration
 	 * @param nextMode the mode which should be transitioned to
 	 */
 	void modeChange(Mode nextMode) {
