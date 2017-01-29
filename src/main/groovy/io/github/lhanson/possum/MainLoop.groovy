@@ -9,8 +9,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
-import static io.github.lhanson.possum.scene.PossumSceneBuilder.START
-
 @Component
 class MainLoop {
 	@Autowired PossumSceneBuilder sceneBuilder
@@ -24,7 +22,6 @@ class MainLoop {
 	double previous = System.currentTimeMillis()
 
 	void run() {
-		sceneBuilder.nextSceneId = START
 		Scene scene = sceneBuilder.getNextScene()
 		while (scene) {
 			scene.processInput()
