@@ -9,26 +9,26 @@ abstract class PossumSceneBuilder {
 	/** The scene ID every game starts in by default */
 	static final String START = 'start'
 
-	@Autowired InputAdapter inputAdapter
+	@Autowired
+	InputAdapter inputAdapter
 
 	/**
 	 * Indicates the scene which should be loaded before the next
-	 * iteration of the main loop. It will begin as the ID of *this*
-	 * scene, i.e. the same scene will run each iteration, but
-	 * is also used to indicate a scene transition.
+	 * iteration of the main loop. Generally the same scene will
+	 * run for a number of iterations and signal a state change
+	 * by changing this value.
 	 */
 	String nextSceneId
 
 	/**
-	 * For the provided {@code sceneId}, returns the active {@link Scene}.
+	 * Return the active {@link Scene}.
+	 *
 	 * Components within a Scene will maintain state and determine when
 	 * to transition to a different scene, which is indicated by setting
 	 * {@code nextScene} to the ID of the next scene to be run.
-	 * TODO: redo docs
-	 * @param sceneId the ID of the currently active Scene
-	 * @return the Scene corresponding to the given ID
+	 *
+	 * @return the Scene corresponding to the {@code nextSceneId}
 	 */
 	abstract Scene getNextScene()
-//	abstract Scene getSceneForId(String sceneId)
 
 }

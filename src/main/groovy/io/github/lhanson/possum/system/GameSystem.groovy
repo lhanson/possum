@@ -24,10 +24,10 @@ interface GameSystem {
 
 	/**
 	 * For each main loop iteration, each system has the opportunity to
-	 * perform some work, including processing entities it knows how to deal with.
+	 * perform some work, including processing scene entities it knows
+	 * how to deal with.
 	 *
-	 * // TODO: Revise
-	 * @param entities the game entities available for processing, never null
+	 * @param scene the currently active scene
 	 * @param elapsed the amount of time since the last game update
 	 */
 	void update(Scene scene, double elapsed)

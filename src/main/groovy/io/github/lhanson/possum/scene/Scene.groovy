@@ -6,7 +6,8 @@ import io.github.lhanson.possum.input.InputContext
 import io.github.lhanson.possum.input.MappedInput
 
 /**
- * TODO
+ * A Scene encapsulates entities and input representing
+ * a particular segment of a game.
  */
 class Scene {
 	InputAdapter inputAdapter
@@ -26,8 +27,7 @@ class Scene {
 	void processInput() {
 		inputAdapter.collectInput()?.each { input ->
 			MappedInput mapped = inputContexts.findResult { context ->
-				def foo = context.mapInput(input)
-				return foo
+				context.mapInput(input)
 			}
 			if (mapped) {
 				activeInput << mapped
