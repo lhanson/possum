@@ -1,7 +1,7 @@
 package io.github.lhanson.possum.system
 
 import io.github.lhanson.possum.component.TimerComponent
-import io.github.lhanson.possum.entity.GameEntity
+import io.github.lhanson.possum.scene.Scene
 import org.springframework.stereotype.Component
 
 @Component
@@ -9,8 +9,8 @@ class TimerSystem implements GameSystem {
 	String name = 'timerSystem'
 
 	@Override
-	void update(List<GameEntity> entities, double ticks) {
-		entities.each { entity ->
+	void update(Scene scene, double ticks) {
+		scene.entities.each { entity ->
 			entity.components
 					.findAll { it instanceof TimerComponent }
 					.each { TimerComponent tc ->

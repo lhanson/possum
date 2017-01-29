@@ -5,28 +5,26 @@ import io.github.lhanson.possum.component.GameComponent
 import io.github.lhanson.possum.component.PositionComponent
 import io.github.lhanson.possum.component.VelocityComponent
 import io.github.lhanson.possum.entity.GameEntity
-import io.github.lhanson.possum.gameState.GameState
 import io.github.lhanson.possum.input.MappedInput
+import io.github.lhanson.possum.scene.Scene
 import mikera.vectorz.Vector2
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 @Component
 class MovementSystem implements GameSystem {
 	private Logger log = LoggerFactory.getLogger(this.class)
 	String name = 'MovementSystem'
-	@Autowired GameState gameState
 
 	@Override
-	void update(List<GameEntity> entities, double ticks) {
-		def mobileEntities = findMobile(entities)
-		if (gameState.activeInput) {
+	void update(Scene scene, double ticks) {
+		def mobileEntities = findMobile(scene.entities)
+		if (scene.activeInput) {
 			findFocused(mobileEntities).each { focusedEntity ->
-				log.trace "Applying {} to {}", gameState.activeInput, focusedEntity.name
+				log.trace "Applying {} to {}", scene.activeInput, focusedEntity.name
 				Vector2 newVelocity = new Vector2()
-				gameState.activeInput.each { input ->
+				scene.activeInput.each { input ->
 					switch (input) {
 						case (MappedInput.UP):
 							newVelocity.add(0, -1)

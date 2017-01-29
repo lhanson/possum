@@ -3,6 +3,7 @@ package io.github.lhanson.possum.system
 import io.github.lhanson.possum.component.GameComponent
 import io.github.lhanson.possum.component.GaugeComponent
 import io.github.lhanson.possum.entity.GameEntity
+import io.github.lhanson.possum.scene.Scene
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -13,8 +14,8 @@ class GaugeSystem implements GameSystem {
 	String name = 'GaugeSystem'
 
 	@Override
-	void update(List<GameEntity> entities, double elapsed) {
-		findGauged(entities).each { entity ->
+	void update(Scene scene, double elapsed) {
+		findGauged(scene.entities).each { entity ->
 			entity.gauges.each { it.update(elapsed) }
 		}
 	}
