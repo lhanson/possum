@@ -13,9 +13,9 @@ class Scene {
 	InputAdapter inputAdapter
 
 	/** Game entities active in this scene */
-	List<GameEntity> entities
+	List<GameEntity> entities = []
 	/** Input contexts for this scene */
-	List<InputContext> inputContexts
+	List<InputContext> inputContexts =[]
 	/** The input collected for this scene to process */
 	List<MappedInput> activeInput = []
 

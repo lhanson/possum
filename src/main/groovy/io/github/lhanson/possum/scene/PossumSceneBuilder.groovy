@@ -10,7 +10,7 @@ import javax.annotation.PostConstruct
 abstract class PossumSceneBuilder {
 	static String START = 'start' // The scene ID every game starts in by default
 	private String nextSceneId = START
-	Map<String, Scene> scenesById
+	Map<String, Scene> scenesById = [:]
 
 	@Autowired
 	InputAdapter inputAdapter
