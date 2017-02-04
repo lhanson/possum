@@ -46,11 +46,6 @@
 			<version>0.48.0</version>
 		</dependency>
 		<dependency>
-			<groupId>net.trystan</groupId>
-			<artifactId>ascii-panel</artifactId>
-			<version>1.1</version>
-		</dependency>
-		<dependency>
 			<groupId>com.github.trystan</groupId>
 			<artifactId>AsciiPanel</artifactId>
 			<version>e156206</version>
