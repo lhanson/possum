@@ -1,8 +1,17 @@
 package io.github.lhanson.possum.component
 
-// TODO: Document. Does this indicate the *center* of the entity?
-// TODO: How do we handle both tile-based (1x1) and sprite-based entities?
+/**
+ * Represents a component able to be positioned with either
+ * absolute position or relative alignment.
+ */
 class PositionComponent extends VectorComponent {
 	String name
 	Alignment alignment
+
+	PositionComponent(Alignment alignment) {
+		this.alignment = alignment
+	}
+	PositionComponent(int x, int y) {
+		super(x, y)
+	}
 }

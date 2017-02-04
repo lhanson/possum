@@ -3,7 +3,9 @@ package io.github.lhanson.possum.rendering
 import asciiPanel.AsciiPanel
 import io.github.lhanson.possum.component.PositionComponent
 import io.github.lhanson.possum.component.TextComponent
+import io.github.lhanson.possum.component.GridCellComponent
 import io.github.lhanson.possum.entity.GameEntity
+import io.github.lhanson.possum.entity.GridEntity
 import io.github.lhanson.possum.system.RenderingSystem
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -54,6 +56,34 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 					terminal.writeCenter(tc.text, y)
 				} else {
 					terminal.write(tc.text, (int) pc.vector2.x, (int) pc.vector2.y)
+				}
+			}
+
+			// Maze renderer, won't be the same as tile-based game renderer
+			if (entity instanceof GridEntity) {
+				GridEntity grid = (GridEntity) entity
+				def x = 0, y = 0
+				if (pc) {
+					x = (int) pc.vector2.x
+					y = (int) pc.vector2.y
+				}
+				def yOffset = y + 1
+				def body = '   '
+				terminal.write('+' + ('---+' * grid.width), x, y)
+				for (int row = 0; row < grid.width; row++) {
+					def top = '|'
+					def bottom = '+'
+					for (int col = 0; col < grid.height; col++) {
+						GridCellComponent cell = grid.cellAt(row, col)
+						def eastBoundary = cell.isLinked(cell.east) ? ' ' : '|'
+						def southBoundary = cell.isLinked(cell.south) ? '   ' : '---'
+						def corner = '+'
+						top += body + eastBoundary
+						bottom += southBoundary + corner
+					}
+					terminal.write(top, x, yOffset)
+					terminal.write(bottom, x, yOffset + 1)
+					yOffset += 2
 				}
 			}
 		}
