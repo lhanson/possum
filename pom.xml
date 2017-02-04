@@ -24,6 +24,13 @@
 		<java.version>1.8</java.version>
 	</properties>
 
+	<repositories>
+		<repository>
+			<id>jitpack.io</id>
+			<url>https://jitpack.io</url>
+		</repository>
+	</repositories>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -42,6 +49,11 @@
 			<groupId>net.trystan</groupId>
 			<artifactId>ascii-panel</artifactId>
 			<version>1.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.trystan</groupId>
+			<artifactId>AsciiPanel</artifactId>
+			<version>e156206</version>
 		</dependency>
 
 		<dependency>
