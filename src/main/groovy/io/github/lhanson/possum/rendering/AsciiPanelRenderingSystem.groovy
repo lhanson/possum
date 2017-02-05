@@ -1,9 +1,10 @@
 package io.github.lhanson.possum.rendering
 
 import asciiPanel.AsciiPanel
-import io.github.lhanson.possum.component.PositionComponent
-import io.github.lhanson.possum.component.TextComponent
 import io.github.lhanson.possum.component.GridCellComponent
+import io.github.lhanson.possum.component.PositionComponent
+import io.github.lhanson.possum.component.RelativePositionComponent
+import io.github.lhanson.possum.component.TextComponent
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.GridEntity
 import io.github.lhanson.possum.system.RenderingSystem
@@ -13,8 +14,6 @@ import org.springframework.stereotype.Component
 
 import javax.annotation.PostConstruct
 import javax.swing.*
-
-import static io.github.lhanson.possum.component.Alignment.CENTERED
 
 @Component
 class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
@@ -51,11 +50,12 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 			TextComponent tc = entity.components.find { it instanceof TextComponent }
 			PositionComponent pc = entity.components.find { it instanceof PositionComponent }
 			if (tc && pc) {
-				if (pc.alignment == CENTERED) {
-					int y = pc.vector2?.y ?: (terminal.heightInCharacters / 2)
-					terminal.writeCenter(tc.text, y)
+				if (pc instanceof RelativePositionComponent) {
+					int relX = (pc.x / 100.0f) * terminal.widthInCharacters - (tc.width() / 2)
+					int relY = (pc.y / 100.0f) * terminal.heightInCharacters - (tc.height() / 2)
+					terminal.write(tc.text, relX, relY)
 				} else {
-					terminal.write(tc.text, (int) pc.vector2.x, (int) pc.vector2.y)
+					terminal.write(tc.text, (int) pc.x, (int) pc.y)
 				}
 			}
 
@@ -64,8 +64,8 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 				GridEntity grid = (GridEntity) entity
 				def x = 0, y = 0
 				if (pc) {
-					x = (int) pc.vector2.x
-					y = (int) pc.vector2.y
+					x = (int) pc.x
+					y = (int) pc.y
 				}
 				def yOffset = y + 1
 				def body = '   '

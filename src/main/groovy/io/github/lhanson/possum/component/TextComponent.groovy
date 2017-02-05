@@ -10,4 +10,11 @@ class TextComponent implements GameComponent {
 	TextComponent(String text) {
 		this.text = text
 	}
+
+	int width() {
+		text?.length()
+	}
+	int height() {
+		1
+	}
 }
