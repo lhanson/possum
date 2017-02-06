@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 @Component
-class GaugeSystem implements GameSystem {
+class GaugeSystem extends GameSystem {
 	private Logger log = LoggerFactory.getLogger(this.class)
 	String name = 'GaugeSystem'
 
@@ -29,7 +29,7 @@ class GaugeSystem implements GameSystem {
 		}
 	}
 
-	class GaugedEntity implements GameEntity {
+	class GaugedEntity extends GameEntity {
 		String name = 'GaugedEntity'
 		List<GameComponent> components
 		List<GaugeComponent> gauges

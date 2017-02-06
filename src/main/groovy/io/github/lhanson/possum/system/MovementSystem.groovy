@@ -10,10 +10,12 @@ import io.github.lhanson.possum.scene.Scene
 import mikera.vectorz.Vector2
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 @Component
-class MovementSystem implements GameSystem {
+class MovementSystem extends GameSystem {
+	@Autowired RenderingSystem renderingSystem
 	private Logger log = LoggerFactory.getLogger(this.class)
 	String name = 'MovementSystem'
 
@@ -46,18 +48,9 @@ class MovementSystem implements GameSystem {
 			}
 		}
 		// Move entities
-		// TODO: Track 'dirty' areas where movement has happened.
-		// TODO: Given areas of movement, the rendering system needs to
-		// TODO: know what to re-draw there.
-		// TODO: Perhaps a lookup of entities by positions?
 		mobileEntities.each { it.position.vector2.add(it.velocity.vector2) }
 
 		// Stop entities
-		// TODO: This works to implement basic movement for now, but
-		// TODO: will not hold up for sustained movement, missiles, etc.
-		// TODO: Best to develop rudimentary friction to kill off velocity
-		// TODO: after one move, at least in the case of a turn-based
-		// TODO: dungeon crawler.
 		mobileEntities.each { it.velocity.vector2.setValues(0, 0) }
 	}
 
@@ -77,7 +70,31 @@ class MovementSystem implements GameSystem {
 		}
 	}
 
-	class MobileEntity implements GameEntity {
+	/**
+	 * Computes the center of the collection of provided {@code entities} and
+	 * performs the appropriate transformation on each of them to relatively
+	 * position them at the given coordinates.
+	 *
+	 * @param xPercent percentage of width away from origin
+	 * @param yPercent percentage of height away from origin
+	 * @param entities the list of entities to recenter
+	 */
+	void centerAround(int xPercent, yPercent, List<GameEntity> entities) {
+		List<PositionComponent> positions = entities.findResults {
+			it.getComponentsOfType(PositionComponent)
+		}.flatten()
+		def xs = positions.collect { it.x }
+		def ys = positions.collect { it.y }
+		int centerX = Math.ceil(xs.sum() / xs.size())
+		int centerY = Math.ceil(ys.sum() / ys.size())
+		int relX = (xPercent / 100.0f) * renderingSystem.viewportWidth
+		int relY = (yPercent / 100.0f) * renderingSystem.viewportHeight
+		int translateX = relX - centerX
+		int translateY = relY - centerY
+		positions.each { it.x += translateX; it.y += translateY }
+	}
+
+	class MobileEntity extends GameEntity {
 		String name = 'MobileEntity'
 		List<GameComponent> components
 		PositionComponent position

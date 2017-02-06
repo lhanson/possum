@@ -5,7 +5,7 @@ import io.github.lhanson.possum.scene.Scene
 import org.springframework.stereotype.Component
 
 @Component
-class TimerSystem implements GameSystem {
+class TimerSystem extends GameSystem {
 	String name = 'timerSystem'
 
 	@Override

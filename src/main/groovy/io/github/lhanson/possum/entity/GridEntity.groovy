@@ -8,7 +8,7 @@ import io.github.lhanson.possum.component.PositionComponent
  * Entity representing a 2-dimensional grid of cells, optionally
  * linked to one or more of their neighbors.
  */
-class GridEntity implements GameEntity {
+class GridEntity extends GameEntity {
 	String name = 'Grid'
 	int width, height
 	GridCellComponent [][] cells

@@ -49,13 +49,14 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		entities.each { entity ->
 			TextComponent tc = entity.components.find { it instanceof TextComponent }
 			PositionComponent pc = entity.components.find { it instanceof PositionComponent }
-			if (tc && pc) {
-				if (pc instanceof RelativePositionComponent) {
-					int relX = (pc.x / 100.0f) * terminal.widthInCharacters - (tc.width() / 2)
-					int relY = (pc.y / 100.0f) * terminal.heightInCharacters - (tc.height() / 2)
-					terminal.write(tc.text, relX, relY)
-				} else {
+			RelativePositionComponent rpc = entity.components.find { it instanceof RelativePositionComponent }
+			if (tc && (pc || rpc)) {
+				if (pc) {
 					terminal.write(tc.text, (int) pc.x, (int) pc.y)
+				} else {
+					int relX = (rpc.x / 100.0f) * terminal.widthInCharacters - (tc.width() / 2)
+					int relY = (rpc.y / 100.0f) * terminal.heightInCharacters - (tc.height() / 2)
+					terminal.write(tc.text, relX, relY)
 				}
 			}
 
@@ -92,5 +93,15 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 //		repaint()
 //		update(getGraphics())
 //		terminal.updateUI()
+	}
+
+	@Override
+	int getViewportWidth() {
+		terminal.widthInCharacters
+	}
+
+	@Override
+	int getViewportHeight() {
+		terminal.heightInCharacters
 	}
 }

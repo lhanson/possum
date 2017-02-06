@@ -13,4 +13,14 @@ interface RenderingSystem {
 	 * Renders the current game state
 	 */
 	void render(List<GameEntity> entities)
+
+	/**
+	 * @return the width of the current viewport
+	 */
+	int getViewportWidth()
+
+	/**
+	 * @return the width of the current viewport
+	 */
+	int getViewportHeight()
 }
