@@ -18,13 +18,16 @@ class BinaryTree {
 	 * @return the modified grid with linked cells forming a maze
 	 */
 	static GridEntity linkCells(GridEntity grid) {
-		grid.cellList.each { GridCellComponent cell ->
-			def neighbors = []
-			if (cell.north) neighbors << cell.north
-			if (cell.east)  neighbors << cell.east
-			// Pick randomly between the north and east neighbor to link
-			if (neighbors) {
-				cell.link(neighbors[new Random().nextInt(neighbors.size())])
+		for (int y = grid.height - 1; y >= 0; y--) {
+			for (int x = 0; x < grid.width; x++) {
+				def neighbors = []
+				GridCellComponent cell = grid.cellAt(x, y)
+				if (cell.north) neighbors << cell.north
+				if (cell.east)  neighbors << cell.east
+				if (neighbors) {
+					// Pick randomly between the north and east neighbor to link
+					cell.link(neighbors[new Random().nextInt(neighbors.size())])
+				}
 			}
 		}
 		return grid

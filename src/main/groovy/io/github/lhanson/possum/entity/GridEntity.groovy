@@ -19,19 +19,22 @@ class GridEntity extends GameEntity {
 		this.width = width
 		this.height = height
 		cells = new GridCellComponent[width][height]
-		for (int row = 0; row < width; row++) {
-			for (int col = 0; col < height; col++) {
-				cells[row][col] = new GridCellComponent(row, col)
-				cellList << cells[row][col]
+		for (int x = 0; x < width; x++) {
+			for (int y = 0; y < height; y++) {
+				cells[x][y] = new GridCellComponent(x, y)
+				cellList << cells[x][y]
 			}
 		}
 
 		// Set neighbor links
-		cellList.each { GridCellComponent cell ->
-			cell.north = cellAt(cell.x - 1, cell.y)
-			cell.south = cellAt(cell.x + 1, cell.y)
-			cell.east  = cellAt(cell.x, cell.y + 1)
-			cell.west  = cellAt(cell.x, cell.y - 1)
+		for (int x = 0; x < width; x++) {
+			for (int y = 0; y < height; y++) {
+				GridCellComponent cell = cellAt(x, y)
+				cell.north = cellAt(cell.x, cell.y - 1)
+				cell.south = cellAt(cell.x, cell.y + 1)
+				cell.east  = cellAt(cell.x + 1, cell.y)
+				cell.west  = cellAt(cell.x - 1, cell.y)
+			}
 		}
 	}
 
@@ -42,23 +45,36 @@ class GridEntity extends GameEntity {
 
 	/**
 	 * Returns the grid cell specified by the coordinates
-	 * @param row the row coordinate
-	 * @param col the column coordinate
+	 * @param x the horizontal coordinate
+	 * @param y the vertical coordinate
 	 * @return the cell at the provided coordinates, or null if none exists
 	 */
-	GridCellComponent cellAt(int row, int col) {
-		if (row >= 0 && row < width &&
-		    col >= 0 && col < height) {
-			return cells[row][col]
+	GridCellComponent cellAt(int x, int y) {
+		if (x >= 0 && x < width &&
+		    y >= 0 && y < height) {
+			return cells[x][y]
 		}
 		return null
 	}
-	GridCellComponent cellAt(double row, double col) {
-		cellAt((int)row, (int)col)
+	GridCellComponent cellAt(double x, double y) {
+		cellAt((int)x, (int)y)
 	}
 
 	@Override
 	List<GameComponent> getComponents() {
 		components
+	}
+
+	@Override
+	String toString() {
+		String str = ''
+		for (int y = 0; y < height; y++) {
+			String row = ''
+			for (int x = 0; x < width; x++) {
+				row += cellAt(x, y).toString() + "\t"
+			}
+			str += row.trim() + "\n"
+		}
+		str
 	}
 }

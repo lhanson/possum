@@ -32,4 +32,14 @@ class GridCellComponent implements GameComponent {
 	boolean isLinked(GridCellComponent cell) {
 		links.contains(cell)
 	}
+
+	@Override
+	String toString() {
+		String s = "[$x, $y "
+		if (north) s += "n"
+		if (east) s += "e"
+		if (south) s += "s"
+		if (west) s += "w"
+		"$s]"
+	}
 }

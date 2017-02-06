@@ -51,7 +51,10 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 			RelativePositionComponent rpc = entity.components.find { it instanceof RelativePositionComponent }
 			if (tc && (pc || rpc)) {
 				if (pc) {
-					terminal.write(tc.text, (int) pc.x, (int) pc.y)
+					if (pc.x >= 0 && pc.x < terminal.widthInCharacters &&
+					    pc.y >= 0 && pc.y < terminal.heightInCharacters) {
+						terminal.write(tc.text, (int) pc.x, (int) pc.y)
+					}
 				} else {
 					int relX = (rpc.x / 100.0f) * terminal.widthInCharacters - (tc.width() / 2)
 					int relY = (rpc.y / 100.0f) * terminal.heightInCharacters - (tc.height() / 2)
@@ -62,27 +65,27 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 			// Maze renderer, won't be the same as tile-based game renderer
 			if (entity instanceof GridEntity) {
 				GridEntity grid = (GridEntity) entity
-				def x = 0, y = 0
+				def baseX = 0, baseY = 0
 				if (pc) {
-					x = (int) pc.x
-					y = (int) pc.y
+					baseX = (int) pc.x
+					baseY = (int) pc.y
 				}
-				def yOffset = y + 1
+				def yOffset = baseY + 1
 				def body = '   '
-				terminal.write('+' + ('---+' * grid.width), x, y)
-				for (int row = 0; row < grid.width; row++) {
+				terminal.write('+' + ('---+' * grid.width), baseX, baseY)
+				for (int row = 0; row < grid.height; row++) {
 					def top = '|'
 					def bottom = '+'
-					for (int col = 0; col < grid.height; col++) {
-						GridCellComponent cell = grid.cellAt(row, col)
+					for (int col = 0; col < grid.width; col++) {
+						GridCellComponent cell = grid.cellAt(col, row)
 						def eastBoundary = cell.isLinked(cell.east) ? ' ' : '|'
 						def southBoundary = cell.isLinked(cell.south) ? '   ' : '---'
 						def corner = '+'
 						top += body + eastBoundary
 						bottom += southBoundary + corner
 					}
-					terminal.write(top, x, yOffset)
-					terminal.write(bottom, x, yOffset + 1)
+					terminal.write(top, baseX, yOffset)
+					terminal.write(bottom, baseX, yOffset + 1)
 					yOffset += 2
 				}
 			}

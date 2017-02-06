@@ -5,8 +5,4 @@ package io.github.lhanson.possum.component
  * An {@link io.github.lhanson.possum.entity.GameEntity} is defined by a set of Components which define its capabilities.
  */
 interface GameComponent {
-	/**
-	 * @return the name of this {@code GameComponent}
-	 */
-//	String getName()
 }

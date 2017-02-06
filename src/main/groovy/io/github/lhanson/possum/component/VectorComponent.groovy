@@ -1,7 +1,6 @@
 package io.github.lhanson.possum.component
 
 import mikera.vectorz.Vector2
-
 /**
  * Component representing a 2-dimensional vector
  */
@@ -29,5 +28,16 @@ class VectorComponent implements GameComponent {
 
 	void setY(int y) {
 		vector2.y = y
+	}
+
+	@Override
+	boolean equals(Object v) {
+		v instanceof VectorComponent &&
+				vector2 == v.vector2
+	}
+
+	@Override
+	int hashCode() {
+		(vector2 != null ? vector2.hashCode() : 0)
 	}
 }

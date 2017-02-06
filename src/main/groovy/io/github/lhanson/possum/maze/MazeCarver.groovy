@@ -21,16 +21,18 @@ class MazeCarver {
 		for (int y = 0; y < maze.height; y++) {
 			int tY = 2*y + 1
 			for (int x = 0; x < maze.width; x++) {
-				GridCellComponent cell = maze.cellAt(y, x)
-				int tX = 2*x + 1
-				if (!cell.isLinked(cell.east)) {
-					walls << buildWall(tX + 1, tY)
+				GridCellComponent cell = maze.cellAt(x, y)
+				if (cell) {
+					int tX = 2 * x + 1
+					if (!cell.isLinked(cell.east)) {
+						walls << buildWall(tX + 1, tY)
+					}
+					if (!cell.isLinked(cell.south)) {
+						walls << buildWall(tX, tY + 1)
+					}
+					// Always build a wall to the SE
+					walls << buildWall(tX + 1, tY + 1)
 				}
-				if (!cell.isLinked(cell.south)) {
-					walls << buildWall(tX, tY + 1)
-				}
-				// Always build a wall to the SE
-				walls << buildWall(tX + 1, tY + 1)
 			}
 		}
 		// Top wall
