@@ -5,6 +5,7 @@ import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.scene.Scene
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+
 /**
  * A GameSystem operates on a entities having {@link GameComponent}s
  * which the particular system is aware of, thereby enabling specific behaviors.

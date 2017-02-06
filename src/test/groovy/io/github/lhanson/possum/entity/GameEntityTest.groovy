@@ -2,7 +2,7 @@ package io.github.lhanson.possum.entity
 
 import io.github.lhanson.possum.component.FocusedComponent
 import io.github.lhanson.possum.component.GameComponent
-import io.github.lhanson.possum.component.ImpassableComponent
+import io.github.lhanson.possum.collision.ImpassableComponent
 import io.github.lhanson.possum.component.TextComponent
 import spock.lang.Specification
 

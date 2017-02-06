@@ -12,13 +12,12 @@ A trash-eating game engine.
 
 # Overview
 
-A major guiding principle behind Possum is that the game engine is decoupled
-from UI concerns. That allows any given game to easily swap out UI approaches
-without a ripple effect throughout the rest of the game, and ensures that
-the engine design is abstracted well for a variety of use cases.
+A JVM-based game engine written around the [Entity–component–system](https://en.wikipedia.org/wiki/Entity%E2%80%93component%E2%80%93system)
+pattern. It's being initially developed for roguelikes, but since I can't restrict myself
+to any particular UI or implementation technology, it's inherently flexible and agnostic
+to your choice of rendering system or UI.
 
-
-# Current features
+# Features
 
 * Interfaces to support a variety of underlying I/O technologies.
   Out of the box, support for [AsciiPanel](https://github.com/trystan/AsciiPanel)

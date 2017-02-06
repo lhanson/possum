@@ -3,7 +3,7 @@ package io.github.lhanson.possum
 import io.github.lhanson.possum.scene.PossumSceneBuilder
 import io.github.lhanson.possum.scene.Scene
 import io.github.lhanson.possum.system.GameSystem
-import io.github.lhanson.possum.system.RenderingSystem
+import io.github.lhanson.possum.rendering.RenderingSystem
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired

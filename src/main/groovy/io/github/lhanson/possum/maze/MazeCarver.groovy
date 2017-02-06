@@ -1,5 +1,6 @@
 package io.github.lhanson.possum.maze
 
+import io.github.lhanson.possum.collision.ImpassableComponent
 import io.github.lhanson.possum.component.*
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.GridEntity

@@ -8,4 +8,9 @@ class PositionComponent extends VectorComponent {
 	PositionComponent(int x, int y) {
 		super(x, y)
 	}
+
+	@Override
+	String toString() {
+		"[$x, $y]"
+	}
 }

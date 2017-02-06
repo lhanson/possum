@@ -26,4 +26,18 @@ abstract class GameEntity {
 	List<GameComponent> getComponentsOfType(Class requiredType) {
 		components.findAll { requiredType.isInstance(it) }
 	}
+
+	/**
+	 * Returns the first component belonging to this entity of the provided type
+	 * @param requiredType the Class of components to be returned
+	 * @return the first component belonging to the entity which is an instance of {@code requiredType}
+	 */
+	GameComponent getComponentOfType(Class requiredType) {
+		components.find { requiredType.isInstance(it) }
+	}
+
+	@Override
+	String toString() {
+		name
+	}
 }

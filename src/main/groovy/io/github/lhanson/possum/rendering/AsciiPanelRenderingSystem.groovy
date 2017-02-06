@@ -7,7 +7,6 @@ import io.github.lhanson.possum.component.RelativePositionComponent
 import io.github.lhanson.possum.component.TextComponent
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.GridEntity
-import io.github.lhanson.possum.system.RenderingSystem
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component

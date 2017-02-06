@@ -1,11 +1,12 @@
-package io.github.lhanson.possum.system
+package io.github.lhanson.possum.rendering
 
 import io.github.lhanson.possum.entity.GameEntity
 
 /**
  * Renders entities to whatever display system is in use.
  *
- * A {@code RenderingSystem} is not like a generic {@link GameSystem}
+ * A {@code RenderingSystem} is not like a generic
+ * {@link io.github.lhanson.possum.system.GameSystem}
  * in that it is handled separately in the main loop.
  */
 interface RenderingSystem {
