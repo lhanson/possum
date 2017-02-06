@@ -50,8 +50,18 @@ class MovementSystem extends GameSystem {
 		// Move entities
 		mobileEntities.each { it.position.vector2.add(it.velocity.vector2) }
 
+		mobileEntities.each { mobileEntity ->
+			List<GameEntity> colliders =
+					findAt(scene.entities, mobileEntity.position) - mobileEntity.entity
+			if (colliders) {
+				// Reverse last move
+				mobileEntity.position.vector2.sub(mobileEntity.velocity.vector2)
+			}
+		}
+
 		// Stop entities
 		mobileEntities.each { it.velocity.vector2.setValues(0, 0) }
+
 	}
 
 	List<MobileEntity> findMobile(List<GameEntity> entities) {
@@ -59,7 +69,7 @@ class MovementSystem extends GameSystem {
 			PositionComponent p = entity.components.find { it instanceof PositionComponent }
 			VelocityComponent v = entity.components.find { it instanceof VelocityComponent }
 			if (p && v) {
-				return new MobileEntity(position: p, velocity: v, components: entity.components, name: entity.name)
+				return new MobileEntity(entity: entity, position: p, velocity: v, components: entity.components, name: entity.name)
 			}
 		}
 	}
@@ -67,6 +77,13 @@ class MovementSystem extends GameSystem {
 	List<MobileEntity> findFocused(List<MobileEntity> entities) {
 		entities.findAll { entity ->
 			entity.components.find { it instanceof FocusedComponent }
+		}
+	}
+
+	List<GameEntity> findAt(List<GameEntity> entities, PositionComponent position) {
+		entities.findAll { entity ->
+			List<PositionComponent> positions = entity.getComponentsOfType(PositionComponent)
+			return positions?.get(0)?.vector2 == position.vector2
 		}
 	}
 
@@ -99,5 +116,6 @@ class MovementSystem extends GameSystem {
 		List<GameComponent> components
 		PositionComponent position
 		VelocityComponent velocity
+		GameEntity entity
 	}
 }
