@@ -81,7 +81,7 @@ class MovementSystem extends GameSystem {
 	}
 
 	/**
-	 * Finds all impassable entities from the given list which are
+	 * Finds all entities from the given list which are
 	 * located at the specified position.
 	 *
 	 * @param entities the list of entities to search
@@ -91,7 +91,9 @@ class MovementSystem extends GameSystem {
 	List<GameEntity> findAt(List<GameEntity> entities, PositionComponent position) {
 		entities.findAll { entity ->
 			List<PositionComponent> positions = entity.getComponentsOfType(PositionComponent)
-			return positions?.get(0)?.vector2 == position.vector2
+			if (positions) {
+				return positions?.get(0)?.vector2 == position.vector2
+			}
 		}
 	}
 

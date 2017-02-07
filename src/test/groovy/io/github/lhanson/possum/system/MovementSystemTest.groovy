@@ -60,6 +60,18 @@ class MovementSystemTest extends Specification {
 			hero.getComponentOfType(PositionComponent) == new PositionComponent(1, 0)
 	}
 
+	def "findAt works with no matches"() {
+		given:
+			GameEntity testEntity = new GameEntity() {
+				String name = 'testEntity'
+				List<GameComponent> components = null
+			}
+		when:
+			List<GameEntity> result = movementSystem.findAt([testEntity], new PositionComponent(0, 0))
+		then:
+			result == []
+	}
+
 	GameEntity heroAt(int x, int y) {
 		new GameEntity() {
 			String name = 'hero'
