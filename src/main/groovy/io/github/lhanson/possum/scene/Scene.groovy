@@ -17,7 +17,7 @@ class Scene {
 	/** Input contexts for this scene */
 	List<InputContext> inputContexts =[]
 	/** The input collected for this scene to process */
-	List<MappedInput> activeInput = []
+	Set<MappedInput> activeInput = []
 
 	/**
 	 * Collects raw input from the available {@link InputAdapter} and passes it to each

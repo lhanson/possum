@@ -1,10 +1,18 @@
 package io.github.lhanson.possum.system
 
-import io.github.lhanson.possum.component.PositionComponent
+import io.github.lhanson.possum.collision.CollisionSystem
+import io.github.lhanson.possum.component.*
+import io.github.lhanson.possum.entity.GameEntity
+import io.github.lhanson.possum.input.MappedInput
+import io.github.lhanson.possum.scene.Scene
 import spock.lang.Specification
 
 class MovementSystemTest extends Specification {
-	MovementSystem movementSystem = new MovementSystem()
+	MovementSystem movementSystem
+
+	def setup() {
+		movementSystem = new MovementSystem(collisionSystem: Mock(CollisionSystem))
+	}
 
 	def "Simple bounding box is correctly computed"() {
 		given:
@@ -36,6 +44,32 @@ class MovementSystemTest extends Specification {
 			boundingBox.size() == 2
 			boundingBox[0] == new PositionComponent(100, 10)
 			boundingBox[1] == new PositionComponent(200, 500)
+	}
+
+	def "Duplicate input signals are not handled each frame"() {
+		given:
+			GameEntity hero = heroAt(0, 0)
+			Scene scene = new Scene(
+					activeInput: [MappedInput.RIGHT, MappedInput.RIGHT],
+					entities: [hero]
+			)
+		when:
+			movementSystem.update(scene, 0)
+		then:
+			// Having two queued right inputs shouldn't move twice
+			hero.getComponentOfType(PositionComponent) == new PositionComponent(1, 0)
+	}
+
+	GameEntity heroAt(int x, int y) {
+		new GameEntity() {
+			String name = 'hero'
+			List<GameComponent> components = [
+					new TextComponent('@'),
+					new PositionComponent(x, y),
+					new VelocityComponent(0, 0),
+					new FocusedComponent()
+			]
+		}
 	}
 
 }

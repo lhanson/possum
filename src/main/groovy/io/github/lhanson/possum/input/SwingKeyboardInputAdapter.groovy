@@ -31,7 +31,7 @@ class SwingKeyboardInputAdapter implements InputAdapter, KeyListener {
 		def keyInput = []
 		queuedKeyEvents.each {
 			log.trace "Key event ${it.keyChar} (${it.keyCode}): ${it.ID}"
-			if (it.ID == Event.KEY_RELEASE) {
+			if (it.ID == Event.KEY_PRESS) {
 				switch (it.keyCode) {
 					case KeyEvent.VK_ESCAPE:
 						keyInput << RawInput.ESCAPE
