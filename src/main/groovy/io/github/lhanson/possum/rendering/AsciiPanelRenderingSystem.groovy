@@ -13,15 +13,21 @@ import org.springframework.stereotype.Component
 
 import javax.annotation.PostConstruct
 import javax.swing.*
+import java.awt.*
+import java.util.List
 
 @Component
 class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	Logger logger = LoggerFactory.getLogger(this.class)
-	AsciiPanel terminal = new AsciiPanel()
+	AsciiPanel terminal
 
 	@PostConstruct
 	void init() {
 		logger.trace "Initializing"
+		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize()
+		// Assume standard 9x16 AsciiPanel characters
+		terminal = new AsciiPanel((int)(screenSize.width / 9), (int)(screenSize.height / 16))
+
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
 		setIgnoreRepaint(true)
 		add(terminal)
