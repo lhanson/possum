@@ -46,9 +46,9 @@
 			<version>0.64.0</version>
 		</dependency>
 		<dependency>
-			<groupId>com.github.trystan</groupId>
+			<groupId>com.github.lhanson</groupId>
 			<artifactId>AsciiPanel</artifactId>
-			<version>e156206</version>
+			<version>1df4fce7</version>
 		</dependency>
 
 		<dependency>

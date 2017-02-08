@@ -40,4 +40,9 @@ class VectorComponent implements GameComponent {
 	int hashCode() {
 		(vector2 != null ? vector2.hashCode() : 0)
 	}
+
+	@Override
+	String toString() {
+		"[${vector2.x}, ${vector2.y}]"
+	}
 }

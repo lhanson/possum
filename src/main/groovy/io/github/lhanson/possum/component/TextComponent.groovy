@@ -7,6 +7,8 @@ class TextComponent implements GameComponent {
 	String name = 'textComponent'
 	String text
 
+	TextComponent() { }
+
 	TextComponent(String text) {
 		this.text = text
 	}

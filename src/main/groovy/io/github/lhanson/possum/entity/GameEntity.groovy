@@ -38,6 +38,6 @@ abstract class GameEntity {
 
 	@Override
 	String toString() {
-		name
+		name ?: this.class.name
 	}
 }
