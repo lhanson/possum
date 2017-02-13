@@ -20,6 +20,14 @@ class AreaComponentTest extends Specification {
 			!area1.overlaps(area2)
 	}
 
+	def "Adjacent but no overlap"() {
+		when:
+			def panel = new AreaComponent(0, 0, 1, 1)
+			def entity = new AreaComponent(0, 1, 1, 1)
+		then:
+			!entity.overlaps(panel)
+	}
+
 	def "Overlap horizontally"() {
 		when:
 			def area1 = new AreaComponent(0, 0, 5, 1)

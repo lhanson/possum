@@ -43,10 +43,10 @@ class AreaComponent extends PositionComponent {
 	 * @return true if the areas overlap, false otherwise
 	 */
 	boolean overlaps(AreaComponent that) {
-		if (that.x > this.x + this.size.x || // right of this
-			that.y > this.y + this.size.y || // below this
-			that.x + that.size.x < this.x || // left of this
-			that.y + that.size.y < this.y) { // above this
+		if (that.x >= this.x + this.size.x || // right of this
+			that.y >= this.y + this.size.y || // below this
+			that.x + that.size.x <= this.x || // left of this
+			that.y + that.size.y <= this.y) { // above this
 			return false
 		}
 		return true
