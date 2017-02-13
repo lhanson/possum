@@ -3,13 +3,38 @@ package io.github.lhanson.possum.component
 /**
  * An area represented by x, y coordinates and its dimensions.
  */
-class AreaComponent implements GameComponent {
-	VectorComponent location
+class AreaComponent extends PositionComponent {
 	VectorComponent size
 
+	AreaComponent() {
+		super()
+		size = new VectorComponent()
+	}
+
 	AreaComponent(int x, int y, int width, int height) {
-		location = new VectorComponent(x, y)
+		super(x, y)
 		size = new VectorComponent(width, height)
+	}
+
+	AreaComponent(PositionComponent pos, int width, int height) {
+		super(pos.x, pos.y)
+		size = new VectorComponent(width, height)
+	}
+
+	int getWidth() {
+		size.x
+	}
+
+	void setWidth(int width) {
+		size.x = width
+	}
+
+	int getHeight() {
+		size.y
+	}
+
+	void setHeight(int height) {
+		size.y = height
 	}
 
 	/**
@@ -18,10 +43,10 @@ class AreaComponent implements GameComponent {
 	 * @return true if the areas overlap, false otherwise
 	 */
 	boolean overlaps(AreaComponent that) {
-		if (that.location.x > this.location.x + this.size.x || // right of this
-			that.location.y > this.location.y + this.size.y || // below this
-			that.location.x + that.size.x < this.location.x || // left of this
-			that.location.y + that.size.y < this.location.y) { // above this
+		if (that.x > this.x + this.size.x || // right of this
+			that.y > this.y + this.size.y || // below this
+			that.x + that.size.x < this.x || // left of this
+			that.y + that.size.y < this.y) { // above this
 			return false
 		}
 		return true
@@ -29,6 +54,6 @@ class AreaComponent implements GameComponent {
 
 	@Override
 	String toString() {
-		"Location [${location.x}, ${location.y}], size [${size.x}, ${size.y}]"
+		"location ${super.toString()}, size [${size.x}, ${size.y}]"
 	}
 }

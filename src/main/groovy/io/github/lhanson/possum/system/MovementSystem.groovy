@@ -109,7 +109,7 @@ class MovementSystem extends GameSystem {
 		entities.findAll { entity ->
 			List<PositionComponent> positions = entity.getComponentsOfType(PositionComponent)
 			def impassable = entity.getComponentsOfType(ImpassableComponent)
-			return impassable && positions?.get(0)?.vector2 == position.vector2
+			return impassable && positions?.get(0) == position
 		}
 	}
 

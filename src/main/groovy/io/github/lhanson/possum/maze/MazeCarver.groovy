@@ -50,7 +50,7 @@ class MazeCarver {
 		new GameEntity() {
 			String name = 'wall'
 			List<GameComponent> components = [
-					new PositionComponent(x, y),
+					new AreaComponent(x, y, 1, 1),
 					new ImpassableComponent(),
 					new TextComponent(String.valueOf((char)176)) // ░
 			]

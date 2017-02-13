@@ -1,6 +1,6 @@
 package io.github.lhanson.possum.rendering
 
-import io.github.lhanson.possum.entity.GameEntity
+import io.github.lhanson.possum.scene.Scene
 
 /**
  * Renders entities to whatever display system is in use.
@@ -11,9 +11,9 @@ import io.github.lhanson.possum.entity.GameEntity
  */
 interface RenderingSystem {
 	/**
-	 * Renders the current game state
+	 * Renders the current scene
 	 */
-	void render(List<GameEntity> entities)
+	void render(Scene scene)
 
 	/**
 	 * @return the width of the current viewport

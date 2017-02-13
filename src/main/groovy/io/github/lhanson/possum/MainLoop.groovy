@@ -31,7 +31,7 @@ class MainLoop {
 				scene.activeInput.clear()
 			//	lag -= MS_PER_UPDATE
 			//}
-			renderers.each { it.render(scene.entities) }
+			renderers.each { it.render(scene) }
 
 			// My Cosmological Constant. Without it, things don't work (rendering gets
 			// weird and flickery), and I don't yet know why.

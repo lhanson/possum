@@ -42,7 +42,7 @@ class TextTruncating {
 			scenesById[PossumSceneBuilder.START] = new Scene(
 					entities: [
 							new GameEntity() {
-								String name = 'menuTitle'
+								String name = 'longText'
 								List<GameComponent> components = [
 										new TextComponent('01234567890'),
 										new RelativePositionComponent(50, 50)

@@ -5,6 +5,7 @@ import io.github.lhanson.possum.component.*
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.GridEntity
 import io.github.lhanson.possum.entity.PanelEntity
+import io.github.lhanson.possum.scene.Scene
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -22,6 +23,8 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	@Autowired(required = false)
 	VectorComponent initialViewportSize
 	AreaComponent viewport
+	Scene lastScene
+	List<AreaComponent> scenePanelAreas
 
 	@PostConstruct
 	void init() {
@@ -42,15 +45,21 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	}
 
 	@Override
-	void render(List<GameEntity> entities) {
+	void render(Scene scene) {
 		logger.trace "Rendering"
+
+		if (scene != lastScene) {
+			lastScene = scene
+			initScene(scene)
+		}
+
 		// TODO: How to restore what was behind an object?
 		// TODO: We need to know which areas are dirty, and also what to paint there.
 		// TODO: Double buffering with clipping?
 		// TODO: For now, I'll just repaint the whole panel each time.
 		terminal.clear()
 
-		entities.each { entity ->
+		scene.entities.each { entity ->
 			if (entity instanceof GridEntity) {
 				// Maze renderer, won't be the same as tile-based game renderer
 				renderMaze(entity)
@@ -58,11 +67,11 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 				// Panel renderer
 				renderPanel(entity)
 			} else {
-				// Resolve any relatively positioned entities
-				PositionComponent pc = calculatePosition(entity)
-				TextComponent tc = entity.components.find { it instanceof TextComponent }
-				if (isVisible(pc, tc)) {
-					write(tc.text, (int) pc.x, (int) pc.y)
+				// Generic renderer
+				if (isVisible(entity)) {
+					TextComponent tc = entity.getComponentOfType(TextComponent)
+					PositionComponent pc = entity.getComponentOfType(PositionComponent)
+					write(tc.text, pc.x, pc.y)
 				}
 			}
 		}
@@ -73,12 +82,68 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 //		terminal.updateUI()
 	}
 
-	boolean isVisible(PositionComponent pc, TextComponent tc) {
-		if (pc && tc) {
-			AreaComponent area = new AreaComponent(pc.x, pc.y, tc.text.length(), 1)
-			return area.overlaps(viewport)
+	void initScene(Scene scene) {
+		logger.debug "Initializing scene {}", scene
+		scene.entities
+				.findAll { it.getComponentOfType(RelativePositionComponent) }
+				.each { GameEntity entity ->
+			AreaComponent ac = entity.getComponentOfType(AreaComponent)
+			RelativePositionComponent rpc = entity.getComponentOfType(RelativePositionComponent)
+			RelativeWidthComponent rwc = entity.getComponentOfType(RelativeWidthComponent)
+			List<io.github.lhanson.possum.component.TextComponent> text =
+					entity.getComponentsOfType(io.github.lhanson.possum.component.TextComponent)
+			int xOffset = 0
+
+			if (!ac) {
+				ac = new AreaComponent()
+				entity.components.add(ac)
+				logger.debug "Added area component for {}", entity.name
+			}
+
+			if (rwc) {
+				// Compute relative width
+				ac.width = (rwc.width / 100.0f) * viewportWidth
+			}
+
+			if (entity instanceof PanelEntity) {
+				// Compute relative height
+				ac.height = text.size() + 2 // text entries plus borders
+				// Compute position
+				ac.x = constrainInt((int) (relativeX(rpc) - (ac.width / 2)), 0, viewportWidth - ac.width)
+				ac.y = relativeY(rpc) - ac.height
+			} else {
+				if (text?.get(0)) {
+					// This is assuming we want to center this text around its position
+					xOffset = text[0].text.length() / 2
+					ac.width = text.collect { it.text.size() }.max() // Longest string
+					// Assumes each text component is on its own line
+					ac.height = text.size()
+				}
+				ac.x = (rpc.x / 100.0f) * viewportWidth - xOffset
+				ac.y = (rpc.y / 100.0f) * viewportHeight
+			}
+			logger.debug "Calculated position of {} for {}", ac, entity.name
 		}
-		return false
+
+		// Store a list of the panel areas in the scene for faster reference
+		scenePanelAreas = scene.entities
+				.findAll { it instanceof PanelEntity }
+				.findResults { it.getComponentsOfType(AreaComponent) }
+	}
+
+	boolean isVisible(GameEntity entity) {
+		boolean visible = false
+		AreaComponent area = entity.getComponentOfType(AreaComponent)
+		if (area) {
+			visible = area.overlaps(viewport) &&
+					!scenePanelAreas.any { area.overlaps(it) }
+		} else {
+			PositionComponent pos = entity.getComponentOfType(PositionComponent)
+			if (pos) {
+				visible = new AreaComponent(pos.x, pos.y, 1, 1).overlaps(viewport)
+			}
+		}
+		return visible
 	}
 
 	/**
@@ -108,14 +173,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	}
 
 	void renderPanel(PanelEntity entity) {
-		RelativePositionComponent rpc = entity.getComponentOfType(RelativePositionComponent)
-		int width = calculateWidth(entity)
-		int height = calculateHeight(entity)
-		int x, y // upper left of the panel
-		if (rpc) {
-			x = constrainInt((int)(relativeX(rpc) - (width / 2)), 0, viewportWidth - width)
-			y = relativeY(rpc) - height
-		}
+		AreaComponent ac = entity.getComponentOfType(AreaComponent)
 		String h  = String.valueOf((char)205) // ═
 		String v  = String.valueOf((char)186) // ║
 		String ul = String.valueOf((char)201) // ╔
@@ -123,16 +181,16 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		String ll = String.valueOf((char)200) // ╚
 		String lr = String.valueOf((char)188) // ╝
 		// Top border
-		terminal.write(ul + ("$h" * (width - 2)) + ur, x, y)
+		terminal.write(ul + ("$h" * (ac.width - 2)) + ur, ac.x, ac.y)
 		// Middle
 		entity.getComponentsOfType(io.github.lhanson.possum.component.TextComponent)
 				.eachWithIndex { TextComponent tc, int idx ->
-			terminal.write(v, x, y + 1 + idx)             // Left border
-			terminal.write(tc.text, x + 2, y + 1 + idx)   // Text
-			terminal.write(v, x + width - 1, y + 1 + idx) // Right border
+			terminal.write(v, ac.x, ac.y + 1 + idx)             // Left border
+			terminal.write(tc.text, ac.x + 2, ac.y + 1 + idx)   // Text
+			terminal.write(v, ac.x + ac.width - 1, ac.y + 1 + idx) // Right border
 		}
 		// Bottom border
-		terminal.write(ll + ("$h" * (width - 2)) + lr, x, y + (height - 1))
+		terminal.write(ll + ("$h" * (ac.width - 2)) + lr, ac.x, ac.y + (ac.height - 1))
 	}
 
 	/*
@@ -166,50 +224,12 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		}
 	}
 
-	/**
-	 * Resolves any relatively positioned entities with respect to the viewport.
-	 *
-	 * @param entity the entity to position within the viewport
-	 * @return the absolute position of the entity
-	 */
-	PositionComponent calculatePosition(GameEntity entity) {
-		PositionComponent pc = entity.getComponentOfType(PositionComponent)
-		RelativePositionComponent rpc = entity.getComponentOfType(RelativePositionComponent)
-		TextComponent tc = entity.getComponentOfType(io.github.lhanson.possum.component.TextComponent)
-		if (!pc && rpc) {
-			int xOffset = 0
-			if (tc) {
-				// This is assuming we want to center this text, which might not hold up for long...
-				xOffset = tc.text.length() / 2
-			}
-			pc = new PositionComponent(
-					(int) ((rpc.x / 100.0f) * terminal.widthInCharacters) - xOffset,
-					(int) ((rpc.y / 100.0f) * terminal.heightInCharacters)
-			)
-		}
-		return pc
-	}
-
-	int calculateWidth(GameEntity entity) {
-		RelativeWidthComponent rwc = entity.getComponentOfType(RelativeWidthComponent)
-		if (rwc) {
-			return (rwc.width / 100.0f) * viewportWidth
-		}
-	}
-
-	int calculateHeight(GameEntity entity) {
-		if (entity instanceof PanelEntity) {
-			def text = entity.getComponentsOfType(io.github.lhanson.possum.component.TextComponent)
-			return text.size() + 2 // text entries plus borders
-		}
-	}
-
 	int relativeX(RelativePositionComponent rpc) {
-		return (int) ((rpc.x / 100.0f) * terminal.widthInCharacters)
+		return (int) ((rpc.x / 100.0f) * viewportWidth)
 	}
 
 	int relativeY(RelativePositionComponent rpc) {
-		return (int) ((rpc.y / 100.0f) * terminal.heightInCharacters)
+		return (int) ((rpc.y / 100.0f) * viewportHeight)
 	}
 
 	int constrainInt(int value, int min, int max) {
