@@ -2,9 +2,10 @@ package io.github.lhanson.possum_demos.mazes
 
 import io.github.lhanson.possum.MainLoop
 import io.github.lhanson.possum.collision.CollisionHandlingComponent
-import io.github.lhanson.possum.component.FocusedComponent
+import io.github.lhanson.possum.component.CameraFocusComponent
 import io.github.lhanson.possum.component.GameComponent
 import io.github.lhanson.possum.component.GaugeComponent
+import io.github.lhanson.possum.component.PlayerInputAwareComponent
 import io.github.lhanson.possum.component.PositionComponent
 import io.github.lhanson.possum.component.RelativePositionComponent
 import io.github.lhanson.possum.component.RelativeWidthComponent
@@ -113,7 +114,7 @@ class MazesForProgrammers {
 							new GameEntity() {
 								String name = 'quitText'
 								List<GameComponent> components = [
-										new TextComponent('See you next time!'),
+										new TextComponent('Goodbye see you!'),
 										new RelativePositionComponent(50, 50),
 										new TimerComponent(ticksRemaining: 1000, alarm: { transition(null) })
 								]
@@ -126,7 +127,6 @@ class MazesForProgrammers {
 			GridEntity maze = BinaryTree.linkCells(new GridEntity(30, 20))
 			def entities = []
 			def walls = MazeCarver.buildWalls(maze)
-			movementSystem.centerAround(50, 50, walls)
 			entities.addAll walls
 
 			PositionComponent startPos = movementSystem.randomPassableSpaceWithin(walls)
@@ -142,7 +142,8 @@ class MazesForProgrammers {
 						new TextComponent('@'),
 						startPos,
 						new VelocityComponent(0, 0),
-						new FocusedComponent()
+						new PlayerInputAwareComponent(),
+						new CameraFocusComponent()
 				]
 			}
 			entities << hero
@@ -162,19 +163,25 @@ class MazesForProgrammers {
 				]
 			}
 
-			def fpsGauge = new GaugeComponent()
-			fpsGauge.update = { ticks ->
-				def fps = (1 / ticks) * 1000
-				def formatted = new DecimalFormat("#0").format(fps)
-				fpsGauge.text = "$formatted fps"
+			def playerPositionGauge = new GaugeComponent()
+			playerPositionGauge.update = { ticks ->
+				def ac = hero.getComponentOfType(PositionComponent)
+				playerPositionGauge.text = "$ac"
 			}
 			entities << new PanelEntity() {
 				String name = 'leftHudPanel'
 				List<GameComponent> components = [
 						new RelativePositionComponent(0, 100),
 						new RelativeWidthComponent(80),
-						fpsGauge
+						playerPositionGauge
 				]
+			}
+
+			def fpsGauge = new GaugeComponent()
+			fpsGauge.update = { ticks ->
+				def fps = (1 / ticks) * 1000
+				def formatted = new DecimalFormat("#0").format(fps)
+				fpsGauge.text = "$formatted fps"
 			}
 			entities << new PanelEntity() {
 				String name = 'rightHudPanel'

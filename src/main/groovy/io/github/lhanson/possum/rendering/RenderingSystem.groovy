@@ -1,5 +1,6 @@
 package io.github.lhanson.possum.rendering
 
+import io.github.lhanson.possum.component.PositionComponent
 import io.github.lhanson.possum.scene.Scene
 
 /**
@@ -24,4 +25,11 @@ interface RenderingSystem {
 	 * @return the width of the current viewport
 	 */
 	int getViewportHeight()
+
+	/**
+	 * Centers the
+	 * @param x horizontal coordinate at which to center the viewport
+	 * @param y vertical coordinate at which to center the viewport
+	 */
+	void centerViewport(PositionComponent position)
 }

@@ -43,6 +43,6 @@ class VectorComponent implements GameComponent {
 
 	@Override
 	String toString() {
-		"[${vector2.x}, ${vector2.y}]"
+		"[${(int) vector2.x}, ${(int) vector2.y}]"
 	}
 }

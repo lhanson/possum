@@ -2,7 +2,7 @@ package io.github.lhanson.possum.system
 
 import io.github.lhanson.possum.collision.CollisionSystem
 import io.github.lhanson.possum.collision.ImpassableComponent
-import io.github.lhanson.possum.component.FocusedComponent
+import io.github.lhanson.possum.component.PlayerInputAwareComponent
 import io.github.lhanson.possum.component.PositionComponent
 import io.github.lhanson.possum.component.VelocityComponent
 import io.github.lhanson.possum.entity.GameEntity
@@ -28,7 +28,7 @@ class MovementSystem extends GameSystem {
 	void update(Scene scene, double ticks) {
 		def mobileEntities = findMobile(scene.entities)
 		if (scene.activeInput) {
-			findFocused(mobileEntities).each { focusedEntity ->
+			findInputAware(mobileEntities).each { focusedEntity ->
 				log.trace "Applying {} to {}", scene.activeInput, focusedEntity.name
 				Vector2 newVelocity = new Vector2()
 				scene.activeInput.each { input ->
@@ -74,9 +74,9 @@ class MovementSystem extends GameSystem {
 		}
 	}
 
-	List<MobileEntity> findFocused(List<MobileEntity> entities) {
+	List<MobileEntity> findInputAware(List<MobileEntity> entities) {
 		entities.findAll { entity ->
-			entity.components.find { it instanceof FocusedComponent }
+			entity.components.find { it instanceof PlayerInputAwareComponent }
 		}
 	}
 

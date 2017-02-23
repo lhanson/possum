@@ -1,6 +1,6 @@
 package io.github.lhanson.possum.entity
 
-import io.github.lhanson.possum.component.FocusedComponent
+import io.github.lhanson.possum.component.CameraFocusComponent
 import io.github.lhanson.possum.component.GameComponent
 import io.github.lhanson.possum.collision.ImpassableComponent
 import io.github.lhanson.possum.component.TextComponent
@@ -12,7 +12,7 @@ class GameEntityTest extends Specification {
 			def entity = new GameEntity() {
 				String name = 'testEntity'
 				List<GameComponent> components = [
-						new FocusedComponent(),
+						new CameraFocusComponent(),
 						new ImpassableComponent(),
 						new TextComponent(),
 						new TextComponent()

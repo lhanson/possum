@@ -53,6 +53,10 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 			initScene(scene)
 		}
 
+		checkScrollBoundaries(
+				scene.entities.find { it.getComponentOfType(CameraFocusComponent) }
+		)
+
 		// TODO: How to restore what was behind an object?
 		// TODO: We need to know which areas are dirty, and also what to paint there.
 		// TODO: Double buffering with clipping?
@@ -87,12 +91,25 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		scene.entities
 				.findAll { it.getComponentOfType(RelativePositionComponent) }
 				.each { GameEntity entity ->
+			// Center viewport on focused entity, important that this happens
+			// before resolving relatively positioned entities
+			GameEntity focusedEntity = scene.entities.find { it.getComponentOfType(CameraFocusComponent) }
+			if (focusedEntity) {
+				PositionComponent position = focusedEntity.getComponentOfType(PositionComponent)
+				if (position) {
+					centerViewport(position)
+				}
+			} else {
+				// No focused entity, restore default viewport state
+				viewport.x = 0
+				viewport.y = 0
+			}
+
 			AreaComponent ac = entity.getComponentOfType(AreaComponent)
 			RelativePositionComponent rpc = entity.getComponentOfType(RelativePositionComponent)
 			RelativeWidthComponent rwc = entity.getComponentOfType(RelativeWidthComponent)
 			List<io.github.lhanson.possum.component.TextComponent> text =
 					entity.getComponentsOfType(io.github.lhanson.possum.component.TextComponent)
-			int xOffset = 0
 
 			if (!ac) {
 				ac = new AreaComponent()
@@ -112,6 +129,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 				ac.x = constrainInt((int) (relativeX(rpc) - (ac.width / 2)), 0, viewportWidth - ac.width)
 				ac.y = relativeY(rpc) - ac.height
 			} else {
+				int xOffset = 0
 				if (text?.get(0)) {
 					// This is assuming we want to center this text around its position
 					xOffset = text[0].text.length() / 2
@@ -135,8 +153,10 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		boolean visible = false
 		AreaComponent area = entity.getComponentOfType(AreaComponent)
 		if (area) {
-			visible = area.overlaps(viewport) &&
-					!scenePanelAreas.any { area.overlaps(it) }
+			// When detecting overlap with panels, we translate the entity's coordinates to
+			// be viewport-based rather than world-based.
+			AreaComponent viewportArea = translateToViewport(area)
+			visible = area.overlaps(viewport) && !scenePanelAreas.any { viewportArea.overlaps(it) }
 		} else {
 			PositionComponent pos = entity.getComponentOfType(PositionComponent)
 			if (pos) {
@@ -144,6 +164,42 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 			}
 		}
 		return visible
+	}
+
+	AreaComponent translateToViewport(AreaComponent area) {
+		int tx = area.x - viewport.x
+		int ty = area.y - viewport.y
+		new AreaComponent(x: tx, y: ty, width: area.width, height: area.height)
+	}
+
+	/**
+	 * If the focused component gets to a certain viewport threshold, we
+	 * recenter the viewport on it before we render the next frame.
+	 * TODO: we should account for panel offset in our thresholds
+	 * TODO: perhaps have a function returning the non-panel viewport?
+ 	 */
+	void checkScrollBoundaries(GameEntity focusedEntity) {
+		if (focusedEntity) {
+			PositionComponent pc = focusedEntity.getComponentOfType(PositionComponent)
+			if (pc) {
+				def scrollToX
+				def scrollToY
+				def threshX = viewport.width * 0.1
+				def threshY = viewport.height * 0.1
+				if (pc.x < viewport.x + threshX || pc.x > viewport.x + viewport.width - threshX) {
+					scrollToX = pc.x
+				}
+				if (pc.y < viewport.y + threshY || pc.y > viewport.y + viewport.height - threshY) {
+					scrollToY = pc.y
+				}
+				if (scrollToX || scrollToY) {
+					def scrollTo = new PositionComponent()
+					scrollTo.x = scrollToX ?: viewport.x + viewport.width / 2
+					scrollTo.y = scrollToY ?: viewport.y + viewport.height / 2
+					centerViewport(scrollTo)
+				}
+			}
+		}
 	}
 
 	/**
@@ -154,10 +210,14 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	 * @param y the y position of the entity
 	 */
 	void write(String s, int x, int y) {
+		// Translate world coordinates into screen coordinates;
+		// the viewport may moved around the world
+		int tx = x - viewport.x
+		int ty = y - viewport.y
 		for (int i = 0; i < s.size(); i++) {
-			if (x + i >= 0 && x + i < viewportWidth &&
-			    y >= 0     && y < viewportHeight) {
-				terminal.write(s.charAt(i), x + i, y)
+			if (tx + i >= 0 && tx + i < viewportWidth &&
+			    ty >= 0     && ty < viewportHeight) {
+				terminal.write(s.charAt(i), tx + i, ty)
 			}
 		}
 	}
@@ -170,6 +230,13 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	@Override
 	int getViewportHeight() {
 		viewport.size.y
+	}
+
+	@Override
+	void centerViewport(PositionComponent pos) {
+		viewport.x = pos.x - (viewport.width / 2)
+		viewport.y = pos.y - (viewport.height / 2)
+		logger.debug "Centered viewport at $pos; viewport $viewport"
 	}
 
 	void renderPanel(PanelEntity entity) {

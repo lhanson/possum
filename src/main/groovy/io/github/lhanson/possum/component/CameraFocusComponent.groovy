@@ -2,7 +2,7 @@ package io.github.lhanson.possum.component
 
 /**
  * A marker interface signifying that this {@link GameComponent} is
- * eligible to respond to user input.
+ * being followed by the camera
  */
-class FocusedComponent implements GameComponent {
+class CameraFocusComponent implements GameComponent {
 }

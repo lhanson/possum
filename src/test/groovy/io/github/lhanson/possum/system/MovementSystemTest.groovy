@@ -79,7 +79,7 @@ class MovementSystemTest extends Specification {
 					new TextComponent('@'),
 					new PositionComponent(x, y),
 					new VelocityComponent(0, 0),
-					new FocusedComponent()
+					new CameraFocusComponent()
 			]
 		}
 	}
