@@ -67,8 +67,5 @@ class SwingKeyboardInputAdapter implements InputAdapter, KeyListener {
 	}
 
 	@Override
-	void keyReleased(KeyEvent e) {
-		log.trace "Key released: ${e.keyChar} (${e.keyCode})"
-		queuedKeyEvents << e
-	}
+	void keyReleased(KeyEvent e) { }
 }
