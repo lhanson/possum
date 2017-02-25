@@ -43,6 +43,8 @@ import java.text.DecimalFormat
 		'io.github.lhanson.mazes'
 ])
 class MazesForProgrammers {
+	@Autowired
+	MainLoop mainLoop
 
 	static void main(String[] args) {
 		def context = new SpringApplicationBuilder(MazesForProgrammers)
@@ -177,18 +179,29 @@ class MazesForProgrammers {
 				]
 			}
 
+			def simulationHzGauge = new GaugeComponent()
+			simulationHzGauge.update = { ticks ->
+				def simHz = (1 / ticks) * 1000
+				def formatted = new DecimalFormat("#0").format(simHz)
+				simulationHzGauge.text = "$formatted Hz"
+			}
+
 			def fpsGauge = new GaugeComponent()
-			fpsGauge.update = { ticks ->
-				def fps = (1 / ticks) * 1000
+			fpsGauge.update = {
+				// The number of ticks being simulated doesn't reflect rendering
+				// frequency, so we get the actual timing from the main loop.
+				def fps = mainLoop.currentFps
 				def formatted = new DecimalFormat("#0").format(fps)
 				fpsGauge.text = "$formatted fps"
 			}
+
 			entities << new PanelEntity() {
 				String name = 'rightHudPanel'
 				List<GameComponent> components = [
 						new RelativePositionComponent(100, 100),
 						new RelativeWidthComponent(20),
-						fpsGauge
+						simulationHzGauge,
+						fpsGauge,
 				]
 			}
 

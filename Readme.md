@@ -48,3 +48,28 @@ beans from `io.github.lhanson.possum`, as well as your own packages.
 That main loop won't do shit unless you implement a `PossumSceneBuilder` to
 define your entities and input handling and whatever. You know, your game logic.
 More on that junk to come.
+
+
+# Engine Internals
+
+## Main loop, time simulation, and rendering strategy
+
+Possum strives to be performant and responsive on slow systems or with games containing a lot
+of simulation complexity, while also being able to take good advantage of speedy hardware. To
+that end, the main loop uses fixed simulation timesteps to update the game state and
+variable rendering. Rather than flounder about, I'll quote an explanation from Robert Nystrom's
+[Game Programming Patterns](http://gameprogrammingpatterns.com/game-loop.html#play-catch-up):
+
+    [This approach] updates with a fixed time step, but it can drop rendering frames if it needs
+    to to catch up to the player’s clock.
+    
+    * It adapts to playing both too slowly and too fast. As long as the game can update in real
+      time, the game won’t fall behind. If the player’s machine is top-of-the-line, it will respond
+      with a smoother gameplay experience.
+    
+    * It’s more complex. The main downside is there is a bit more going on in the implementation.
+      You have to tune the update time step to be both as small as possible for the high-end,
+      while not being too slow on the low end.
+
+Writing a game with Possum will shield you from these gory details, but it may be of general interest
+if you're going deeper down the rabbit hole.
