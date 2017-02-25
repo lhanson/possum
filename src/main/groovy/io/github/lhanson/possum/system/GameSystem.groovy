@@ -27,9 +27,23 @@ abstract class GameSystem {
 	 * perform some work, including processing scene entities it knows
 	 * how to deal with.
 	 *
+	 * Calls {@code doUpdate()} on implementing classes.
+	 *
 	 * @param scene the currently active scene
 	 * @param elapsed the amount of time since the last game update
 	 */
-	abstract void update(Scene scene, double elapsed)
+	void update(Scene scene, double elapsed) {
+		long startTime = System.currentTimeMillis()
+		doUpdate(scene, elapsed)
+		log.debug "Updating {} took {} ms", name, System.currentTimeMillis() - startTime
+	}
 
+	/**
+	 * Implementation-specific class called For each main loop iteration,
+	 * allows implementing system to process scene entities.
+	 *
+	 * @param scene the currently active scene
+	 * @param elapsed the amount of time since the last game update
+	 */
+	abstract void doUpdate(Scene scene, double elapsed)
 }

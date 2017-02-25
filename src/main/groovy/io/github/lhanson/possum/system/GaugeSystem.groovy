@@ -14,7 +14,7 @@ class GaugeSystem extends GameSystem {
 	String name = 'GaugeSystem'
 
 	@Override
-	void update(Scene scene, double elapsed) {
+	void doUpdate(Scene scene, double elapsed) {
 		findGauged(scene.entities).each { entity ->
 			entity.gauges.each { it.update(elapsed) }
 		}

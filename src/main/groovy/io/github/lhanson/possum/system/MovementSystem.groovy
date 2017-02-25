@@ -25,7 +25,7 @@ class MovementSystem extends GameSystem {
 	String name = 'MovementSystem'
 
 	@Override
-	void update(Scene scene, double ticks) {
+	void doUpdate(Scene scene, double ticks) {
 		def mobileEntities = findMobile(scene.entities)
 		if (scene.activeInput) {
 			findInputAware(mobileEntities).each { focusedEntity ->

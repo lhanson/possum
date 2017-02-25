@@ -29,9 +29,8 @@ class MainLoop {
 		while (scene) {
 			timer.tick()
 
-			scene.processInput()
-
 			timer.updateSimulation {
+				scene.processInput()
 				systems.each { it.update(scene, SIMULATION_TIMESTEP) }
 				scene.activeInput.clear()
 			}
@@ -62,8 +61,6 @@ class MainLoop {
 		// before increasing SIMULATION_TIMESTEP to catch up
 		final int MAX_SLOWDOWN_FRAMES = 5
 
-		// The amount of time the last frame took
-		long lastFrameMs
 		// The amount of real elapsed time since the previous frame that we need to simulate for
 		long lag = 0
 		// Current rendering framerate
@@ -79,12 +76,12 @@ class MainLoop {
 		 * Called once per main loop iteration
 		 */
 		void tick() {
-			log.debug "Main loop - {}ms frame, {}ms lag, rendering at {} fps",
-					lastFrameMs, lag, currentFps
 			long currentTime = System.currentTimeMillis()
 			long elapsed = currentTime - previousTime
 			previousTime = currentTime
 			lag += elapsed
+			log.debug "Main loop - {}ms frame, {}ms lag, rendering at {} fps",
+					elapsed, lag, currentFps
 
 			// Update current FPS calculation every half-second
 			fpsTimeCounter += elapsed

@@ -9,7 +9,7 @@ class TimerSystem extends GameSystem {
 	String name = 'timerSystem'
 
 	@Override
-	void update(Scene scene, double ticks) {
+	void doUpdate(Scene scene, double ticks) {
 		scene.entities.each { entity ->
 			entity.components
 					.findAll { it instanceof TimerComponent }
