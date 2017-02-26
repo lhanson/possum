@@ -15,6 +15,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
+import org.springframework.util.StopWatch
 
 @Component
 class MovementSystem extends GameSystem {
@@ -23,10 +24,19 @@ class MovementSystem extends GameSystem {
 	Random random = new Random()
 	Logger log = LoggerFactory.getLogger(this.class)
 	String name = 'MovementSystem'
+	List<GameEntity> mobileEntities
 
 	@Override
 	void doUpdate(Scene scene, double ticks) {
-		def mobileEntities = findMobile(scene.entities)
+		StopWatch stopwatch = new StopWatch(name)
+
+		if (!mobileEntities) {
+			stopwatch.start('Find mobile entities')
+			mobileEntities = findMobile(scene.entities)
+			stopwatch.stop()
+		}
+
+		stopwatch.start('Processing active input')
 		if (scene.activeInput) {
 			findInputAware(mobileEntities).each { focusedEntity ->
 				log.trace "Applying {} to {}", scene.activeInput, focusedEntity.name
@@ -51,17 +61,26 @@ class MovementSystem extends GameSystem {
 				log.trace "New velocity is {}", focusedEntity.velocity.vector2
 			}
 		}
-		// Move entities
-		mobileEntities.each { it.position.vector2.add(it.velocity.vector2) }
+		stopwatch.stop()
 
+		// Move entities
+		stopwatch.start('Moving mobile entities')
+		mobileEntities.each { it.position.vector2.add(it.velocity.vector2) }
+		stopwatch.stop()
+
+		stopwatch.start('Calculating collisions')
 		mobileEntities.each { mobileEntity ->
 			List<GameEntity> colliders = findAt(scene.entities, mobileEntity.position) - mobileEntity.entity
 			colliders.each { collisionSystem.collide(mobileEntity, it) }
 		}
+		stopwatch.stop()
 
 		// Stop entities
+		stopwatch.start('Stopping entity velocity')
 		mobileEntities.each { it.velocity.vector2.setValues(0, 0) }
+		stopwatch.stop()
 
+		log.debug "{}", stopwatch
 	}
 
 	List<MobileEntity> findMobile(List<GameEntity> entities) {
