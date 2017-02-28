@@ -80,17 +80,21 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 			}
 		}
 
-		terminal.repaint()
-//		repaint()
-//		update(getGraphics())
-//		terminal.updateUI()
+		// TODO: why is this preferable to calling paintImmediately directly?
+		update(getGraphics())
+		//terminal.paintImmediately(0, 0, terminal.width, terminal.height)
+		logger.trace "Render complete"
+	}
+
+	@Override
+	void update(Graphics g) {
+		terminal.paintImmediately(0, 0, terminal.width, terminal.height)
 	}
 
 	void initScene(Scene scene) {
 		logger.debug "Initializing scene {}", scene
-		scene.entities
-				.findAll { it.getComponentOfType(RelativePositionComponent) }
-				.each { GameEntity entity ->
+		scene.getEntitiesMatching([RelativePositionComponent]).each { GameEntity entity ->
+			logger.trace "Initializing entity ${entity.name}"
 			// Center viewport on focused entity, important that this happens
 			// before resolving relatively positioned entities
 			GameEntity focusedEntity = scene.entities.find { it.getComponentOfType(CameraFocusComponent) }
@@ -141,6 +145,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 				ac.y = (rpc.y / 100.0f) * viewportHeight
 			}
 			logger.debug "Calculated position of {} for {}", ac, entity.name
+			entity.updateComponentLookupCache()
 		}
 
 		// Store a list of the panel areas in the scene for faster reference
@@ -251,9 +256,11 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		terminal.write(ul + ("$h" * (ac.width - 2)) + ur, ac.x, ac.y)
 		// Middle
 		entity.getComponentsOfType(io.github.lhanson.possum.component.TextComponent)
-				.eachWithIndex { TextComponent tc, int idx ->
+				.eachWithIndex { io.github.lhanson.possum.component.TextComponent tc, int idx ->
 			terminal.write(v, ac.x, ac.y + 1 + idx)             // Left border
-			terminal.write(tc.text, ac.x + 2, ac.y + 1 + idx)   // Text
+			if (tc?.text) {
+				terminal.write(tc.text, ac.x + 2, ac.y + 1 + idx)   // Text
+			}
 			terminal.write(v, ac.x + ac.width - 1, ac.y + 1 + idx) // Right border
 		}
 		// Bottom border

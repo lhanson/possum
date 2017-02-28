@@ -15,6 +15,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.builder.SpringApplicationBuilder
 import org.springframework.stereotype.Component
 
+import javax.annotation.PostConstruct
+
 /**
  * Exercises viewport rendering e.g. entities larger than the viewport
  */
@@ -38,25 +40,28 @@ class TextTruncating {
 
 	@Component
 	class SceneBuilder extends PossumSceneBuilder {
-		@Override void initializeScenes() {
-			scenesById[PossumSceneBuilder.START] = new Scene(
-					entities: [
-							new GameEntity() {
-								String name = 'longText'
-								List<GameComponent> components = [
-										new TextComponent('01234567890'),
-										new RelativePositionComponent(50, 50)
-								]
-							}
+		@PostConstruct
+		void init() {
+			addScene(new Scene(
+					SceneBuilder.START,
+					[
+							new GameEntity(
+									name: 'longText',
+									components:  [
+											new TextComponent('01234567890'),
+											new RelativePositionComponent(50, 50)
+									])
 					],
-					inputContexts: [
+					[
 							new InputContext() {
-								@Override MappedInput mapInput(RawInput rawInput) {
+								@Override
+								MappedInput mapInput(RawInput rawInput) {
 									transition(null)
 								}
 							}
 					]
-			)}
+			))
 		}
+	}
 
 }

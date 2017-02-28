@@ -1,8 +1,7 @@
 package io.github.lhanson.possum.entity
 
-import io.github.lhanson.possum.component.GameComponent
-
+/**
+ * Entity type which is treated specially by renderers.
+ */
 class PanelEntity extends GameEntity {
-	String name
-	List<GameComponent> components
 }

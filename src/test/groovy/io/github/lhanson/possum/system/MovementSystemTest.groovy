@@ -62,10 +62,7 @@ class MovementSystemTest extends Specification {
 
 	def "findAt works with no matches"() {
 		given:
-			GameEntity testEntity = new GameEntity() {
-				String name = 'testEntity'
-				List<GameComponent> components = null
-			}
+			GameEntity testEntity = new GameEntity(name: 'testEntity')
 		when:
 			List<GameEntity> result = movementSystem.findAt([testEntity], new PositionComponent(0, 0))
 		then:
@@ -73,15 +70,14 @@ class MovementSystemTest extends Specification {
 	}
 
 	GameEntity heroAt(int x, int y) {
-		new GameEntity() {
-			String name = 'hero'
-			List<GameComponent> components = [
-					new TextComponent('@'),
-					new PositionComponent(x, y),
-					new VelocityComponent(0, 0),
-					new PlayerInputAwareComponent()
-			]
-		}
+		new GameEntity(
+				name: 'hero',
+				components: [
+						new TextComponent('@'),
+						new PositionComponent(x, y),
+						new VelocityComponent(0, 0),
+						new PlayerInputAwareComponent()
+				])
 	}
 
 }

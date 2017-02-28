@@ -47,14 +47,13 @@ class MazeCarver {
 	}
 
 	static GameEntity buildWall(int x, int y) {
-		new GameEntity() {
-			String name = 'wall'
-			List<GameComponent> components = [
-					new AreaComponent(x, y, 1, 1),
-					new ImpassableComponent(),
-					new TextComponent(String.valueOf((char)176)) // ░
-			]
-		}
+		new GameEntity(
+				name: 'wall',
+				components: [
+						new AreaComponent(x, y, 1, 1),
+						new ImpassableComponent(),
+						new TextComponent(String.valueOf((char)176)) // ░
+				])
 	}
 
 }

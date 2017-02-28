@@ -9,6 +9,14 @@ class MobileEntity extends GameEntity {
 	List<GameComponent> components
 	PositionComponent position
 	VelocityComponent velocity
-	GameEntity entity
+
+	/**
+	 * Creates a MobileEntity from the provided base GameEntity
+	 */
+	MobileEntity(GameEntity baseEntity) {
+		name = baseEntity.name
+		position = baseEntity.getComponentOfType(PositionComponent)
+		velocity = baseEntity.getComponentOfType(VelocityComponent)
+	}
 }
 

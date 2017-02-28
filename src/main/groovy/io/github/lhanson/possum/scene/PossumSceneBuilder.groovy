@@ -4,8 +4,6 @@ import io.github.lhanson.possum.input.InputAdapter
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
-import javax.annotation.PostConstruct
-
 @Component
 abstract class PossumSceneBuilder {
 	static String START = 'start' // The scene ID every game starts in by default
@@ -15,17 +13,14 @@ abstract class PossumSceneBuilder {
 	@Autowired
 	InputAdapter inputAdapter
 
-	@PostConstruct
-	def init() {
-		initializeScenes()
-		scenesById.values().each { it.inputAdapter = inputAdapter }
-	}
-
 	/**
-	 * Called after construction and autowiring occurs, allows
-	 * implementations to perform initial scene creation.
+	 * Register a new {@code Scene} with the game
+	 * @param scene the scene to register
 	 */
-	abstract void initializeScenes()
+	void addScene(Scene scene) {
+		scene.inputAdapter = inputAdapter
+		scenesById[scene.id] = scene
+	}
 
 	/**
 	 * Return the active {@link Scene}.

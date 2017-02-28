@@ -32,6 +32,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.builder.SpringApplicationBuilder
 import org.springframework.stereotype.Component
 
+import javax.annotation.PostConstruct
 import java.text.DecimalFormat
 
 /**
@@ -64,33 +65,31 @@ class MazesForProgrammers {
 		@Autowired MovementSystem movementSystem
 		@Autowired RenderingSystem renderingSystem
 
-		@Override
+		@PostConstruct
 		void initializeScenes() {
-			scenesById[PossumSceneBuilder.START] = startScene()
-			scenesById[MAZE] = mazeScene()
-			scenesById[QUITTING] = quittingScene()
-			scenesById[WIN] = winScene()
+			[startScene(), mazeScene(), quittingScene(), winScene()].each {
+				addScene(it)
+			}
 		}
 
 		Scene startScene() {
 			new Scene(
-					entities: [
-							new GameEntity() {
-								String name = 'menuTitle'
-								List<GameComponent> components = [
-										new TextComponent('Main Menu'),
-										new RelativePositionComponent(50, 50)
-								]
-							},
-							new GameEntity() {
-								String name = 'pressStart'
-								List<GameComponent> components = [
-										new TextComponent('-- press [enter] to start, [esc] to quit --'),
-										new RelativePositionComponent( 50, 90)
-								]
-							},
+					SceneBuilder.START,
+					[
+							new GameEntity(
+									name: 'menuTitle',
+									components: [
+											new TextComponent('Main Menu'),
+											new RelativePositionComponent(50, 50)
+									]),
+							new GameEntity(
+									name: 'pressStart',
+									components: [
+											new TextComponent('-- press [enter] to start, [esc] to quit --'),
+											new RelativePositionComponent( 50, 90)
+									])
 					],
-					inputContexts: [
+					[
 							// Main menu context
 							new InputContext() {
 								@Override MappedInput mapInput(RawInput rawInput) {
@@ -112,15 +111,15 @@ class MazesForProgrammers {
 
 		Scene quittingScene() {
 			new Scene(
-					entities: [
-							new GameEntity() {
-								String name = 'quitText'
-								List<GameComponent> components = [
+					QUITTING,
+					[
+							new GameEntity(
+								name: 'quitText',
+								components: [
 										new TextComponent('Goodbye see you!'),
 										new RelativePositionComponent(50, 50),
 										new TimerComponent(ticksRemaining: 1000, alarm: { transition(null) })
-								]
-							},
+								])
 					],
 			)
 		}
@@ -138,46 +137,43 @@ class MazesForProgrammers {
 				finishPos = movementSystem.randomPassableSpaceWithin(walls)
 			}
 
-			def hero = new GameEntity() {
-				String name = 'hero'
-				List<GameComponent> components = [
-						new TextComponent('@'),
-						startPos,
-						new VelocityComponent(0, 0),
-						new PlayerInputAwareComponent(),
-						new CameraFocusComponent()
-				]
-			}
+			def hero = new GameEntity(
+					name: 'hero',
+					components: [
+							new TextComponent('@'),
+							startPos,
+							new VelocityComponent(0, 0),
+							new PlayerInputAwareComponent(),
+							new CameraFocusComponent()
+					])
 			entities << hero
 
-			entities << new GameEntity() {
-				String name = 'finish'
-				List<GameComponent> components = [
-						new TextComponent('>'),
-						finishPos,
-						new CollisionHandlingComponent() {
-							@Override void handleCollision(MobileEntity mobileEntity) {
-								if (mobileEntity.entity == hero) {
-									transition(WIN)
+			entities << new GameEntity(
+					name: 'finish',
+					components: [
+							new TextComponent('>'),
+							finishPos,
+							new CollisionHandlingComponent() {
+								@Override void handleCollision(MobileEntity mobileEntity) {
+									if (mobileEntity == hero) {
+										transition(WIN)
+									}
 								}
 							}
-						}
-				]
-			}
+					])
 
 			def playerPositionGauge = new GaugeComponent()
 			playerPositionGauge.update = { ticks ->
 				def ac = hero.getComponentOfType(PositionComponent)
 				playerPositionGauge.text = "$ac"
 			}
-			entities << new PanelEntity() {
-				String name = 'leftHudPanel'
-				List<GameComponent> components = [
+			entities << new PanelEntity(
+				name: 'leftHudPanel',
+				components: [
 						new RelativePositionComponent(0, 100),
 						new RelativeWidthComponent(80),
 						playerPositionGauge
-				]
-			}
+				])
 
 			def simulationHzGauge = new GaugeComponent()
 			simulationHzGauge.update = { ticks ->
@@ -195,19 +191,19 @@ class MazesForProgrammers {
 				fpsGauge.text = "$formatted fps"
 			}
 
-			entities << new PanelEntity() {
-				String name = 'rightHudPanel'
-				List<GameComponent> components = [
+			entities << new PanelEntity(
+				name: 'rightHudPanel',
+				components: [
 						new RelativePositionComponent(100, 100),
 						new RelativeWidthComponent(20),
 						simulationHzGauge,
 						fpsGauge,
-				]
-			}
+				])
 
 			new Scene(
-					entities: entities,
-					inputContexts: [
+					MAZE,
+					entities,
+					[
 							new InputContext() {
 								@Override MappedInput mapInput(RawInput rawInput) {
 									// Menu contexts gobble all input, none pass through
@@ -233,15 +229,15 @@ class MazesForProgrammers {
 
 		Scene winScene() {
 			new Scene(
-					entities: [
-							new GameEntity() {
-								String name = 'winText'
-								List<GameComponent> components = [
-										new TextComponent('Congrats, you won!'),
-										new RelativePositionComponent(50, 50),
-										new TimerComponent(ticksRemaining: 1000, alarm: { transition(START) })
-								]
-							},
+					WIN,
+					[
+							new GameEntity(
+									name: 'winText',
+									components: [
+											new TextComponent('Congrats, you won!'),
+											new RelativePositionComponent(50, 50),
+											new TimerComponent(ticksRemaining: 1000, alarm: { transition(START) })
+									])
 					],
 			)
 		}

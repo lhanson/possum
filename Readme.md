@@ -34,7 +34,6 @@ beans from `io.github.lhanson.possum`, as well as your own packages.
     		'[YOUR.PACKAGES.HERE]'
     ])
     class EatTrashGame {
-    
     	static void main(String[] args) {
     		def context = new SpringApplicationBuilder(EatTrashGame)
     				.headless(false)
@@ -56,8 +55,9 @@ More on that junk to come.
 
 Possum strives to be performant and responsive on slow systems or with games containing a lot
 of simulation complexity, while also being able to take good advantage of speedy hardware. To
-that end, the main loop uses fixed simulation timesteps to update the game state and
-variable rendering. Rather than flounder about, I'll quote an explanation from Robert Nystrom's
+that end, the main loop uses fixed simulation timesteps to update the game state, and
+variable rendering frequency to adapt to hardware capabilities. Rather than flounder about,
+I'll quote an explanation from Robert Nystrom's
 [Game Programming Patterns](http://gameprogrammingpatterns.com/game-loop.html#play-catch-up):
 
     [This approach] updates with a fixed time step, but it can drop rendering frames if it needs

@@ -24,22 +24,14 @@ class MovementSystem extends GameSystem {
 	Random random = new Random()
 	Logger log = LoggerFactory.getLogger(this.class)
 	String name = 'MovementSystem'
-	List<GameEntity> mobileEntities
 
 	@Override
 	void doUpdate(Scene scene, double ticks) {
 		StopWatch stopwatch = new StopWatch(name)
-
-		if (!mobileEntities) {
-			stopwatch.start('Find mobile entities')
-			mobileEntities = findMobile(scene.entities)
-			stopwatch.stop()
-		}
-
 		stopwatch.start('Processing active input')
 		if (scene.activeInput) {
-			findInputAware(mobileEntities).each { focusedEntity ->
-				log.trace "Applying {} to {}", scene.activeInput, focusedEntity.name
+			scene.getEntitiesMatching([PlayerInputAwareComponent]).each { entity ->
+				log.trace "Applying {} to {}", scene.activeInput, entity.name
 				Vector2 newVelocity = new Vector2()
 				scene.activeInput.each { input ->
 					switch (input) {
@@ -57,20 +49,21 @@ class MovementSystem extends GameSystem {
 							break
 					}
 				}
-				focusedEntity.velocity.vector2.add(newVelocity)
-				log.trace "New velocity is {}", focusedEntity.velocity.vector2
+				entity.getComponentOfType(VelocityComponent).vector2.add(newVelocity)
+				log.trace "New velocity is {}", entity.getComponentOfType(VelocityComponent).vector2
 			}
 		}
 		stopwatch.stop()
 
 		// Move entities
+		List<MobileEntity> mobileEntities = scene.getMobileEntities()
 		stopwatch.start('Moving mobile entities')
 		mobileEntities.each { it.position.vector2.add(it.velocity.vector2) }
 		stopwatch.stop()
 
 		stopwatch.start('Calculating collisions')
 		mobileEntities.each { mobileEntity ->
-			List<GameEntity> colliders = findAt(scene.entities, mobileEntity.position) - mobileEntity.entity
+			List<GameEntity> colliders = findAt(scene.entities, mobileEntity.position) - mobileEntity
 			colliders.each { collisionSystem.collide(mobileEntity, it) }
 		}
 		stopwatch.stop()
@@ -81,22 +74,6 @@ class MovementSystem extends GameSystem {
 		stopwatch.stop()
 
 		log.debug "{}", stopwatch
-	}
-
-	List<MobileEntity> findMobile(List<GameEntity> entities) {
-		entities.findResults { entity ->
-			PositionComponent p = entity.getComponentOfType(PositionComponent)
-			VelocityComponent v = entity.getComponentOfType(VelocityComponent)
-			if (p && v) {
-				return new MobileEntity(entity: entity, position: p, velocity: v, components: entity.components, name: entity.name)
-			}
-		}
-	}
-
-	List<MobileEntity> findInputAware(List<MobileEntity> entities) {
-		entities.findAll { entity ->
-			entity.components.find { it instanceof PlayerInputAwareComponent }
-		}
 	}
 
 	/**
