@@ -9,15 +9,14 @@ import spock.lang.Specification
 class GameEntityTest extends Specification {
 	def "test getComponentsOfType"() {
 		given:
-			def entity = new GameEntity() {
-				String name = 'testEntity'
-				List<GameComponent> components = [
+			def entity = new GameEntity(
+				name: 'testEntity',
+				components: [
 						new CameraFocusComponent(),
 						new ImpassableComponent(),
 						new TextComponent(),
 						new TextComponent()
-				]
-			}
+				])
 
 		when:
 			def results = entity.getComponentsOfType(TextComponent)
