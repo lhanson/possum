@@ -61,7 +61,6 @@ class MovementSystem extends GameSystem {
 		stopwatch.stop()
 
 		stopwatch.start('Calculating collisions')
-		// TODO: this is now our bottleneck, only involve those entities which actually moved
 		scene.mobileEntities.each { mobileEntity ->
 			List<GameEntity> colliders = findAt(scene.entities, mobileEntity.position) - mobileEntity
 			colliders.each { collisionSystem.collide(mobileEntity, it) }
