@@ -2,11 +2,12 @@ package io.github.lhanson.possum.system
 
 import io.github.lhanson.possum.collision.CollisionSystem
 import io.github.lhanson.possum.collision.ImpassableComponent
+import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.PlayerInputAwareComponent
 import io.github.lhanson.possum.component.PositionComponent
 import io.github.lhanson.possum.component.VelocityComponent
 import io.github.lhanson.possum.entity.GameEntity
-import io.github.lhanson.possum.entity.MobileEntity
+import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.input.MappedInput
 import io.github.lhanson.possum.rendering.RenderingSystem
 import io.github.lhanson.possum.scene.Scene
@@ -24,6 +25,7 @@ class MovementSystem extends GameSystem {
 	Random random = new Random()
 	Logger log = LoggerFactory.getLogger(this.class)
 	String name = 'MovementSystem'
+	VelocityComponent still = new VelocityComponent(0, 0)
 
 	@Override
 	void doUpdate(Scene scene, double ticks) {
@@ -50,46 +52,45 @@ class MovementSystem extends GameSystem {
 					}
 				}
 				entity.getComponentOfType(VelocityComponent).vector2.add(newVelocity)
-				log.trace "New velocity is {}", entity.getComponentOfType(VelocityComponent).vector2
 			}
 		}
 		stopwatch.stop()
 
 		// Move entities
 		stopwatch.start('Moving mobile entities')
-		scene.mobileEntities.each { it.position.vector2.add(it.velocity.vector2) }
+		scene.mobileEntities.each {
+			AreaComponent ac = it.getComponentOfType(AreaComponent)
+			VelocityComponent vc = it.getComponentOfType(VelocityComponent)
+			if (vc != still) {
+				def oldPos = new AreaComponent(ac)
+				ac.position.vector2.add(vc.vector2)
+				log.trace "Entity {} moved from {} to {}", it.name, ac.position, oldPos.position
+				scene.entityNeedsRendering(it, oldPos)
+			}
+		}
 		stopwatch.stop()
 
 		stopwatch.start('Calculating collisions')
-		scene.mobileEntities.each { mobileEntity ->
-			List<GameEntity> colliders = findAt(scene.entities, mobileEntity.position) - mobileEntity
-			colliders.each { collisionSystem.collide(mobileEntity, it) }
+		scene.mobileEntities.each { entity ->
+			List<GameEntity> colliders = scene.findWithin(entity.getComponentOfType(AreaComponent)) - entity
+			colliders.each {
+				if (!(it instanceof PanelEntity)) {
+					collisionSystem.collide(entity, it)
+					log.trace "Collided {} and {}",
+							entity.getComponentOfType(AreaComponent), it.getComponentOfType(AreaComponent)
+					scene.entityNeedsRendering(entity)
+					scene.entityNeedsRendering(it)
+				}
+			}
 		}
 		stopwatch.stop()
 
 		// Stop entities
 		stopwatch.start('Stopping entity velocity')
-		scene.mobileEntities.each { it.velocity.vector2.setValues(0, 0) }
+		scene.mobileEntities.each { it.getComponentOfType(VelocityComponent).vector2.setValues(0, 0) }
 		stopwatch.stop()
 
-		log.debug "{}", stopwatch
-	}
-
-	/**
-	 * Finds all entities from the given list which are
-	 * located at the specified position.
-	 *
-	 * @param entities the list of entities to search
-	 * @param position the position of interest
-	 * @return the list of impassable entities at the given position
-	 */
-	List<GameEntity> findAt(List<GameEntity> entities, PositionComponent position) {
-		entities.findAll { entity ->
-			List<PositionComponent> positions = entity.getComponentsOfType(PositionComponent)
-			if (positions) {
-				return positions?.get(0)?.vector2 == position.vector2
-			}
-		}
+		log.trace "{}", stopwatch
 	}
 
 	/**
@@ -100,9 +101,9 @@ class MovementSystem extends GameSystem {
 	 * @param position the position of interest
 	 * @return the list of impassable entities at the given position
 	 */
-	List<GameEntity> findImpassableAt(List<GameEntity> entities, PositionComponent position) {
+	List<GameEntity> findImpassableAt(List<GameEntity> entities, AreaComponent position) {
 		entities.findAll { entity ->
-			List<PositionComponent> positions = entity.getComponentsOfType(PositionComponent)
+			List<PositionComponent> positions = entity.getComponentsOfType(AreaComponent)
 			def impassable = entity.getComponentsOfType(ImpassableComponent)
 			return impassable && positions?.get(0) == position
 		}
@@ -138,15 +139,15 @@ class MovementSystem extends GameSystem {
 	 *
 	 * @param entities the entities defining the rectangular bounds of the
 	 *        selection as well as disqualifying impassable entities
-	 * @return a position among the entities, not occupied by an Impassable entity
+	 * @return an area among the entities, not occupied by an Impassable entity
 	 */
-	PositionComponent randomPassableSpaceWithin(List<GameEntity> entities) {
-		List<PositionComponent> boundingBox = boundingBox(entities.collect { it.getComponentsOfType(PositionComponent)} )
-		PositionComponent randomPosition
+	AreaComponent randomPassableSpaceWithin(List<GameEntity> entities) {
+		AreaComponent boundingBox = boundingBox(entities.collect { it.getComponentsOfType(AreaComponent)} )
+		AreaComponent randomPosition
 		while (!randomPosition) {
-			int rx = random.nextInt(boundingBox[1].x + 1 - boundingBox[0].x) + boundingBox[0].x
-			int ry = random.nextInt(boundingBox[1].y + 1 - boundingBox[0].y) + boundingBox[0].y
-			PositionComponent tentativePosition = new PositionComponent(rx, ry)
+			int rx = random.nextInt(boundingBox.width + 1 - boundingBox.x) + boundingBox.x
+			int ry = random.nextInt(boundingBox.height + 1 - boundingBox.y) + boundingBox.y
+			AreaComponent tentativePosition = new AreaComponent(rx, ry, 1, 1)
 			if (!findImpassableAt(entities, tentativePosition)) {
 				randomPosition = tentativePosition
 			} else {
@@ -157,16 +158,15 @@ class MovementSystem extends GameSystem {
 	}
 
 	/**
-	 * @param positions the list of positions to calculate a bounding box for
-	 * @return a pair of positions representing the upper-left and lower-right
-	 *         coordinates of the bounding box
+	 * @param areas the list of areas to calculate a bounding box for
+	 * @return an area representing the bounding box encompassing the areas
 	 */
-	List<PositionComponent> boundingBox(List<PositionComponent> positions) {
-		int minX = positions.collect { it.x }.flatten().min()
-		int maxX = positions.collect { it.x }.flatten().max()
-		int minY = positions.collect { it.y }.flatten().min()
-		int maxY = positions.collect { it.y }.flatten().max()
-		return [new PositionComponent(minX, minY), new PositionComponent(maxX, maxY)]
+	AreaComponent boundingBox(List<AreaComponent> areas) {
+		int minX = areas.collect { it.x }.flatten().min()
+		int maxX = areas.collect { it.x }.flatten().max()
+		int minY = areas.collect { it.y }.flatten().min()
+		int maxY = areas.collect { it.y }.flatten().max()
+		return new AreaComponent(minX, minY, maxX - minX, maxY - minY)
 	}
 
 }

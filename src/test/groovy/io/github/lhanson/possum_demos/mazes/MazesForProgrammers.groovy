@@ -2,11 +2,10 @@ package io.github.lhanson.possum_demos.mazes
 
 import io.github.lhanson.possum.MainLoop
 import io.github.lhanson.possum.collision.CollisionHandlingComponent
+import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.CameraFocusComponent
-import io.github.lhanson.possum.component.GameComponent
 import io.github.lhanson.possum.component.GaugeComponent
 import io.github.lhanson.possum.component.PlayerInputAwareComponent
-import io.github.lhanson.possum.component.PositionComponent
 import io.github.lhanson.possum.component.RelativePositionComponent
 import io.github.lhanson.possum.component.RelativeWidthComponent
 import io.github.lhanson.possum.component.TextComponent
@@ -14,7 +13,6 @@ import io.github.lhanson.possum.component.TimerComponent
 import io.github.lhanson.possum.component.VelocityComponent
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.GridEntity
-import io.github.lhanson.possum.entity.MobileEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.input.InputContext
 import io.github.lhanson.possum.input.MappedInput
@@ -130,8 +128,8 @@ class MazesForProgrammers {
 			def walls = MazeCarver.buildWalls(maze)
 			entities.addAll walls
 
-			PositionComponent startPos = movementSystem.randomPassableSpaceWithin(walls)
-			PositionComponent finishPos = movementSystem.randomPassableSpaceWithin(walls)
+			AreaComponent startPos = movementSystem.randomPassableSpaceWithin(walls)
+			AreaComponent finishPos = movementSystem.randomPassableSpaceWithin(walls)
 			while (finishPos == startPos) {
 				log.warn "Random finish position is same as start, recalculating"
 				finishPos = movementSystem.randomPassableSpaceWithin(walls)
@@ -154,8 +152,8 @@ class MazesForProgrammers {
 							new TextComponent('>'),
 							finishPos,
 							new CollisionHandlingComponent() {
-								@Override void handleCollision(MobileEntity mobileEntity) {
-									if (mobileEntity == hero) {
+								@Override void handleCollision(GameEntity entity) {
+									if (entity == hero) {
 										transition(WIN)
 									}
 								}
@@ -164,8 +162,8 @@ class MazesForProgrammers {
 
 			def playerPositionGauge = new GaugeComponent()
 			playerPositionGauge.update = { ticks ->
-				def ac = hero.getComponentOfType(PositionComponent)
-				playerPositionGauge.text = "$ac"
+				AreaComponent ac = hero.getComponentOfType(AreaComponent)
+				playerPositionGauge.text = "${ac.position}"
 			}
 			entities << new PanelEntity(
 				name: 'leftHudPanel',

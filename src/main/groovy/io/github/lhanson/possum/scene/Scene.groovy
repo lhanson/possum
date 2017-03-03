@@ -1,9 +1,11 @@
 package io.github.lhanson.possum.scene
 
-import io.github.lhanson.possum.component.PositionComponent
+import io.github.lhanson.possum.component.AreaComponent
+import io.github.lhanson.possum.component.TextComponent
 import io.github.lhanson.possum.component.VelocityComponent
 import io.github.lhanson.possum.entity.GameEntity
-import io.github.lhanson.possum.entity.MobileEntity
+import io.github.lhanson.possum.entity.PanelEntity
+import io.github.lhanson.possum.entity.RerenderEntity
 import io.github.lhanson.possum.input.InputAdapter
 import io.github.lhanson.possum.input.InputContext
 import io.github.lhanson.possum.input.MappedInput
@@ -18,7 +20,8 @@ class Scene {
 	Logger log = LoggerFactory.getLogger(this.class)
 	InputAdapter inputAdapter
 	Map<Class, List<GameEntity>> entitiesByComponentType = [:]
-	Map<Class, List<GameEntity>> entitiesByEntityType = [:]
+	// A list of entities modified in such a way as to require re-rendering
+	List<GameEntity> entitiesToBeRendered = []
 
 	/** Unique identifier for this scene */
 	String id
@@ -44,6 +47,23 @@ class Scene {
 				entitiesByComponentType[component.class] << entity
 			}
 		}
+		entitiesToBeRendered.addAll entities // All entities will need to be rendered initially
+	}
+
+	/**
+	 * Returns a single unique entity matching the provided component types.
+	 * If there are more than one matching entities, an error will be logged but
+	 * we won't throw an exception.
+	 *
+	 * @param componentTypes the component types which matching entities will contain
+	 * @return the matching entity, or null if none match
+	 */
+	GameEntity getEntityMatching(List<Class> componentTypes) {
+		def results = getEntitiesMatching(componentTypes)
+		if (results.size() > 1) {
+			log.error "Expecting at most one unique match for $componentTypes, found ${results.size()}"
+		}
+		return results[0]
 	}
 
 	/**
@@ -63,7 +83,7 @@ class Scene {
 			}
 			// Match on entities containing all of the desired component types
 			matchingComponentCountByEntity.each { key, value ->
-				if (value == componentTypes.size()) {
+				if (value >= componentTypes.size()) {
 					matches << key
 				}
 			}
@@ -72,15 +92,45 @@ class Scene {
 	}
 
 	/**
-	 * @return all movable {@link GameEntity} objects conveniently packaged as {@link MobileEntity}
+	 * @return all movable {@link GameEntity} objects
 	 */
-	List<MobileEntity> getMobileEntities() {
-		def result = entitiesByEntityType[MobileEntity]
-		if (result == null) {
-			result = getEntitiesMatching([PositionComponent, VelocityComponent]).collect { new MobileEntity(it) }
-			entitiesByEntityType[MobileEntity] = result
+	List<GameEntity> getMobileEntities() {
+		getEntitiesMatching([AreaComponent, VelocityComponent])
+	}
+
+	/**
+	 * Finds all non-Panel entities located within the given area
+	 * @param area the boundaries for which we want to find entities
+	 * @return any entities within the provided area
+	 */
+	List<GameEntity> findWithin(AreaComponent area) {
+		// TODO: Optimize this
+		entities.findAll { entity ->
+			!(entity instanceof PanelEntity) &&
+				entity.getComponentOfType(AreaComponent)?.overlaps(area)
 		}
-		result
+	}
+
+	/**
+	 * @param entity an entity which has been updated such that it needs to be re-rendered
+	 */
+	void entityNeedsRendering(GameEntity entity, AreaComponent previousArea = null) {
+		entitiesToBeRendered << entity
+		if (previousArea) {
+			// Need to repaint what's at the entity's previous location
+			def uncoveredEntities = findWithin(previousArea)
+			if (uncoveredEntities) {
+				entitiesToBeRendered.addAll(uncoveredEntities)
+			} else {
+				// Nothing is there, use our default "background" entity
+				entitiesToBeRendered << new RerenderEntity(
+						name: 'backgroundRenderingEntity',
+						components: [
+								new AreaComponent(previousArea.x, previousArea.y, previousArea.width, previousArea.height),
+								new TextComponent(' ')
+						])
+			}
+		}
 	}
 
 	/**

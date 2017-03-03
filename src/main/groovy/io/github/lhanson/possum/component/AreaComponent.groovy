@@ -1,24 +1,45 @@
 package io.github.lhanson.possum.component
 
+import groovy.transform.Canonical
+
 /**
  * An area represented by x, y coordinates and its dimensions.
  */
-class AreaComponent extends PositionComponent {
+@Canonical
+class AreaComponent implements GameComponent {
+	VectorComponent position
 	VectorComponent size
 
 	AreaComponent() {
-		super()
+		position = new VectorComponent()
 		size = new VectorComponent()
+
+	}
+
+	AreaComponent(AreaComponent copy) {
+		position = new VectorComponent(copy.position)
+		size = new VectorComponent(copy.size)
 	}
 
 	AreaComponent(int x, int y, int width, int height) {
-		super(x, y)
+		position = new VectorComponent(x, y)
 		size = new VectorComponent(width, height)
 	}
 
-	AreaComponent(PositionComponent pos, int width, int height) {
-		super(pos.x, pos.y)
-		size = new VectorComponent(width, height)
+	int getX() {
+		position.x
+	}
+
+	void setX(int x) {
+		this.position.x = x
+	}
+
+	int getY() {
+		position.y
+	}
+
+	void setY(int y) {
+		position.y = y
 	}
 
 	int getWidth() {
@@ -43,10 +64,10 @@ class AreaComponent extends PositionComponent {
 	 * @return true if the areas overlap, false otherwise
 	 */
 	boolean overlaps(AreaComponent that) {
-		if (that.x >= this.x + this.size.x || // right of this
-			that.y >= this.y + this.size.y || // below this
-			that.x + that.size.x <= this.x || // left of this
-			that.y + that.size.y <= this.y) { // above this
+		if (that.x >= this.x + this.width  || // right of this
+			that.y >= this.y + this.height || // below this
+			that.x + that.width <= this.x  || // left of this
+			that.y + that.height <= this.y) { // above this
 			return false
 		}
 		return true
@@ -54,6 +75,6 @@ class AreaComponent extends PositionComponent {
 
 	@Override
 	String toString() {
-		"location ${super.toString()}, size [${size.x}, ${size.y}]"
+		"location [$x, $y], size [$width, $height]"
 	}
 }

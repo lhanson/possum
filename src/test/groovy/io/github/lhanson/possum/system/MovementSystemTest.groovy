@@ -16,34 +16,35 @@ class MovementSystemTest extends Specification {
 
 	def "Simple bounding box is correctly computed"() {
 		given:
-			def positions = [
-					new PositionComponent(0, 0),
-					new PositionComponent(1, 1)
+			def areas = [
+					new AreaComponent(0, 0, 1, 1),
+					new AreaComponent(1, 1, 1, 1)
 			]
 		when:
-			def boundingBox = movementSystem.boundingBox(positions)
+			AreaComponent boundingBox = movementSystem.boundingBox(areas)
 		then:
-			boundingBox.size() == 2
-			boundingBox[0] == new PositionComponent(0, 0)
-			boundingBox[1] == new PositionComponent(1, 1)
-			boundingBox[1] != new PositionComponent(10, 10)
+			boundingBox.x == 0
+			boundingBox.y == 0
+			boundingBox.width == 1
+			boundingBox.height == 1
 	}
 
 	def "More complex bounding box is correctly computed"() {
 		given:
-			def positions = [
-					new PositionComponent(100, 10),
-					new PositionComponent(101, 15),
-					new PositionComponent(200, 100),
-					new PositionComponent(130, 500),
-					new PositionComponent(100, 10),
+			def areas = [
+					new AreaComponent(100, 10, 10, 10),
+					new AreaComponent(101, 15, 10, 10),
+					new AreaComponent(200, 100, 10, 10),
+					new AreaComponent(130, 500, 10, 10),
+					new AreaComponent(100, 10, 10, 10),
 			]
 		when:
-			def boundingBox = movementSystem.boundingBox(positions)
+			AreaComponent boundingBox = movementSystem.boundingBox(areas)
 		then:
-			boundingBox.size() == 2
-			boundingBox[0] == new PositionComponent(100, 10)
-			boundingBox[1] == new PositionComponent(200, 500)
+			boundingBox.x == 100
+			boundingBox.y == 10
+			boundingBox.width == 100
+			boundingBox.height == 490
 	}
 
 	def "Duplicate input signals are not handled each frame"() {
@@ -55,16 +56,7 @@ class MovementSystemTest extends Specification {
 			movementSystem.update(scene, 0)
 		then:
 			// Having two queued right inputs shouldn't move twice
-			hero.getComponentOfType(PositionComponent) == new PositionComponent(1, 0)
-	}
-
-	def "findAt works with no matches"() {
-		given:
-			GameEntity testEntity = new GameEntity(name: 'testEntity')
-		when:
-			List<GameEntity> result = movementSystem.findAt([testEntity], new PositionComponent(0, 0))
-		then:
-			result == []
+			hero.getComponentOfType(AreaComponent) == new AreaComponent(1, 0, 1, 1)
 	}
 
 	GameEntity heroAt(int x, int y) {
@@ -72,7 +64,7 @@ class MovementSystemTest extends Specification {
 				name: 'hero',
 				components: [
 						new TextComponent('@'),
-						new PositionComponent(x, y),
+						new AreaComponent(x, y, 1, 1),
 						new VelocityComponent(0, 0),
 						new PlayerInputAwareComponent()
 				])

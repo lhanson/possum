@@ -14,6 +14,11 @@ class VectorComponent implements GameComponent {
 		vector2.y = y
 	}
 
+	VectorComponent(VectorComponent v) {
+		vector2.x = v.x
+		vector2.y = v.y
+	}
+
 	Integer getX() {
 		vector2.x
 	}

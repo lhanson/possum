@@ -1,8 +1,8 @@
 package io.github.lhanson.possum.entity
 
+import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.GameComponent
 import io.github.lhanson.possum.component.GridCellComponent
-import io.github.lhanson.possum.component.PositionComponent
 
 /**
  * Entity representing a 2-dimensional grid of cells, optionally
@@ -40,7 +40,7 @@ class GridEntity extends GameEntity {
 
 	GridEntity(int width, int height, int xPos, int yPos) {
 		this(width, height)
-		components << new PositionComponent(xPos, yPos)
+		components << new AreaComponent(xPos, yPos, width, height)
 	}
 
 	/**

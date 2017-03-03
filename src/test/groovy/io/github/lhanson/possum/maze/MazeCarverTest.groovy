@@ -1,6 +1,6 @@
 package io.github.lhanson.possum.maze
 
-import io.github.lhanson.possum.component.PositionComponent
+import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.GridEntity
 import io.github.lhanson.possum.system.MovementSystem
@@ -15,12 +15,12 @@ class MazeCarverTest extends Specification {
 			GridEntity maze = BinaryTree.linkCells(new GridEntity(width, height))
 			List<GameEntity> walls = MazeCarver.buildWalls(maze)
 		when:
-			def boundingBox = movementSystem.boundingBox(walls.collect { it.getComponentOfType(PositionComponent) })
+			AreaComponent boundingBox = movementSystem.boundingBox(walls.collect { it.getComponentOfType(AreaComponent) })
 		then:
-			boundingBox[0].x == 0
-			boundingBox[0].y == 0
+			boundingBox.x == 0
+			boundingBox.y == 0
 			// The number of grid cells is doubled to account for the inserted walls
-			boundingBox[1].x == width * 2
-			boundingBox[1].y == height * 2
+			boundingBox.width == width * 2
+			boundingBox.height == height * 2
 	}
 }

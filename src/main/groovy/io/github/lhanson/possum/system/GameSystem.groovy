@@ -35,7 +35,7 @@ abstract class GameSystem {
 	void update(Scene scene, double elapsed) {
 		long startTime = System.currentTimeMillis()
 		doUpdate(scene, elapsed)
-		log.debug "Updating {} took {} ms", name, System.currentTimeMillis() - startTime
+		log.trace "Updating {} took {} ms", name, System.currentTimeMillis() - startTime
 	}
 
 	/**

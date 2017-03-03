@@ -5,11 +5,13 @@ import io.github.lhanson.possum.component.*
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.GridEntity
 import io.github.lhanson.possum.entity.PanelEntity
+import io.github.lhanson.possum.entity.RerenderEntity
 import io.github.lhanson.possum.scene.Scene
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
+import org.springframework.util.StopWatch
 
 import javax.annotation.PostConstruct
 import javax.swing.*
@@ -24,6 +26,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	VectorComponent initialViewportSize
 	AreaComponent viewport
 	Scene lastScene
+	// Panel areas in the scene, sorted by x, y coordinates
 	List<AreaComponent> scenePanelAreas
 
 	@PostConstruct
@@ -34,10 +37,11 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		} else {
 			viewport = new AreaComponent(0, 0, 80, 24)
 		}
-		terminal = new AsciiPanel(viewport.size.x, viewport.size.y)
+		terminal = new AsciiPanel(viewport.width, viewport.height)
 		logger.debug "Created terminal with viewport {}", viewport
 
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
+		// We're doing active rendering, so we don't need to be told when to repaint
 		setIgnoreRepaint(true)
 		add(terminal)
 		pack()
@@ -46,6 +50,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 
 	@Override
 	void render(Scene scene) {
+		StopWatch stopwatch = new StopWatch('rendering')
 		logger.trace "Rendering"
 
 		if (scene != lastScene) {
@@ -53,42 +58,38 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 			initScene(scene)
 		}
 
-		checkScrollBoundaries(
-				scene.entities.find { it.getComponentOfType(CameraFocusComponent) }
-		)
+		stopwatch.start('checkScrollBoundaries')
+		checkScrollBoundaries(scene)
+		stopwatch.stop()
 
-		// TODO: How to restore what was behind an object?
-		// TODO: We need to know which areas are dirty, and also what to paint there.
-		// TODO: Double buffering with clipping?
-		// TODO: For now, I'll just repaint the whole panel each time.
-		terminal.clear()
-
-		scene.entities.each { entity ->
+		stopwatch.start('processing each entity')
+		scene.entitiesToBeRendered.each { entity ->
 			if (entity instanceof GridEntity) {
 				// Maze renderer, won't be the same as tile-based game renderer
 				renderMaze(entity)
 			} else if (entity instanceof PanelEntity) {
 				// Panel renderer
 				renderPanel(entity)
+			} else if (entity instanceof RerenderEntity) {
+				AreaComponent area = translateToViewport(entity.getComponentOfType(AreaComponent))
+				logger.debug "Clearing {}", area
+				terminal.clear(' ' as char, area.x, area.y, area.width, area.height)
 			} else {
 				// Generic renderer
 				if (isVisible(entity)) {
 					TextComponent tc = entity.getComponentOfType(TextComponent)
-					PositionComponent pc = entity.getComponentOfType(PositionComponent)
-					write(tc.text, pc.x, pc.y)
+					AreaComponent ac = entity.getComponentOfType(AreaComponent)
+					write(tc.text, ac.x, ac.y)
 				}
 			}
 		}
+		scene.entitiesToBeRendered.clear()
+		stopwatch.stop()
 
-		// TODO: why is this preferable to calling paintImmediately directly?
-		update(getGraphics())
-		//terminal.paintImmediately(0, 0, terminal.width, terminal.height)
-		logger.trace "Render complete"
-	}
-
-	@Override
-	void update(Graphics g) {
+		stopwatch.start('terminal render')
 		terminal.paintImmediately(0, 0, terminal.width, terminal.height)
+		stopwatch.stop()
+		logger.trace "Render complete. {}", stopwatch
 	}
 
 	void initScene(Scene scene) {
@@ -99,9 +100,9 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 			// before resolving relatively positioned entities
 			GameEntity focusedEntity = scene.entities.find { it.getComponentOfType(CameraFocusComponent) }
 			if (focusedEntity) {
-				PositionComponent position = focusedEntity.getComponentOfType(PositionComponent)
-				if (position) {
-					centerViewport(position)
+				AreaComponent area = focusedEntity.getComponentOfType(AreaComponent)
+				if (area) {
+					centerViewport(area.position)
 				}
 			} else {
 				// No focused entity, restore default viewport state
@@ -148,10 +149,15 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 			entity.updateComponentLookupCache()
 		}
 
-		// Store a list of the panel areas in the scene for faster reference
+		// Store a list of the panel areas in the scene sorted by x,y coordinates for faster reference
 		scenePanelAreas = scene.entities
 				.findAll { it instanceof PanelEntity }
-				.findResults { it.getComponentsOfType(AreaComponent) }
+				.findResults { it.getComponentOfType(AreaComponent) }
+				scenePanelAreas.sort { a, b -> a.x <=> b.y ?: a.y <=> b.y }
+
+		// Repaint entire scene
+		scene.entities.each { scene.entityNeedsRendering(it) }
+		terminal.clear()
 	}
 
 	boolean isVisible(GameEntity entity) {
@@ -162,11 +168,6 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 			// be viewport-based rather than world-based.
 			AreaComponent viewportArea = translateToViewport(area)
 			visible = area.overlaps(viewport) && !scenePanelAreas.any { viewportArea.overlaps(it) }
-		} else {
-			PositionComponent pos = entity.getComponentOfType(PositionComponent)
-			if (pos) {
-				visible = new AreaComponent(pos.x, pos.y, 1, 1).overlaps(viewport)
-			}
 		}
 		return visible
 	}
@@ -183,27 +184,58 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	 * TODO: we should account for panel offset in our thresholds
 	 * TODO: perhaps have a function returning the non-panel viewport?
  	 */
-	void checkScrollBoundaries(GameEntity focusedEntity) {
+	void checkScrollBoundaries(Scene scene) {
+		GameEntity focusedEntity = scene.getEntityMatching([CameraFocusComponent])
 		if (focusedEntity) {
-			PositionComponent pc = focusedEntity.getComponentOfType(PositionComponent)
-			if (pc) {
+			AreaComponent ac = focusedEntity.getComponentOfType(AreaComponent)
+			if (ac) {
 				def scrollToX
 				def scrollToY
 				def threshX = viewport.width * 0.1
 				def threshY = viewport.height * 0.1
-				if (pc.x < viewport.x + threshX || pc.x > viewport.x + viewport.width - threshX) {
-					scrollToX = pc.x
+				if (ac.x < viewport.x + threshX || ac.x > viewport.x + viewport.width - threshX) {
+					scrollToX = ac.x
 				}
-				if (pc.y < viewport.y + threshY || pc.y > viewport.y + viewport.height - threshY) {
-					scrollToY = pc.y
+				if (ac.y < viewport.y + threshY || ac.y > viewport.y + viewport.height - threshY) {
+					scrollToY = ac.y
 				}
 				if (scrollToX || scrollToY) {
-					def scrollTo = new PositionComponent()
+					def scrollTo = new VectorComponent()
 					scrollTo.x = scrollToX ?: viewport.x + viewport.width / 2
 					scrollTo.y = scrollToY ?: viewport.y + viewport.height / 2
 					centerViewport(scrollTo)
+					logger.debug "Scroll boundaries shifted, need rendering"
+					// TODO: 'viewport' is too big and includes panels, which then causes the area
+					// TODO: to be flagged as invisible and not rendered.
+					// TODO: Ideally we would calculate the non-panel areas for rendering.
+					//List<AreaComponent> nonPanelAreas = subtractPanelAreas(viewport)
+					scene.entityNeedsRendering(new RerenderEntity(
+							name: 'scrollRerender',
+							components: [viewport]
+					))
+					scene.findWithin(viewport).each { scene.entityNeedsRendering(it) }
 				}
 			}
+		}
+	}
+
+	/**
+	 * Takes an initial area, which may contain panel components within it,
+	 * and returns a list of areas which are contained within the initial
+	 * area but exclude the panels.
+	 * @param initialArea the bounding box of the area to examine
+	 * @return a list of non-panel areas
+	 */
+	List<AreaComponent> subtractPanelAreas(AreaComponent area) {
+		def panels = scenePanelAreas.clone()
+
+		// TODO: WIP
+		// Slice into horizontal bands at panel boundaries
+		def horizontals = []
+		int nextX = 0
+		int nextY = 0
+		panels.each { AreaComponent panel ->
+			//horizontals << new AreaComponent(nextX, 0, area.width, area.height)
 		}
 	}
 
@@ -229,23 +261,28 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 
 	@Override
 	int getViewportWidth() {
-		viewport.size.x
+		viewport.width
 	}
 
 	@Override
 	int getViewportHeight() {
-		viewport.size.y
+		viewport.height
 	}
 
 	@Override
-	void centerViewport(PositionComponent pos) {
+	void centerViewport(VectorComponent pos) {
 		viewport.x = pos.x - (viewport.width / 2)
 		viewport.y = pos.y - (viewport.height / 2)
 		logger.debug "Centered viewport at $pos; viewport $viewport"
 	}
 
-	void renderPanel(PanelEntity entity) {
-		AreaComponent ac = entity.getComponentOfType(AreaComponent)
+	/**
+	 * Renders a panel. Panels' coordinates are viewport-relative,
+	 * so no translation from world coordinates is necessary.
+	 * @param entity the
+	 */
+	void renderPanel(PanelEntity panel) {
+		AreaComponent ac = panel.getComponentOfType(AreaComponent)
 		String h  = String.valueOf((char)205) // ═
 		String v  = String.valueOf((char)186) // ║
 		String ul = String.valueOf((char)201) // ╔
@@ -255,7 +292,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		// Top border
 		terminal.write(ul + ("$h" * (ac.width - 2)) + ur, ac.x, ac.y)
 		// Middle
-		entity.getComponentsOfType(io.github.lhanson.possum.component.TextComponent)
+		panel.getComponentsOfType(io.github.lhanson.possum.component.TextComponent)
 				.eachWithIndex { io.github.lhanson.possum.component.TextComponent tc, int idx ->
 			terminal.write(v, ac.x, ac.y + 1 + idx)             // Left border
 			if (tc?.text) {
