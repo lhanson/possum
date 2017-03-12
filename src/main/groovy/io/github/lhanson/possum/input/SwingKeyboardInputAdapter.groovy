@@ -51,6 +51,11 @@ class SwingKeyboardInputAdapter implements InputAdapter, KeyListener {
 					case KeyEvent.VK_DOWN:
 						keyInput << RawInput.DOWN
 						break
+					default:
+						switch (it.keyChar) {
+							case '?':
+								keyInput << RawInput.QUESTION_MARK
+						}
 				}
 			}
 		}

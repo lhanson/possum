@@ -1,6 +1,6 @@
 package io.github.lhanson.possum.system
 
-import io.github.lhanson.possum.component.GaugeComponent
+import io.github.lhanson.possum.entity.GaugeEntity
 import io.github.lhanson.possum.scene.Scene
 import org.springframework.stereotype.Component
 
@@ -10,13 +10,12 @@ class GaugeSystem extends GameSystem {
 
 	@Override
 	void doUpdate(Scene scene, double elapsed) {
-		scene.getEntitiesMatching([GaugeComponent]).each { entity ->
-			entity.getComponentsOfType(GaugeComponent).each {
-				def before = it.text
-				it.update(elapsed)
-				if (it.text != before) {
-					scene.entityNeedsRendering(entity)
-				}
+		scene.gauges.each { GaugeEntity gauge ->
+			def before = gauge.text
+			gauge.update(elapsed)
+			if (gauge.text != before) {
+				log.trace "Gauge {} value changed", gauge.name
+				scene.entityNeedsRendering(gauge)
 			}
 		}
 	}

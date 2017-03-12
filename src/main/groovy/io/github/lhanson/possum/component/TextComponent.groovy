@@ -5,18 +5,11 @@ package io.github.lhanson.possum.component
  */
 class TextComponent implements GameComponent {
 	String name = 'textComponent'
-	String text
+	String text = ''
 
 	TextComponent() { }
 
 	TextComponent(String text) {
 		this.text = text
-	}
-
-	int width() {
-		text?.length()
-	}
-	int height() {
-		1
 	}
 }

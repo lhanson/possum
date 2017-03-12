@@ -4,7 +4,7 @@ import io.github.lhanson.possum.MainLoop
 import io.github.lhanson.possum.collision.CollisionHandlingComponent
 import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.CameraFocusComponent
-import io.github.lhanson.possum.component.GaugeComponent
+import io.github.lhanson.possum.component.InventoryComponent
 import io.github.lhanson.possum.component.PlayerInputAwareComponent
 import io.github.lhanson.possum.component.RelativePositionComponent
 import io.github.lhanson.possum.component.RelativeWidthComponent
@@ -12,8 +12,10 @@ import io.github.lhanson.possum.component.TextComponent
 import io.github.lhanson.possum.component.TimerComponent
 import io.github.lhanson.possum.component.VelocityComponent
 import io.github.lhanson.possum.entity.GameEntity
+import io.github.lhanson.possum.entity.GaugeEntity
 import io.github.lhanson.possum.entity.GridEntity
 import io.github.lhanson.possum.entity.PanelEntity
+import io.github.lhanson.possum.entity.TextEntity
 import io.github.lhanson.possum.input.InputContext
 import io.github.lhanson.possum.input.MappedInput
 import io.github.lhanson.possum.input.RawInput
@@ -74,13 +76,13 @@ class MazesForProgrammers {
 			new Scene(
 					SceneBuilder.START,
 					[
-							new GameEntity(
+							new TextEntity(
 									name: 'menuTitle',
 									components: [
 											new TextComponent('Main Menu'),
 											new RelativePositionComponent(50, 50)
 									]),
-							new GameEntity(
+							new TextEntity(
 									name: 'pressStart',
 									components: [
 											new TextComponent('-- press [enter] to start, [esc] to quit --'),
@@ -160,27 +162,37 @@ class MazesForProgrammers {
 							}
 					])
 
-			def playerPositionGauge = new GaugeComponent()
+			def leftHudPanel = new PanelEntity(name: 'leftHudPanel', padding: 1)
+			def playerPositionGauge = new GaugeEntity(
+					name: 'playerPositionGauge',
+					parent: leftHudPanel
+			)
 			playerPositionGauge.update = { ticks ->
 				AreaComponent ac = hero.getComponentOfType(AreaComponent)
 				playerPositionGauge.text = "${ac.position}"
 			}
-			entities << new PanelEntity(
-				name: 'leftHudPanel',
-				components: [
-						new RelativePositionComponent(0, 100),
-						new RelativeWidthComponent(80),
-						playerPositionGauge
-				])
+			leftHudPanel.components.addAll([
+					new RelativePositionComponent(0, 100),
+					new RelativeWidthComponent(80),
+					new InventoryComponent([playerPositionGauge])
+			])
+			entities << leftHudPanel
 
-			def simulationHzGauge = new GaugeComponent()
+			def rightHudPanel = new PanelEntity(name: 'rightHudPanel', padding: 1)
+			def simulationHzGauge = new GaugeEntity(
+					name: 'simulationHzGauge',
+					parent: rightHudPanel
+			)
 			simulationHzGauge.update = { ticks ->
 				def simHz = (1 / ticks) * 1000
 				def formatted = new DecimalFormat("#0").format(simHz)
 				simulationHzGauge.text = "$formatted Hz"
 			}
-
-			def fpsGauge = new GaugeComponent()
+			def fpsGauge = new GaugeEntity(
+					name: 'fpsGauge',
+					parent: rightHudPanel
+			)
+			fpsGauge.components << new AreaComponent(0, 1, 0, 1)
 			fpsGauge.update = {
 				// The number of ticks being simulated doesn't reflect rendering
 				// frequency, so we get the actual timing from the main loop.
@@ -188,15 +200,12 @@ class MazesForProgrammers {
 				def formatted = new DecimalFormat("#0").format(fps)
 				fpsGauge.text = "$formatted fps"
 			}
-
-			entities << new PanelEntity(
-				name: 'rightHudPanel',
-				components: [
-						new RelativePositionComponent(100, 100),
-						new RelativeWidthComponent(20),
-						simulationHzGauge,
-						fpsGauge,
-				])
+			rightHudPanel.components.addAll([
+					new RelativePositionComponent(100, 100),
+					new RelativeWidthComponent(20),
+					new InventoryComponent([simulationHzGauge, fpsGauge])
+			])
+			entities << rightHudPanel
 
 			new Scene(
 					MAZE,
@@ -204,7 +213,6 @@ class MazesForProgrammers {
 					[
 							new InputContext() {
 								@Override MappedInput mapInput(RawInput rawInput) {
-									// Menu contexts gobble all input, none pass through
 									switch (rawInput) {
 										case RawInput.UP:
 											return MappedInput.UP

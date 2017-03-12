@@ -1,9 +1,12 @@
 package io.github.lhanson.possum.scene
 
 import io.github.lhanson.possum.component.AreaComponent
+import io.github.lhanson.possum.component.GameComponent
+import io.github.lhanson.possum.component.InventoryComponent
 import io.github.lhanson.possum.component.TextComponent
 import io.github.lhanson.possum.component.VelocityComponent
 import io.github.lhanson.possum.entity.GameEntity
+import io.github.lhanson.possum.entity.GaugeEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.RerenderEntity
 import io.github.lhanson.possum.input.InputAdapter
@@ -25,7 +28,7 @@ class Scene {
 
 	/** Unique identifier for this scene */
 	String id
-	/** Game entities active in this scene */
+	/** Top-level entities active in this scene, does not include entities in inventories */
 	List<GameEntity> entities = []
 	/** Input contexts for this scene */
 	List<InputContext> inputContexts = []
@@ -89,6 +92,33 @@ class Scene {
 			}
 		}
 		return matches
+	}
+
+	/**
+	 * @return GaugeEntities in the scene, from both the top-level entities list
+	 *         as well as entities nested in {@code InventoryComponents}
+	 */
+	List<GaugeEntity> getGauges() {
+		def results = entities.findAll { it instanceof GaugeEntity }
+		def inventories = getComponents(InventoryComponent)
+		def inventoryGauges = inventories?.findResults { InventoryComponent ic ->
+			ic.inventory.findAll { it instanceof GaugeEntity }
+		}?.flatten()
+		if (inventoryGauges) {
+			results.addAll(inventoryGauges)
+			results.flatten()
+		}
+		return results
+	}
+
+	/**
+	 * @param componentType the type of component to search for
+	 * @return all components of the given type within the scene
+	 */
+	List<GameComponent> getComponents(Class componentType) {
+		entitiesByComponentType[componentType]?.collect {
+			it.getComponentOfType(componentType)
+		}
 	}
 
 	/**

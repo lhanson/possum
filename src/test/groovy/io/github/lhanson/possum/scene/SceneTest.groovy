@@ -1,9 +1,9 @@
 package io.github.lhanson.possum.scene
 
 import io.github.lhanson.possum.component.AreaComponent
-import io.github.lhanson.possum.component.GaugeComponent
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.PanelEntity
+import io.github.lhanson.possum.entity.TextEntity
 import spock.lang.Specification
 
 class SceneTest extends Specification {
@@ -23,12 +23,15 @@ class SceneTest extends Specification {
 
 	def "Find by component when entity has multiple components of the same type"() {
 		given:
-			def gaugedPanel = new PanelEntity(
-					name: 'testPanel',
-					components: [new GaugeComponent(), new GaugeComponent()])
-			Scene scene = new Scene('testScene', [gaugedPanel])
+			def textPanel = new PanelEntity(
+					name: 'textPanel',
+					components: [new TextEntity(), new TextEntity()])
+			Scene scene = new Scene('testScene', [textPanel])
 		when:
-			def gaugedEntities = scene.getEntitiesMatching([GaugeComponent])
+			// This is slightly odd in that TextEntity is not technically a GameComponent,
+			// but it's still useful to find and there doesn't appear to be a reason to
+			// restrict entity matching to GameComponent only.
+			def gaugedEntities = scene.getEntitiesMatching([TextEntity])
 		then:
 			gaugedEntities
 	}

@@ -11,9 +11,11 @@ class GameEntity {
 	/** The name of the entity */
 	String name
 	/** The {@link GameComponent}s describing this entity's properties */
-	List<GameComponent> components
+	List<GameComponent> components = []
 	/** Map used for internal lookups of components by type without iterating each time */
 	Map<Class, List<GameComponent>> componentsByType = [:]
+	/** The entity this belongs to, if any. A panel, for example. **/
+	GameEntity parent = null
 
 	/**
 	 * Returns all components belonging to this entity of the provided type
