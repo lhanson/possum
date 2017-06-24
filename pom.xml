@@ -14,7 +14,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>1.4.2.RELEASE</version>
+		<version>1.5.4.RELEASE</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 
@@ -43,7 +43,7 @@
 		<dependency>
 			<groupId>net.mikera</groupId>
 			<artifactId>vectorz</artifactId>
-			<version>0.64.0</version>
+			<version>0.65.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.lhanson</groupId>
@@ -59,13 +59,13 @@
 		<dependency>
 			<groupId>org.spockframework</groupId>
 			<artifactId>spock-core</artifactId>
-			<version>1.1-groovy-2.4-rc-3</version>
+			<version>1.1-groovy-2.4</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.spockframework</groupId>
 			<artifactId>spock-spring</artifactId>
-			<version>1.1-groovy-2.4-rc-3</version>
+			<version>1.1-groovy-2.4</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
