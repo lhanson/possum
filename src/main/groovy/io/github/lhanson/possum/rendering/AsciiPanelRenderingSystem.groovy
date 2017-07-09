@@ -25,6 +25,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	AsciiPanel terminal
 	@Autowired(required = false)
 	VectorComponent initialViewportSize
+	// the entire visible area being rendered
 	AreaComponent viewport
 	Scene lastScene
 	// Panel areas in the scene, sorted by x, y coordinates
@@ -230,8 +231,8 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 			if (ac) {
 				def scrollToX
 				def scrollToY
-				def threshX = viewport.width * 0.1
-				def threshY = viewport.height * 0.1
+				def threshX = viewport.width * 0.2
+				def threshY = viewport.height * 0.2
 				if (ac.x < viewport.x + threshX || ac.x > viewport.x + viewport.width - threshX) {
 					scrollToX = ac.x
 				}
