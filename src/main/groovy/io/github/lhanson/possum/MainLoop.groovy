@@ -136,7 +136,7 @@ class MainLoop {
 		}
 
 		/**
-		 * Executes the provided clojure and logs its elapsed time
+		 * Executes the provided closure and logs its elapsed time
 		 * @param description a description of the action to be used in the log message
 		 * @param action the closure to invoke
 		 */
