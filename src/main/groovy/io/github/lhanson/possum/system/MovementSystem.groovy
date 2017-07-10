@@ -72,7 +72,7 @@ class MovementSystem extends GameSystem {
 
 		stopwatch.start('Calculating collisions')
 		scene.mobileEntities.each { entity ->
-			List<GameEntity> colliders = scene.findWithin(entity.getComponentOfType(AreaComponent)) - entity
+			List<GameEntity> colliders = scene.findNonPanelWithin(entity.getComponentOfType(AreaComponent)) - entity
 			colliders.each {
 				if (!(it instanceof PanelEntity)) {
 					collisionSystem.collide(entity, it)

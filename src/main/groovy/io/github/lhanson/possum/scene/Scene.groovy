@@ -133,7 +133,7 @@ class Scene {
 	 * @param area the boundaries for which we want to find entities
 	 * @return any entities within the provided area
 	 */
-	List<GameEntity> findWithin(AreaComponent area) {
+	List<GameEntity> findNonPanelWithin(AreaComponent area) {
 		// TODO: Optimize this
 		entities.findAll { entity ->
 			!(entity instanceof PanelEntity) &&
@@ -148,7 +148,7 @@ class Scene {
 		entitiesToBeRendered << entity
 		if (previousArea) {
 			// Need to repaint what's at the entity's previous location
-			def uncoveredEntities = findWithin(previousArea)
+			def uncoveredEntities = findNonPanelWithin(previousArea)
 			if (uncoveredEntities) {
 				entitiesToBeRendered.addAll(uncoveredEntities)
 			} else {

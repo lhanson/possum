@@ -41,7 +41,7 @@ class SceneTest extends Specification {
 			GameEntity testEntity = new GameEntity(name: 'testEntity')
 			Scene scene = new Scene('testId', [testEntity])
 		when:
-			def result = scene.findWithin(new AreaComponent())
+			def result = scene.findNonPanelWithin(new AreaComponent())
 		then:
 			result == []
 	}

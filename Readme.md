@@ -73,3 +73,27 @@ I'll quote an explanation from Robert Nystrom's
 
 Writing a game with Possum will shield you from these gory details, but it may be of general interest
 if you're going deeper down the rabbit hole.
+
+## Rendering Process (AsciiPanelRenderingSystem)
+
+### Overview
+The `Scene` object contains a list of game entities. During each main loop iteration,
+the `RenderingSystem`(s) are asked to render the scene. `RenderingSystem` is currently a
+fairly non-specific interface, so in theory each renderer could come up with its own rendering
+strategy. At present, however, `AsciiPanelRenderingSystem` is the only system implemented, and
+with the implementation of future renderers it's quite likely I'll extract many of the useful
+mechanisms from the AsciiPanel code into a more general class for all renderers to leverage.
+But in the meantime, I'll describe how `AsciiPanelRenderingSystem` works.
+
+### Scroll check
+When `RenderingSystem#render()` is called, we first check that the entity with camera
+focus has not moved beyond the edge of our defined scroll boundaries; if so, we clear the entire
+viewport and re-render everything including `PanelEntity`s and their contents. There is some
+efficiency to be gained here in the future by not re-rendering panels, but in any case the logic
+for rendering after scrolling will proceed normally as follows below.
+
+### Entities to be rendered
+When an action occurs which requires an entity to be re-rendered (the user moved their character, we
+scrolled the screen, etc.), the `GameSystem` which determined this will call `Scene#entityNeedsRendering()`.
+The `Scene` maintains a list of 'dirty' entities to render for the next iteration. It doesn't
+do the rendering itself, it merely tracks this list for any interested `RenderingSystem` to act on.

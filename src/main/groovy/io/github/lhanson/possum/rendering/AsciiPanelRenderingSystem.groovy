@@ -149,8 +149,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 				// Maze renderer, won't be the same as tile-based game renderer
 				renderMaze(entity)
 			} else if (entity instanceof PanelEntity) {
-				// Panel renderer
-				renderPanel(entity)
+				renderPanelBorders(entity)
 			} else if (entity instanceof RerenderEntity) {
 				AreaComponent area = translateWorldToScreen(entity.getComponentOfType(AreaComponent), viewport)
 				logger.debug "Clearing {}", area
@@ -250,13 +249,17 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 							components: [viewport]
 					))
 					// Finds non-panel entities for rendering
-					scene.findWithin(viewport).each { scene.entityNeedsRendering(it) }
-					// Since we're currently adding a RenderEntity for the entire viewport,
+					scene.findNonPanelWithin(viewport).each { scene.entityNeedsRendering(it) }
+					// Since we're currently adding a RerenderEntity for the entire viewport,
 					// we need to re-render the panels. Better would be to not clear the
 					// panels in the first place.
 					scene.entities
 							.findAll { it instanceof PanelEntity }
-							.each { scene.entityNeedsRendering(it) }
+							.each {
+								scene.entityNeedsRendering(it)
+								InventoryComponent ic = it.getComponentOfType(InventoryComponent)
+								ic.inventory.each { item -> scene.entityNeedsRendering(item) }
+							}
 				}
 			}
 		}
@@ -297,11 +300,16 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	}
 
 	/**
-	 * Renders a panel. Panels' coordinates are viewport-relative,
-	 * so no translation from world coordinates is necessary.
-	 * @param entity the
+	 * Renders a panel's borders. Panels' coordinates are
+	 * viewport-relative,so no translation from world
+	 * coordinates is necessary.
+	 *
+	 * Note that this does not render panel contents/inventory.
+	 * That's currently handled by the main render() logic.
+	 *
+	 * @param panel the panel to render borders for
 	 */
-	void renderPanel(PanelEntity panel) {
+	void renderPanelBorders(PanelEntity panel) {
 		AreaComponent ac = panel.getComponentOfType(AreaComponent)
 		String h  = String.valueOf((char)205) // ═
 		String v  = String.valueOf((char)186) // ║
