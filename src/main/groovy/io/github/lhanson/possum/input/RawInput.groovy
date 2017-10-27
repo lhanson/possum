@@ -7,5 +7,6 @@ enum RawInput {
 	DOWN,
 	ESCAPE,
 	ENTER,
-	QUESTION_MARK
+	QUESTION_MARK,
+	P
 }

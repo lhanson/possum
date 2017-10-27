@@ -225,6 +225,9 @@ class MazesForProgrammers {
 										case RawInput.ESCAPE:
 											transition(START)
 											break
+										case RawInput.P:
+											return MappedInput.PAUSE
+											break
 									}
 									null
 								}

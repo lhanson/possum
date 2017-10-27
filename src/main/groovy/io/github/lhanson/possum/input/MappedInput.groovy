@@ -5,4 +5,5 @@ enum MappedInput {
 	RIGHT,
 	UP,
 	DOWN,
+	PAUSE
 }

@@ -34,6 +34,9 @@ class Scene {
 	List<InputContext> inputContexts = []
 	/** The input collected for this scene to process */
 	Set<MappedInput> activeInput = []
+	/** Whether the simulation is paused */
+	volatile boolean paused = false
+
 
 	Scene(String id, List<GameEntity> entities, List<InputContext> inputContexts = []) {
 		log.debug "Initializing scene $id"

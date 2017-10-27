@@ -1,5 +1,6 @@
 package io.github.lhanson.possum.input
 
+import io.github.lhanson.possum.system.PauseSystem
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -16,6 +17,8 @@ import java.util.concurrent.ConcurrentLinkedQueue
 class SwingKeyboardInputAdapter implements InputAdapter, KeyListener {
 	private Logger log = LoggerFactory.getLogger(this.class)
 	private ConcurrentLinkedQueue<KeyEvent> queuedKeyEvents = new ConcurrentLinkedQueue<>()
+
+	@Autowired PauseSystem pauseSystem
 
 	@Autowired
 	SwingKeyboardInputAdapter(JFrame jframe) {
@@ -51,6 +54,9 @@ class SwingKeyboardInputAdapter implements InputAdapter, KeyListener {
 					case KeyEvent.VK_DOWN:
 						keyInput << RawInput.DOWN
 						break
+					case KeyEvent.VK_P:
+						keyInput << RawInput.P
+						break
 					default:
 						switch (it.keyChar) {
 							case '?':
@@ -68,7 +74,15 @@ class SwingKeyboardInputAdapter implements InputAdapter, KeyListener {
 	@Override
 	void keyPressed(KeyEvent e) {
 		log.trace "Key pressed: ${e.keyChar} (${e.keyCode})"
-		queuedKeyEvents << e
+		if (!pauseSystem.currentScene.paused) {
+			queuedKeyEvents << e
+		} else if (e.keyChar == 'p') {
+			synchronized(pauseSystem.currentScene) {
+				log.debug "Unpausing scene"
+				pauseSystem.currentScene.paused = false
+				pauseSystem.currentScene.notify()
+			}
+		}
 	}
 
 	@Override
