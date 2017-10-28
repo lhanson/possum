@@ -7,10 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 import javax.swing.*
-import java.awt.*
+import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
-import java.util.List
 import java.util.concurrent.ConcurrentLinkedQueue
 
 @Component
@@ -27,46 +26,10 @@ class SwingKeyboardInputAdapter implements InputAdapter, KeyListener {
 	}
 
 	@Override
-	List<RawInput> collectInput() {
-		if (queuedKeyEvents) {
-			log.trace "Processing queued input"
-		}
-		def keyInput = []
-		queuedKeyEvents.each {
-			log.trace "Key event ${it.keyChar} (${it.keyCode}): ${it.ID}"
-			if (it.ID == Event.KEY_PRESS) {
-				switch (it.keyCode) {
-					case KeyEvent.VK_ESCAPE:
-						keyInput << RawInput.ESCAPE
-						break
-					case KeyEvent.VK_ENTER:
-						keyInput << RawInput.ENTER
-						break
-					case KeyEvent.VK_LEFT:
-						keyInput << RawInput.LEFT
-						break
-					case KeyEvent.VK_RIGHT:
-						keyInput << RawInput.RIGHT
-						break
-					case KeyEvent.VK_UP:
-						keyInput << RawInput.UP
-						break
-					case KeyEvent.VK_DOWN:
-						keyInput << RawInput.DOWN
-						break
-					case KeyEvent.VK_P:
-						keyInput << RawInput.P
-						break
-					default:
-						switch (it.keyChar) {
-							case '?':
-								keyInput << RawInput.QUESTION_MARK
-						}
-				}
-			}
-		}
+	List<InputEvent> collectInput() {
+		def collectedInput = queuedKeyEvents.collect {it}
 		queuedKeyEvents.clear()
-		return keyInput
+		return collectedInput
 	}
 
 	@Override void keyTyped(KeyEvent e) { }

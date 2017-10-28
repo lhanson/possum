@@ -1,14 +1,12 @@
 package io.github.lhanson.possum_demos.viewport
 
 import io.github.lhanson.possum.MainLoop
-import io.github.lhanson.possum.component.GameComponent
 import io.github.lhanson.possum.component.RelativePositionComponent
 import io.github.lhanson.possum.component.TextComponent
 import io.github.lhanson.possum.component.VectorComponent
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.input.InputContext
 import io.github.lhanson.possum.input.MappedInput
-import io.github.lhanson.possum.input.RawInput
 import io.github.lhanson.possum.scene.PossumSceneBuilder
 import io.github.lhanson.possum.scene.Scene
 import org.springframework.boot.autoconfigure.SpringBootApplication
@@ -16,6 +14,7 @@ import org.springframework.boot.builder.SpringApplicationBuilder
 import org.springframework.stereotype.Component
 
 import javax.annotation.PostConstruct
+import java.awt.event.InputEvent
 
 /**
  * Exercises viewport rendering e.g. entities larger than the viewport
@@ -55,7 +54,7 @@ class TextTruncating {
 					[
 							new InputContext() {
 								@Override
-								MappedInput mapInput(RawInput rawInput) {
+								MappedInput mapInput(InputEvent rawInput) {
 									transition(null)
 								}
 							}

@@ -15,8 +15,10 @@ import org.springframework.stereotype.Component
 import org.springframework.util.StopWatch
 
 import javax.annotation.PostConstruct
+import javax.imageio.ImageIO
 import javax.swing.*
 import java.awt.*
+import java.awt.image.BufferedImage
 import java.util.List
 
 @Component
@@ -41,6 +43,23 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		}
 		terminal = new AsciiPanel(viewport.width, viewport.height)
 		logger.debug "Created terminal with viewport {}", viewport
+
+		boolean isOSX = false
+		try {
+			String className = "com.apple.eawt.Application"
+			Class<?> cls = Class.forName(className)
+			isOSX = true
+			Object application = cls.newInstance().getClass().getMethod("getApplication")
+					.invoke(null)
+			BufferedImage image = ImageIO.read(ClassLoader.getResourceAsStream('/possum.jpg'))
+			application.getClass().getMethod("setDockIconImage", java.awt.Image)
+					.invoke(application, image)
+		}
+		catch (Throwable t) {
+			if (isOSX) {
+				logger.error("Error setting dock icon image", t)
+			}
+		}
 
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
 		// We're doing active rendering, so we don't need to be told when to repaint

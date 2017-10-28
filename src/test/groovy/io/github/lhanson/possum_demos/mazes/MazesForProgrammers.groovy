@@ -18,7 +18,6 @@ import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.TextEntity
 import io.github.lhanson.possum.input.InputContext
 import io.github.lhanson.possum.input.MappedInput
-import io.github.lhanson.possum.input.RawInput
 import io.github.lhanson.possum.maze.BinaryTree
 import io.github.lhanson.possum.maze.MazeCarver
 import io.github.lhanson.possum.rendering.RenderingSystem
@@ -33,6 +32,8 @@ import org.springframework.boot.builder.SpringApplicationBuilder
 import org.springframework.stereotype.Component
 
 import javax.annotation.PostConstruct
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
 import java.text.DecimalFormat
 
 /**
@@ -92,16 +93,18 @@ class MazesForProgrammers {
 					[
 							// Main menu context
 							new InputContext() {
-								@Override MappedInput mapInput(RawInput rawInput) {
-									// Menu contexts gobble all input, none pass through
-									switch (rawInput) {
-										case RawInput.ESCAPE:
-											transition(QUITTING)
-											break
-										case RawInput.ENTER:
-											transition(MAZE)
-											break
+								@Override MappedInput mapInput(InputEvent rawInput) {
+									if (rawInput instanceof KeyEvent) {
+										switch (rawInput.keyCode) {
+											case rawInput.VK_ESCAPE:
+												transition(QUITTING)
+												break
+											case rawInput.VK_ENTER:
+												transition(MAZE)
+												break
+										}
 									}
+									// Menu contexts gobble all input, none pass through
 									null
 								}
 							}
@@ -212,22 +215,24 @@ class MazesForProgrammers {
 					entities,
 					[
 							new InputContext() {
-								@Override MappedInput mapInput(RawInput rawInput) {
-									switch (rawInput) {
-										case RawInput.UP:
-											return MappedInput.UP
-										case RawInput.DOWN:
-											return MappedInput.DOWN
-										case RawInput.LEFT:
-											return MappedInput.LEFT
-										case RawInput.RIGHT:
-											return MappedInput.RIGHT
-										case RawInput.ESCAPE:
-											transition(START)
-											break
-										case RawInput.P:
-											return MappedInput.PAUSE
-											break
+								@Override MappedInput mapInput(InputEvent rawInput) {
+									if (rawInput instanceof KeyEvent) {
+										switch (rawInput.keyCode) {
+											case rawInput.VK_UP:
+												return MappedInput.UP
+											case rawInput.VK_DOWN:
+												return MappedInput.DOWN
+											case rawInput.VK_LEFT:
+												return MappedInput.LEFT
+											case rawInput.VK_RIGHT:
+												return MappedInput.RIGHT
+											case rawInput.VK_ESCAPE:
+												transition(START)
+												break
+											case rawInput.VK_P:
+												return MappedInput.PAUSE
+												break
+										}
 									}
 									null
 								}
