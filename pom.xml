@@ -14,7 +14,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>1.5.4.RELEASE</version>
+		<version>1.5.8.RELEASE</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 
@@ -26,6 +26,7 @@
 
 	<repositories>
 		<repository>
+			<!-- Service which allows us to use GitHub repos as dependencies -->
 			<id>jitpack.io</id>
 			<url>https://jitpack.io</url>
 		</repository>
@@ -46,9 +47,9 @@
 			<version>0.65.0</version>
 		</dependency>
 		<dependency>
-			<groupId>com.github.lhanson</groupId>
+			<groupId>com.github.trystan</groupId>
 			<artifactId>AsciiPanel</artifactId>
-			<version>1df4fce7</version>
+			<version>84ed5446</version>
 		</dependency>
 
 		<dependency>
@@ -81,14 +82,14 @@
 			<plugin>
 				<groupId>org.codehaus.gmavenplus</groupId>
 				<artifactId>gmavenplus-plugin</artifactId>
-				<version>1.5</version>
+				<version>1.6</version>
 				<executions>
 					<execution>
 						<goals>
 							<goal>addSources</goal>
 							<goal>addTestSources</goal>
 							<goal>compile</goal>
-							<goal>testCompile</goal>
+							<goal>compileTests</goal>
 						</goals>
 					</execution>
 				</executions>
