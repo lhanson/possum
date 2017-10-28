@@ -17,6 +17,7 @@ pattern. It's being initially developed for roguelikes, but since I can't restri
 to any particular UI or implementation technology, it's inherently flexible and agnostic
 to your choice of rendering system or UI.
 
+
 # Features
 
 * Interfaces to support a variety of underlying I/O technologies.
@@ -73,6 +74,17 @@ I'll quote an explanation from Robert Nystrom's
 
 Writing a game with Possum will shield you from these gory details, but it may be of general interest
 if you're going deeper down the rabbit hole.
+
+## Input
+
+Raw input is collected via the `InputAdapter` interface and passed to any `InputContext`s that the game
+has attached to the active `Scene` for mapping into a higher-level `MappedInput` event. This allows
+an input context to map simple keypresses to events (KeyEvent.VK_UP to MappedInput.UP, for example) or
+collect multiple keypress combinations into higher-level actions with semantic meaning to the game.
+These are then set as the `Scene#activeInput` for each frame, and any `GameSystem`s active will
+have a chance to react to them.
+
+The provided `InputAdapter` implementation uses AWT's `KeyListener`.
 
 ## Rendering Process (AsciiPanelRenderingSystem)
 
