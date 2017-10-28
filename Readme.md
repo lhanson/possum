@@ -97,6 +97,13 @@ with the implementation of future renderers it's quite likely I'll extract many 
 mechanisms from the AsciiPanel code into a more general class for all renderers to leverage.
 But in the meantime, I'll describe how `AsciiPanelRenderingSystem` works.
 
+### Active rendering
+
+Rather than coupling visible entities to `AWT`'s passive rendering strategy (the Event Dispatch
+Thread calls `paint()` on components as it sees fit), we take active control of determining
+what screen regions need to be redrawn during each render loop. This also allows us to use more
+advanced rendering techniques than would be available passively.
+
 ### Scroll check
 When `RenderingSystem#render()` is called, we first check that the entity with camera
 focus has not moved beyond the edge of our defined scroll boundaries; if so, we clear the entire
