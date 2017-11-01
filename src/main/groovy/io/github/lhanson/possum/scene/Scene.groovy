@@ -25,8 +25,8 @@ class Scene {
 	// Top-level entities active in this scene, does not include entities in inventories
 	private List<GameEntity> entities = []
 	private Map<Class, List<GameEntity>> entitiesByComponentType = [:]
-	// A list of entities modified in such a way as to require re-rendering
-	List<GameEntity> entitiesToBeRendered = []
+	// A set of entities modified in such a way as to require re-rendering
+	Set<GameEntity> entitiesToBeRendered = []
 
 	/** Unique identifier for this scene */
 	String id
