@@ -23,6 +23,7 @@ to your choice of rendering system or UI.
 * Interfaces to support a variety of underlying I/O technologies.
   Out of the box, support for [AsciiPanel](https://github.com/trystan/AsciiPanel)
   rendering and Swing keyboard input adapter.
+* Basic animation system using alpha blending
 
 
 # Writing a Possum-powered game

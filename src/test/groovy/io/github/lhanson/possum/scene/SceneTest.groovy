@@ -1,6 +1,7 @@
 package io.github.lhanson.possum.scene
 
 import io.github.lhanson.possum.component.AreaComponent
+import io.github.lhanson.possum.component.TextComponent
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.TextEntity
@@ -44,6 +45,27 @@ class SceneTest extends Specification {
 			def result = scene.findNonPanelWithin(new AreaComponent())
 		then:
 			result == []
+	}
+
+	def "setEntities clears existing entries in entitiesByComponentType "() {
+		given:
+			GameEntity testEntity = new GameEntity(name: 'testEntity', components: [TextComponent])
+			Scene scene = new Scene('testId', [testEntity])
+		when:
+			scene.setEntities([])
+			def results = scene.getEntitiesMatching([TextComponent])
+		then:
+			results.isEmpty()
+	}
+
+	def "setEntities updates entitiesByComponentType lookup table"() {
+		given:
+			GameEntity testEntity = new GameEntity(name: 'testEntity', components: [new TextComponent()])
+			Scene scene = new Scene('testId', [testEntity])
+		when:
+			def results = scene.getEntitiesMatching([TextComponent])
+		then:
+			results == [testEntity]
 	}
 
 }

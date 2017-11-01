@@ -93,7 +93,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 
 			if (!ac) {
 				ac = new AreaComponent()
-				entity.components.add(ac)
+				entity.addComponent(ac)
 				logger.debug "Added area component for {}", entity.name
 			}
 
@@ -134,7 +134,6 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 				ac.y = (rpc.y / 100.0f) * viewportHeight
 			}
 			logger.debug "Calculated position of {} for {}", ac, entity.name
-			entity.updateComponentLookupCache()
 		}
 
 		// Store a list of the panel areas in the scene sorted by x,y coordinates for faster reference
@@ -185,17 +184,18 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 			} else {
 				// Generic renderer
 				if (isVisible(entity)) {
+					Color color = entity.getComponentOfType(ColorComponent)?.color ?: AsciiPanel.white
 					TextComponent tc = entity.getComponentOfType(TextComponent)
 					AreaComponent ac = translateWorldToScreen(entity.getComponentOfType(AreaComponent), viewport)
-					write(tc.text, ac.x, ac.y)
+					write(tc.text, ac.x, ac.y, color)
 				}
 			}
 		}
-		scene.entitiesToBeRendered.clear()
 		stopwatch.stop()
 
 		stopwatch.start('terminal render')
 		terminal.paintImmediately(0, 0, terminal.width, terminal.height)
+		scene.entitiesToBeRendered.clear()
 		stopwatch.stop()
 		logger.trace "Render complete. {}", stopwatch
 	}
@@ -293,10 +293,29 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	 * @param y the terminal column to begin writing
 	 */
 	void write(String s, int x, int y) {
+		write(s, x, y, AsciiPanel.white)
+	}
+
+	/**
+	 * Writes the given string to the AsciiPanel terminal, omitting any
+	 * characters which don't fit.
+	 *uuu
+	 * @param s the string to write to the screen
+	 * @param x the terminal row to begin writing
+	 * @param y the terminal column to begin writing
+	 * @param color the foreground color to write with
+	 */
+	void write(String s, int x, int y, Color color) {
 		for (int i = 0; i < s.size(); i++) {
 			if (x + i >= 0 && x + i < viewport.width &&
 					y >= 0 && y < viewport.height) {
-				terminal.write(s.charAt(i), x + i, y)
+				if (color.alpha != 255) {
+					// If there are alpha effects happening, let's just
+					// assume that we need a freshly-cleared background
+					terminal.offscreenGraphics.setColor(Color.black)
+					terminal.offscreenGraphics.fillRect((x + i) * terminal.charWidth, y * terminal.charHeight, terminal.charWidth, terminal.charHeight)
+				}
+				terminal.write(s.charAt(i), x + i, y, color)
 			}
 		}
 	}

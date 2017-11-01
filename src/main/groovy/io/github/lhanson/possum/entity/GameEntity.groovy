@@ -1,6 +1,8 @@
 package io.github.lhanson.possum.entity
 
 import io.github.lhanson.possum.component.GameComponent
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * An entity is a general-purpose game object. It possess various
@@ -8,14 +10,59 @@ import io.github.lhanson.possum.component.GameComponent
  * {@code GameEntity} behavior is processed by {@link io.github.lhanson.possum.system.GameSystem}s.
  */
 class GameEntity {
+	Logger logger = LoggerFactory.getLogger(this.class)
+
 	/** The name of the entity */
 	String name
+
 	/** The {@link GameComponent}s describing this entity's properties */
-	List<GameComponent> components = []
+	private List<GameComponent> components = []
 	/** Map used for internal lookups of components by type without iterating each time */
 	Map<Class, List<GameComponent>> componentsByType = [:]
+
 	/** The entity this belongs to, if any. A panel, for example. **/
 	GameEntity parent = null
+
+	/**
+	 * @return the components associated with this entity
+	 */
+	List<GameComponent> getComponents() {
+		return components
+	}
+
+	void setComponents(List<GameComponent> components) {
+		this.components = components
+		componentsByType.clear()
+		components.each {
+			if (componentsByType[it.class] == null) {
+				componentsByType[it.class] = []
+			}
+			componentsByType[it.class] << it
+		}
+	}
+
+	/**
+	 * Adds the component to the entity and inserts it into the
+	 * componentsByType lookup map as well.
+	 * @param component the component to add to this entity
+	 */
+	void addComponent(GameComponent component) {
+		components << component
+		if (componentsByType[component.class] == null) {
+			componentsByType[component.class] = []
+		}
+		componentsByType[component.class] << component
+	}
+
+	/**
+	 * Removes the component from the entity as well as the
+	 * componentsByType lookup map.
+	 * @param component the component to remove from this entity
+	 */
+	void removeComponent(GameComponent component) {
+		components.remove(component)
+		componentsByType[component.class]?.remove(component)
+	}
 
 	/**
 	 * Returns all components belonging to this entity of the provided type
@@ -28,6 +75,7 @@ class GameEntity {
 		if (result == null) {
 			result = components.findAll { requiredType.isInstance(it) }
 			componentsByType[requiredType] = result
+			logger.trace("getComponentsOfType cache miss. Item was present: {}", !result.isEmpty())
 		}
 		result
 	}
@@ -39,21 +87,6 @@ class GameEntity {
 	 */
 	GameComponent getComponentOfType(Class requiredType) {
 		getComponentsOfType(requiredType)[0]
-	}
-
-	/**
-	 * After the entity's list of components has changed (for example, when
-	 * resolving relative positioning components and adding concrete locations),
-	 * this method will update the lookup map of components by type
-	 */
-	void updateComponentLookupCache() {
-		componentsByType.clear()
-		components.each {
-			if (componentsByType[it.class] == null) {
-				componentsByType[it.class] = []
-			}
-			componentsByType[it.class] << it
-		}
 	}
 
 	@Override

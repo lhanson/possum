@@ -2,6 +2,7 @@ package io.github.lhanson.possum_demos.mazes
 
 import io.github.lhanson.possum.MainLoop
 import io.github.lhanson.possum.collision.CollisionHandlingComponent
+import io.github.lhanson.possum.component.AnimatedComponent
 import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.CameraFocusComponent
 import io.github.lhanson.possum.component.InventoryComponent
@@ -146,6 +147,7 @@ class MazesForProgrammers {
 							new TextComponent('@'),
 							startPos,
 							new VelocityComponent(0, 0),
+							new AnimatedComponent(pulseDurationMillis: 1000, repeat: true),
 							new PlayerInputAwareComponent(),
 							new CameraFocusComponent()
 					])

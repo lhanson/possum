@@ -22,14 +22,14 @@ import org.slf4j.LoggerFactory
 class Scene {
 	Logger log = LoggerFactory.getLogger(this.class)
 	InputAdapter inputAdapter
-	Map<Class, List<GameEntity>> entitiesByComponentType = [:]
+	// Top-level entities active in this scene, does not include entities in inventories
+	private List<GameEntity> entities = []
+	private Map<Class, List<GameEntity>> entitiesByComponentType = [:]
 	// A list of entities modified in such a way as to require re-rendering
 	List<GameEntity> entitiesToBeRendered = []
 
 	/** Unique identifier for this scene */
 	String id
-	/** Top-level entities active in this scene, does not include entities in inventories */
-	List<GameEntity> entities = []
 	/** Input contexts for this scene */
 	List<InputContext> inputContexts = []
 	/** The input collected for this scene to process */
@@ -41,10 +41,17 @@ class Scene {
 	Scene(String id, List<GameEntity> entities, List<InputContext> inputContexts = []) {
 		log.debug "Initializing scene $id"
 		this.id = id
-		this.entities = entities
+		this.id = id
+		setEntities(entities)
 		this.inputContexts = inputContexts
 
-		// Initialize lookup map of entities by component type
+		// All entities will need to be rendered initially
+		entitiesToBeRendered.addAll entities
+	}
+
+	void setEntities(List<GameEntity> entities) {
+		this.entities = entities
+		entitiesByComponentType.clear()
 		entities.each { entity ->
 			entity.components.each { component ->
 				if (entitiesByComponentType[component.class] == null) {
@@ -53,7 +60,24 @@ class Scene {
 				entitiesByComponentType[component.class] << entity
 			}
 		}
-		entitiesToBeRendered.addAll entities // All entities will need to be rendered initially
+	}
+
+	// This is necessary to brute-force the scene into re-scanning each
+	// entity for current components, but in the future we can do much
+	// better and maintain loose coupling by having entities send generic
+	// add/remove events that the scene consumes and can thereby do
+	// targeted updates to entitiesByComponentType.
+	@Deprecated
+	void updateEntitiesByComponent() {
+		entitiesByComponentType.clear()
+		entities.each { entity ->
+			entity.components.each { component ->
+				if (entitiesByComponentType[component.class] == null) {
+					entitiesByComponentType[component.class] = []
+				}
+				entitiesByComponentType[component.class] << entity
+			}
+		}
 	}
 
 	/**
