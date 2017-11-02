@@ -37,7 +37,7 @@ class SwingKeyboardInputAdapter implements InputAdapter, KeyListener {
 	@Override
 	void keyPressed(KeyEvent e) {
 		log.trace "Key pressed: ${e.keyChar} (${e.keyCode})"
-		if (!pauseSystem.currentScene.paused) {
+		if (!pauseSystem.currentScene?.paused) {
 			queuedKeyEvents << e
 		} else if (e.keyChar == 'p') {
 			synchronized(pauseSystem.currentScene) {
