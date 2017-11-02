@@ -22,7 +22,6 @@ class AnimationSystem extends GameSystem {
 
 			if (cc == null) {
 				entity.addComponent(new ColorComponent(color: new Color(255, 255, 255, 0)))
-				scene.updateEntitiesByComponent()
 			} else {
 				cc.color = new Color(cc.color.red, cc.color.green, cc.color.blue, getPulsedAlpha(ac))
 			}
@@ -32,7 +31,6 @@ class AnimationSystem extends GameSystem {
 					ac.currentDuration = ac.currentDuration - ac.pulseDurationMillis
 				} else {
 					entity.removeComponent(ac)
-					scene.updateEntitiesByComponent()
 				}
 			}
 			scene.entityNeedsRendering(entity, entity.getComponentOfType(AreaComponent))

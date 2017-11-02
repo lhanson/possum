@@ -9,6 +9,10 @@ import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.GaugeEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.RerenderEntity
+import io.github.lhanson.possum.events.ComponentAddedEvent
+import io.github.lhanson.possum.events.ComponentRemovedEvent
+import io.github.lhanson.possum.events.EventBroker
+import io.github.lhanson.possum.events.Subscription
 import io.github.lhanson.possum.input.InputAdapter
 import io.github.lhanson.possum.input.InputContext
 import io.github.lhanson.possum.input.MappedInput
@@ -34,6 +38,8 @@ class Scene {
 	List<InputContext> inputContexts = []
 	/** The input collected for this scene to process */
 	Set<MappedInput> activeInput = []
+	/** Event broker for this scene */
+	EventBroker eventBroker = new EventBroker()
 	/** Whether the simulation is paused */
 	volatile boolean paused = false
 
@@ -45,6 +51,8 @@ class Scene {
 		setEntities(entities)
 		this.inputContexts = inputContexts
 
+		eventBroker.subscribe(this)
+
 		// All entities will need to be rendered initially
 		entitiesToBeRendered.addAll entities
 	}
@@ -53,6 +61,7 @@ class Scene {
 		this.entities = entities
 		entitiesByComponentType.clear()
 		entities.each { entity ->
+			entity.eventBroker = eventBroker
 			entity.components.each { component ->
 				if (entitiesByComponentType[component.class] == null) {
 					entitiesByComponentType[component.class] = []
@@ -62,22 +71,19 @@ class Scene {
 		}
 	}
 
-	// This is necessary to brute-force the scene into re-scanning each
-	// entity for current components, but in the future we can do much
-	// better and maintain loose coupling by having entities send generic
-	// add/remove events that the scene consumes and can thereby do
-	// targeted updates to entitiesByComponentType.
-	@Deprecated
-	void updateEntitiesByComponent() {
-		entitiesByComponentType.clear()
-		entities.each { entity ->
-			entity.components.each { component ->
-				if (entitiesByComponentType[component.class] == null) {
-					entitiesByComponentType[component.class] = []
-				}
-				entitiesByComponentType[component.class] << entity
-			}
+	@Subscription
+	void componentAdded(ComponentAddedEvent event) {
+		if (entitiesByComponentType[event.component.class] == null) {
+			entitiesByComponentType[event.component.class] = []
 		}
+		entitiesByComponentType[event.component.class] << event.entity
+		log.debug("Added {} to component lookup list for {}", event.entity, event.component)
+	}
+
+	@Subscription
+	void componentRemoved(ComponentRemovedEvent event) {
+		entitiesByComponentType[event.component.class].remove(event.entity)
+		log.debug("Removed {} from component lookup list for {}", event.entity, event.component)
 	}
 
 	/**
@@ -161,7 +167,6 @@ class Scene {
 	 * @return any entities within the provided area
 	 */
 	List<GameEntity> findNonPanelWithin(AreaComponent area) {
-		// TODO: Optimize this
 		entities.findAll { entity ->
 			!(entity instanceof PanelEntity) &&
 				entity.getComponentOfType(AreaComponent)?.overlaps(area)

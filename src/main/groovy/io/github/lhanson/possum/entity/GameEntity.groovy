@@ -1,6 +1,9 @@
 package io.github.lhanson.possum.entity
 
 import io.github.lhanson.possum.component.GameComponent
+import io.github.lhanson.possum.events.ComponentAddedEvent
+import io.github.lhanson.possum.events.ComponentRemovedEvent
+import io.github.lhanson.possum.events.EventBroker
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -22,6 +25,9 @@ class GameEntity {
 
 	/** The entity this belongs to, if any. A panel, for example. **/
 	GameEntity parent = null
+
+	/** Broker for publishing events */
+	EventBroker eventBroker
 
 	/**
 	 * @return the components associated with this entity
@@ -52,6 +58,7 @@ class GameEntity {
 			componentsByType[component.class] = []
 		}
 		componentsByType[component.class] << component
+		eventBroker?.publish(new ComponentAddedEvent(this, component))
 	}
 
 	/**
@@ -62,6 +69,7 @@ class GameEntity {
 	void removeComponent(GameComponent component) {
 		components.remove(component)
 		componentsByType[component.class]?.remove(component)
+		eventBroker?.publish(new ComponentRemovedEvent(this, component))
 	}
 
 	/**

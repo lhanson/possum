@@ -5,6 +5,8 @@ import io.github.lhanson.possum.component.TextComponent
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.TextEntity
+import io.github.lhanson.possum.events.ComponentAddedEvent
+import io.github.lhanson.possum.events.ComponentRemovedEvent
 import spock.lang.Specification
 
 class SceneTest extends Specification {
@@ -66,6 +68,35 @@ class SceneTest extends Specification {
 			def results = scene.getEntitiesMatching([TextComponent])
 		then:
 			results == [testEntity]
+	}
+
+	def "Component added events are processed"() {
+		given:
+			GameEntity testEntity = new GameEntity(name: 'testEntity')
+			Scene scene = new Scene('testId', [testEntity])
+			ComponentAddedEvent addEvent = new ComponentAddedEvent(testEntity, new TextComponent())
+
+		when:
+			scene.eventBroker.publish(addEvent)
+			def results = scene.getEntitiesMatching([TextComponent])
+
+		then:
+			results == [testEntity]
+	}
+
+	def "Component removed events are processed"() {
+		given:
+			TextComponent textComponent = new TextComponent()
+			GameEntity testEntity = new GameEntity(name: 'testEntity', components: [textComponent])
+			Scene scene = new Scene('testId', [testEntity])
+			ComponentRemovedEvent removeEvent = new ComponentRemovedEvent(testEntity, textComponent)
+
+		when:
+			scene.eventBroker.publish(removeEvent)
+			def results = scene.getEntitiesMatching([TextComponent])
+
+		then:
+			results == []
 	}
 
 }
