@@ -24,6 +24,7 @@ to your choice of rendering system or UI.
   Out of the box, support for [AsciiPanel](https://github.com/trystan/AsciiPanel)
   rendering and Swing keyboard input adapter.
 * Basic animation system using alpha blending
+* Internal event broker
 
 
 # Writing a Possum-powered game
