@@ -25,6 +25,7 @@ to your choice of rendering system or UI.
   rendering and Swing keyboard input adapter.
 * Basic animation system using alpha blending
 * Internal event broker
+* Rendering debug mode with visual hints
 
 
 # Writing a Possum-powered game

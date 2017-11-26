@@ -32,6 +32,7 @@ class MovementSystem extends GameSystem {
 		StopWatch stopwatch = new StopWatch(name)
 		stopwatch.start('Processing active input')
 		if (scene.activeInput) {
+			log.trace("Updating movements for {} active inputs", scene.activeInput.size())
 			scene.getEntitiesMatching([PlayerInputAwareComponent]).each { entity ->
 				log.trace "Applying {} to {}", scene.activeInput, entity.name
 				Vector2 newVelocity = new Vector2()
@@ -64,7 +65,7 @@ class MovementSystem extends GameSystem {
 			if (vc != still) {
 				def oldPos = new AreaComponent(ac)
 				ac.position.vector2.add(vc.vector2)
-				log.trace "Entity {} moved from {} to {}", it.name, ac.position, oldPos.position
+				log.trace "Entity {} moved from {} to {}", it.name, oldPos.position, ac.position
 				scene.entityNeedsRendering(it, oldPos)
 			}
 		}

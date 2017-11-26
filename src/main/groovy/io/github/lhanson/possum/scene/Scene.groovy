@@ -30,7 +30,7 @@ class Scene {
 	private List<GameEntity> entities = []
 	private Map<Class, List<GameEntity>> entitiesByComponentType = [:]
 	// A set of entities modified in such a way as to require re-rendering
-	Set<GameEntity> entitiesToBeRendered = []
+	private Set<GameEntity> entitiesToBeRendered = []
 
 	/** Unique identifier for this scene */
 	String id
@@ -40,6 +40,10 @@ class Scene {
 	Set<MappedInput> activeInput = []
 	/** Event broker for this scene */
 	EventBroker eventBroker = new EventBroker()
+	/** Whether the simulation is in debug mode */
+	volatile boolean debug = false
+	/** If we're in debug mode, how long to pause while showing rendering hints */
+	volatile int debugPauseMillis = 1000
 	/** Whether the simulation is paused */
 	volatile boolean paused = false
 

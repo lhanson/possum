@@ -3,6 +3,7 @@ package io.github.lhanson.possum.rendering
 import asciiPanel.AsciiPanel
 import io.github.lhanson.possum.component.*
 import io.github.lhanson.possum.entity.GameEntity
+import io.github.lhanson.possum.entity.GaugeEntity
 import io.github.lhanson.possum.entity.GridEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.RerenderEntity
@@ -161,6 +162,8 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		checkScrollBoundaries(scene)
 		stopwatch.stop()
 
+		renderDebugHints(scene, stopwatch)
+
 		stopwatch.start('processing each entity')
 		scene.entitiesToBeRendered.each { entity ->
 			if (entity instanceof GridEntity) {
@@ -198,6 +201,32 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		scene.entitiesToBeRendered.clear()
 		stopwatch.stop()
 		logger.trace "Render complete. {}", stopwatch
+	}
+
+	void renderDebugHints(Scene scene, StopWatch stopwatch) {
+		if (scene.debug) {
+			boolean pauseForHints = false
+			stopwatch.start('rendering debug hints')
+			scene.entitiesToBeRendered
+					.findAll { !(it instanceof GaugeEntity) }
+					.each { entity ->
+				if (entity instanceof RerenderEntity) {
+					AreaComponent area = translateWorldToScreen(entity.getComponentOfType(AreaComponent), viewport)
+					logger.debug "Hinting clearing {}", area
+					// Draw a red block where we're clearing (▓)
+					def red = new Color(255, 0, 0, 100)
+					terminal.clear((char) 178, area.x, area.y, area.width, area.height, red, Color.black)
+					pauseForHints = true
+				}
+			}
+
+			if (pauseForHints) {
+				terminal.paintImmediately(0, 0, terminal.width, terminal.height)
+				logger.debug "Pausing to display render hints for ${scene.debugPauseMillis} ms"
+				Thread.sleep(scene.debugPauseMillis)
+			}
+			stopwatch.stop()
+		}
 	}
 
 	boolean isVisible(GameEntity entity) {

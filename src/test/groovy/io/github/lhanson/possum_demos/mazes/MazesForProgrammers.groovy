@@ -228,8 +228,17 @@ class MazesForProgrammers {
 												return MappedInput.LEFT
 											case rawInput.VK_RIGHT:
 												return MappedInput.RIGHT
+											case rawInput.VK_PLUS:
+											case rawInput.VK_ADD:
+											case rawInput.VK_SHIFT | rawInput.VK_EQUALS:
+												return MappedInput.INCREASE_DEBUG_PAUSE
+											case rawInput.VK_MINUS:
+												return MappedInput.DECREASE_DEBUG_PAUSE
 											case rawInput.VK_ESCAPE:
 												transition(START)
+												break
+											case rawInput.VK_D:
+												return MappedInput.DEBUG
 												break
 											case rawInput.VK_P:
 												return MappedInput.PAUSE
