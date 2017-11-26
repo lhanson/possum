@@ -1,4 +1,4 @@
-package io.github.lhanson.possum.maze
+package io.github.lhanson.possum.terrain.maze
 
 import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.entity.GameEntity

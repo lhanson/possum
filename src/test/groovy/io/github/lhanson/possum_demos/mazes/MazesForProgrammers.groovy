@@ -19,8 +19,8 @@ import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.TextEntity
 import io.github.lhanson.possum.input.InputContext
 import io.github.lhanson.possum.input.MappedInput
-import io.github.lhanson.possum.maze.BinaryTree
-import io.github.lhanson.possum.maze.MazeCarver
+import io.github.lhanson.possum.terrain.maze.BinaryTree
+import io.github.lhanson.possum.terrain.maze.MazeCarver
 import io.github.lhanson.possum.rendering.RenderingSystem
 import io.github.lhanson.possum.scene.PossumSceneBuilder
 import io.github.lhanson.possum.scene.Scene

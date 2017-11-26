@@ -1,4 +1,4 @@
-package io.github.lhanson.possum.maze
+package io.github.lhanson.possum.terrain.maze
 
 import io.github.lhanson.possum.collision.ImpassableComponent
 import io.github.lhanson.possum.component.*
