@@ -20,7 +20,7 @@ import io.github.lhanson.possum.entity.TextEntity
 import io.github.lhanson.possum.input.InputContext
 import io.github.lhanson.possum.input.MappedInput
 import io.github.lhanson.possum.terrain.maze.BinaryTreeMazeGenerator
-import io.github.lhanson.possum.terrain.maze.MazeCarver
+import io.github.lhanson.possum.terrain.WallCarver
 import io.github.lhanson.possum.rendering.RenderingSystem
 import io.github.lhanson.possum.scene.PossumSceneBuilder
 import io.github.lhanson.possum.scene.Scene
@@ -130,7 +130,7 @@ class MazesForProgrammers {
 		Scene mazeScene() {
 			GridEntity maze = BinaryTreeMazeGenerator.linkCells(new GridEntity(30, 20))
 			def entities = []
-			def walls = MazeCarver.buildWalls(maze)
+			def walls = WallCarver.buildWalls(maze)
 			entities.addAll walls
 
 			AreaComponent startPos = movementSystem.randomPassableSpaceWithin(walls)
