@@ -11,7 +11,7 @@ import io.github.lhanson.possum.entity.GridEntity
  * each cell of the grid is used, and 'walls' are only represented
  * implicitly by neighboring cells being unconnected.
  */
-class BinaryTree {
+class BinaryTreeMazeGenerator {
 	/**
 	 * Constructs a maze within the provided grid
 	 * @param grid the collection of pre-existing, unlinked cells to operate on

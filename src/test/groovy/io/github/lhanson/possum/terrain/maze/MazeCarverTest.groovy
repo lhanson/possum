@@ -12,7 +12,7 @@ class MazeCarverTest extends Specification {
 			int width = 10
 			int height = 9
 			MovementSystem movementSystem = new MovementSystem()
-			GridEntity maze = BinaryTree.linkCells(new GridEntity(width, height))
+			GridEntity maze = BinaryTreeMazeGenerator.linkCells(new GridEntity(width, height))
 			List<GameEntity> walls = MazeCarver.buildWalls(maze)
 		when:
 			AreaComponent boundingBox = movementSystem.boundingBox(walls.collect { it.getComponentOfType(AreaComponent) })

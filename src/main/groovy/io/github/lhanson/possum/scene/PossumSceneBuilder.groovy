@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 @Component
 abstract class PossumSceneBuilder {
 	static String START = 'start' // The scene ID every game starts in by default
-	private String nextSceneId = START
+	String nextSceneId = START
 	Map<String, Scene> scenesById = [:]
 
 	@Autowired
@@ -42,7 +42,7 @@ abstract class PossumSceneBuilder {
 	 *
 	 * @param nextSceneId the scene to run next, or null if the program should exit
 	 */
-	void transition(String nextSceneId) {
+	def transition = { String nextSceneId ->
 		this.nextSceneId = nextSceneId
 	}
 }
