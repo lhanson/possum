@@ -166,10 +166,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 
 		stopwatch.start('processing each entity')
 		scene.entitiesToBeRendered.each { entity ->
-			if (entity instanceof GridEntity) {
-				// Maze renderer, won't be the same as tile-based game renderer
-				renderMaze(entity)
-			} else if (entity instanceof PanelEntity) {
+			if (entity instanceof PanelEntity) {
 				renderPanelBorders(entity)
 			} else if (entity instanceof RerenderEntity) {
 				AreaComponent area = translateWorldToScreen(entity.getComponentOfType(AreaComponent), viewport)
@@ -396,37 +393,6 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		}
 		// Bottom border
 		terminal.write(ll + ("$h" * (ac.width - 2)) + lr, ac.x, ac.y + (ac.height - 1))
-	}
-
-	/*
-	 * Special-case code for rendering mazes as text, without
-	 * expanding them with MazeCarver to be actual 2D structures.
-	 */
-	private void renderMaze(GridEntity grid) {
-		def baseX = 0, baseY = 0
-		PositionComponent pc = grid.getComponentOfType(PositionComponent)
-		if (pc) {
-			baseX = (int) pc.x
-			baseY = (int) pc.y
-		}
-		def yOffset = baseY + 1
-		def body = '   '
-		terminal.write('+' + ('---+' * grid.width), baseX, baseY)
-		for (int row = 0; row < grid.height; row++) {
-			def top = '|'
-			def bottom = '+'
-			for (int col = 0; col < grid.width; col++) {
-				GridCellComponent cell = grid.cellAt(col, row)
-				def eastBoundary = cell.isLinked(cell.east) ? ' ' : '|'
-				def southBoundary = cell.isLinked(cell.south) ? '   ' : '---'
-				def corner = '+'
-				top += body + eastBoundary
-				bottom += southBoundary + corner
-			}
-			terminal.write(top, baseX, yOffset)
-			terminal.write(bottom, baseX, yOffset + 1)
-			yOffset += 2
-		}
 	}
 
 	int relativeX(RelativePositionComponent rpc) {
