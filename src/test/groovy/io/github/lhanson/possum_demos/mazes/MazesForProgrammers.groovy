@@ -42,8 +42,7 @@ import java.text.DecimalFormat
  * https://pragprog.com/book/jbmaze/mazes-for-programmers
  */
 @SpringBootApplication(scanBasePackages = [
-		'io.github.lhanson.possum',
-		'io.github.lhanson.mazes'
+		'io.github.lhanson.possum'
 ])
 class MazesForProgrammers {
 	@Autowired
