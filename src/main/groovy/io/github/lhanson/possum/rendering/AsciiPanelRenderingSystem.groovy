@@ -4,7 +4,6 @@ import asciiPanel.AsciiPanel
 import io.github.lhanson.possum.component.*
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.GaugeEntity
-import io.github.lhanson.possum.entity.GridEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.RerenderEntity
 import io.github.lhanson.possum.entity.TextEntity
@@ -40,7 +39,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		if (initialViewportSize) {
 			viewport = new AreaComponent(0, 0, initialViewportSize.x, initialViewportSize.y)
 		} else {
-			viewport = new AreaComponent(0, 0, 80, 24)
+			viewport = new AreaComponent(0, 0, 100, 40)
 		}
 		terminal = new AsciiPanel(viewport.width, viewport.height)
 		logger.debug "Created terminal with viewport {}", viewport
