@@ -4,14 +4,24 @@ import io.github.lhanson.possum.collision.ImpassableComponent
 import io.github.lhanson.possum.component.*
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.GridEntity
+import io.github.lhanson.possum.terrain.maze.BinaryTreeMazeGenerator
 
 /**
  * Takes a logical representation of a space; e.g. a grid with linked
  * cells representing open areas and implicit walls represented by
  * the lack of neighboring cells being linked, and * generates the
  * list of entities required to represent walls.
+ *
+ * Takes GridEntity objects representing a logical space
+ * and transforms them into a list of discrete wall entities.
+ *
+ * Can do literal 1:1 grid-to-wall mapping or it can expand
+ * a set of linked cells where walls are implicitly represented
+ * by the lack of neighboring cells being linked, as is the
+ * case with algorithms like {@link BinaryTreeMazeGenerator}.
  */
 class WallCarver {
+
 	/**
 	 * @param grid a grid wherein walls are not explicitly represented by cells
 	 * @return a set of 2D entities representing the grid walls
@@ -46,13 +56,23 @@ class WallCarver {
 		walls
 	}
 
-	static GameEntity buildWall(int x, int y) {
+	/**
+	 * @param grid a grid wherein walls explicitly represented by cells
+	 * @return a set of 2D entities representing the grid walls
+	 */
+	static List<GameEntity> getWalls(GridEntity grid, char wallChar = (char) 176/* ░ */) {
+		grid.cellList.findResults { GridCellComponent cell ->
+			cell.wall ? buildWall(cell.x, cell.y, wallChar) : null
+		}
+	}
+
+	static GameEntity buildWall(int x, int y, char wallChar = (char) 176/* ░ */) {
 		new GameEntity(
 				name: 'wall',
 				components: [
 						new AreaComponent(x, y, 1, 1),
 						new ImpassableComponent(),
-						new TextComponent(String.valueOf((char)176)) // ░
+						new TextComponent(String.valueOf(wallChar))
 				])
 	}
 

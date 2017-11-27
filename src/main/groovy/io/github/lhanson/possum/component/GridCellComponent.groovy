@@ -8,6 +8,8 @@ package io.github.lhanson.possum.component
 class GridCellComponent implements GameComponent {
 	GridCellComponent north, south, east, west
 	List<GridCellComponent> links = []
+	/** Whether this cell represents a wall */
+	boolean wall = false
 	int x, y
 
 	GridCellComponent(int x, int y) {
