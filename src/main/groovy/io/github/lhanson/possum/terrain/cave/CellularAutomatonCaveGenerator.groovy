@@ -3,32 +3,59 @@ package io.github.lhanson.possum.terrain.cave
 import io.github.lhanson.possum.entity.GridEntity
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Component
 
 /**
  * Constructs a cave using a cellular automaton.
  *
  * See: http://www.roguebasin.com/index.php?title=Cellular_Automata_Method_for_Generating_Random_Cave-Like_Levels
  */
+@Component
 class CellularAutomatonCaveGenerator {
-	Logger log = LoggerFactory.getLogger(this.class)
-	Random rand
-	int[][] grid
-	int width
-	int height
+	@Autowired Random rand
+	private Logger log = LoggerFactory.getLogger(this.class)
+	private int[][] grid
+	/** The width of the grid to generate */
+	int width = 140
+	/** The height of the grid to generate */
+	int height = 60
+	/** The percentage of cells which will be initially alive */
+	int initialFactor = 60
 
 	/**
-	 * Runs a cellular automaton system to generate a grid of the specified dimensions.
+	 * Run the automaton the specified number of generations and create
+	 * a GridEntity out of the result.
 	 *
-	 * @param width the width of the generated grid
-	 * @param height the height of the generated grid
-	 * @param initialFactor the percentage of cells which will be initially alive
-	 * @param generations the number of generations to run
+	 * @param generations how many generations to run the automaton through
+	 * @return a GridEntity representing the final results
 	 */
-	CellularAutomatonCaveGenerator(int width, int height, Long randomSeed = null, int initialFactor = 60, int generations = 5) {
-		this.width = width
-		this.height = height
+	GridEntity generate(int generations = 5) {
+		init()
+
+		generations.times {
+			log.trace "Calculating generation"
+			int[][] nextGrid = copyGrid(grid)
+			for (int x = 0; x < width; x++) {
+				for (int y = 0; y < height; y++) {
+					if (livingNeighbors(x, y) >= 5 || /*livingNeighbors(x, y) == 0 ||*/ isBorder(x, y)) {
+						nextGrid[x][y] = 1
+					} else {
+						nextGrid[x][y] = 0
+					}
+				}
+			}
+			grid = nextGrid
+		}
+
+		return getGridEntity()
+	}
+
+	/**
+	 * Initialize the CA with current parameters.
+	 */
+	void init() {
 		grid = new int[width][height]
-		rand = new Random(randomSeed ?: System.currentTimeMillis())
 
 		// Set random initial state based on the initialFactor
 		for (int x = 0; x < width; x++) {
@@ -38,26 +65,6 @@ class CellularAutomatonCaveGenerator {
 				}
 			}
 		}
-
-		generations.times { generate() }
-	}
-
-	/**
-	 * Advance the CA universe a single step
-	 */
-	void generate() {
-		log.trace "Calculating generation"
-		int[][] nextGrid = copyGrid(grid)
-		for (int x = 0; x < width; x++) {
-			for (int y = 0; y < height; y++) {
-				if (livingNeighbors(x, y) >= 5 || /*livingNeighbors(x, y) == 0 ||*/ isBorder(x, y)) {
-					nextGrid[x][y] = 1
-				} else {
-					nextGrid[x][y] = 0
-				}
-			}
-		}
-		grid = nextGrid
 	}
 
 	int[][] copyGrid(int[][] grid) {

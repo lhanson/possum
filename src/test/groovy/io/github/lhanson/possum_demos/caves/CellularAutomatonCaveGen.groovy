@@ -14,6 +14,7 @@ import io.github.lhanson.possum.component.TimerComponent
 import io.github.lhanson.possum.component.VelocityComponent
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.GaugeEntity
+import io.github.lhanson.possum.entity.GridEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.TextEntity
 import io.github.lhanson.possum.input.InputContext
@@ -63,6 +64,7 @@ class CellularAutomatonCaveGen {
 		Logger log = LoggerFactory.getLogger(this.class)
 		@Autowired MovementSystem movementSystem
 		@Autowired RenderingSystem renderingSystem
+		@Autowired CellularAutomatonCaveGenerator caveGenerator
 
 		@PostConstruct
 		void initializeScenes() {
@@ -126,9 +128,8 @@ class CellularAutomatonCaveGen {
 		}
 
 		Scene caveScene() {
-			CellularAutomatonCaveGenerator caveGenerator = new CellularAutomatonCaveGenerator(140, 60, 1L)
-//			CellularAutomatonCaveGenerator caveGenerator = new CellularAutomatonCaveGenerator(140, 60, 1L, 35, 5)
-			def entities = WallCarver.getWalls(caveGenerator.getGridEntity(), (char)219)
+			GridEntity grid = caveGenerator.generate()
+			def entities = WallCarver.getWalls(grid, (char)219)
 
 			AreaComponent startPos = movementSystem.randomPassableSpaceWithin(entities)
 			AreaComponent finishPos = movementSystem.randomPassableSpaceWithin(entities)

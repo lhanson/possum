@@ -6,7 +6,12 @@ class CellularAutomatonCaveGeneratorTest extends Specification {
 	CellularAutomatonCaveGenerator generator
 
 	def setup() {
-		generator = new CellularAutomatonCaveGenerator(4, 4, 45)
+		generator = new CellularAutomatonCaveGenerator()
+		generator.width = 4
+		generator.height = 4
+		generator.initialFactor = 45
+		generator.rand = new Random()
+		generator.init()
 		fillGrid(0)
 	}
 

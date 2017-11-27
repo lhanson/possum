@@ -22,7 +22,7 @@ import org.springframework.util.StopWatch
 class MovementSystem extends GameSystem {
 	@Autowired RenderingSystem renderingSystem
 	@Autowired CollisionSystem collisionSystem
-	Random random = new Random()
+	@Autowired Random random
 	Logger log = LoggerFactory.getLogger(this.class)
 	String name = 'MovementSystem'
 	VelocityComponent still = new VelocityComponent(0, 0)

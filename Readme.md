@@ -101,7 +101,6 @@ mechanisms from the AsciiPanel code into a more general class for all renderers 
 But in the meantime, I'll describe how `AsciiPanelRenderingSystem` works.
 
 ### Active rendering
-
 Rather than coupling visible entities to `AWT`'s passive rendering strategy (the Event Dispatch
 Thread calls `paint()` on components as it sees fit), we take active control of determining
 what screen regions need to be redrawn during each render loop. This also allows us to use more
@@ -119,3 +118,11 @@ When an action occurs which requires an entity to be re-rendered (the user moved
 scrolled the screen, etc.), the `GameSystem` which determined this will call `Scene#entityNeedsRendering()`.
 The `Scene` maintains a list of 'dirty' entities to render for the next iteration. It doesn't
 do the rendering itself, it merely tracks this list for any interested `RenderingSystem` to act on.
+
+## Random number generation
+
+A shared pseudo-random number generator is used throughout, and is seeded with the current timestamp
+by default. To facilitate repeatable behavior when testing, you can specify a random seed by
+adding it to an `application.yml` file in the game's working directory like so:
+
+    random-seed: 1
