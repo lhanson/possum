@@ -1,5 +1,6 @@
 package io.github.lhanson.possum.terrain.cave
 
+import io.github.lhanson.possum.component.GridCellComponent
 import io.github.lhanson.possum.entity.GridEntity
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -14,14 +15,15 @@ import org.springframework.stereotype.Component
 @Component
 class CellularAutomatonCaveGenerator {
 	@Autowired Random rand
-	private Logger log = LoggerFactory.getLogger(this.class)
-	private int[][] grid
+	Logger log = LoggerFactory.getLogger(this.class)
+	boolean initialized = false
+	int[][] grid
 	/** The width of the grid to generate */
 	int width = 140
 	/** The height of the grid to generate */
 	int height = 60
 	/** The percentage of cells which will be initially alive */
-	int initialFactor = 60
+	int initialFactor = 45
 
 	/**
 	 * Run the automaton the specified number of generations and create
@@ -30,15 +32,20 @@ class CellularAutomatonCaveGenerator {
 	 * @param generations how many generations to run the automaton through
 	 * @return a GridEntity representing the final results
 	 */
-	GridEntity generate(int generations = 5) {
-		init()
+	GridEntity generate(int generations = 10) {
+		if (!initialized) {
+			init()
+		}
 
 		generations.times {
 			log.trace "Calculating generation"
 			int[][] nextGrid = copyGrid(grid)
 			for (int x = 0; x < width; x++) {
 				for (int y = 0; y < height; y++) {
-					if (livingNeighbors(x, y) >= 5 || /*livingNeighbors(x, y) == 0 ||*/ isBorder(x, y)) {
+					int livingNeighbors = livingNeighbors(x, y)
+					if (isBorder(x, y) ||
+							(grid[x][y] == 0 && livingNeighbors >= 5) ||
+							(grid[x][y] == 1 && livingNeighbors >= 4)) {
 						nextGrid[x][y] = 1
 					} else {
 						nextGrid[x][y] = 0
@@ -54,17 +61,19 @@ class CellularAutomatonCaveGenerator {
 	/**
 	 * Initialize the CA with current parameters.
 	 */
-	void init() {
+	void init(int initialValue = 1) {
 		grid = new int[width][height]
 
 		// Set random initial state based on the initialFactor
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
 				if (isBorder(x, y) || rand.nextInt(100) <= initialFactor) {
-					grid[x][y] = 1
+					grid[x][y] = initialValue
 				}
 			}
 		}
+
+		initialized = true
 	}
 
 	int[][] copyGrid(int[][] grid) {
@@ -111,6 +120,32 @@ class CellularAutomatonCaveGenerator {
 			}
 		}
 		return result
+	}
+
+	void analyzeGrid() {
+		log.debug "Grid size: $width x $height = ${width * height} total cells"
+
+		int emptyCells = 0
+		for (int x = 0; x < width; x++) {
+			for (int y = 0; y < height; y++) {
+				if (grid[x][y] == 0) {
+					emptyCells++
+				}
+			}
+		}
+		log.debug "Grid is ${(emptyCells / (width * height)) * 100}% open with $emptyCells empty cells"
+	}
+
+	def countRooms() {
+		def rooms = []
+		def openCells = gridEntity.cellList.findAll { !it.wall }
+		while (openCells) {
+			def cell = openCells.pop()
+			def roomCells = GridCellComponent.floodFill(cell)
+			rooms.add roomCells
+			openCells.removeAll(roomCells)
+		}
+		return rooms
 	}
 
 }

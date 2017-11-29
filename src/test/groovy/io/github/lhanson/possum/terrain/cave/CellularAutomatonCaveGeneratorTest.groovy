@@ -6,13 +6,13 @@ class CellularAutomatonCaveGeneratorTest extends Specification {
 	CellularAutomatonCaveGenerator generator
 
 	def setup() {
-		generator = new CellularAutomatonCaveGenerator()
-		generator.width = 4
-		generator.height = 4
-		generator.initialFactor = 45
-		generator.rand = new Random()
-		generator.init()
-		fillGrid(0)
+		generator = new CellularAutomatonCaveGenerator(
+				width: 4,
+				height: 4,
+				initialFactor: 45,
+				rand: new Random()
+		)
+		generator.init(0)
 	}
 
 	def "livingNeighbors calculation doesn't include the cell itself"() {
@@ -48,15 +48,6 @@ class CellularAutomatonCaveGeneratorTest extends Specification {
 			generator.grid[0][0] = 1
 		then:
 			generator.livingNeighbors(1, 0) == 1
-	}
-
-	// Initialize all cells to `value`
-	def fillGrid(int value) {
-		for (int x = 0; x < generator.width; x++) {
-			for (int y = 0; y < generator.height; y++) {
-				generator.grid[x][y] = value
-			}
-		}
 	}
 
 }

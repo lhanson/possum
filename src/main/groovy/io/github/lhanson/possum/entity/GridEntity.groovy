@@ -31,9 +31,13 @@ class GridEntity extends GameEntity {
 			for (int y = 0; y < height; y++) {
 				GridCellComponent cell = cellAt(x, y)
 				cell.north = cellAt(cell.x, cell.y - 1)
-				cell.south = cellAt(cell.x, cell.y + 1)
+				cell.northeast = cellAt(cell.x + 1 , cell.y - 1)
 				cell.east  = cellAt(cell.x + 1, cell.y)
+				cell.southeast  = cellAt(cell.x + 1, cell.y + 1)
+				cell.south = cellAt(cell.x, cell.y + 1)
+				cell.southwest = cellAt(cell.x - 1, cell.y + 1)
 				cell.west  = cellAt(cell.x - 1, cell.y)
+				cell.northwest  = cellAt(cell.x - 1, cell.y - 1)
 			}
 		}
 	}

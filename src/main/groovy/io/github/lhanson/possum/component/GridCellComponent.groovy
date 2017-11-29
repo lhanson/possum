@@ -6,10 +6,11 @@ package io.github.lhanson.possum.component
  * linked to other cells in the four cardinal directions.
  */
 class GridCellComponent implements GameComponent {
-	GridCellComponent north, south, east, west
+	GridCellComponent north, northeast, east, southeast, south, southwest, west, northwest
 	List<GridCellComponent> links = []
 	/** Whether this cell represents a wall */
 	boolean wall = false
+	boolean visited = false
 	int x, y
 
 	GridCellComponent(int x, int y) {
@@ -35,13 +36,32 @@ class GridCellComponent implements GameComponent {
 		links.contains(cell)
 	}
 
+	/** Returns all of the non-null neighboring cells in 4 directions */
+	List<GridCellComponent> neighborhood4Way() {
+		[north, south, east, west] - null
+	}
+
+	/** Returns all of the non-null neighboring cells in 8 directions */
+	List<GridCellComponent> neighborhood8Way() {
+		[north, northeast, east, southeast, south, southwest, west, northwest] - null
+	}
+
+	/**
+	 * Performs a recursive flood fill beginning at the provided cell.
+	 *
+	 * @return all cells in the target cell's "room", defined by whether it's a wall or not
+	 */
+	static List<GridCellComponent> floodFill(GridCellComponent cell) {
+		def results = [cell]
+		cell.visited = true
+		cell.neighborhood8Way()
+				.findAll { !it.visited && it.wall == cell.wall }
+				.each { results.addAll(floodFill(it)) }
+		return results
+	}
+
 	@Override
 	String toString() {
-		String s = "[$x, $y "
-		if (north) s += "n"
-		if (east) s += "e"
-		if (south) s += "s"
-		if (west) s += "w"
-		"$s]"
+		"($x, $y)"
 	}
 }
