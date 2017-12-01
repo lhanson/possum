@@ -71,4 +71,29 @@ class AnimationSystemTest extends Specification {
 			alpha == 127
 	}
 
+	def "getPulsedAlpha when duration is greater than period"() {
+		given:
+			// This could happen if it has been longer between updates than the full pulse width
+			AnimatedComponent ac = new AnimatedComponent(currentDuration: 200, pulseDurationMillis: 100)
+
+		when:
+			int alpha = animationSystem.getPulsedAlpha(ac)
+
+		then:
+			// The result should be modulated by 255
+			alpha == 0
+	}
+
+	def "getPulsedAlpha when duration is much greater than period"() {
+		given:
+			// This could happen if it has been longer between updates than the full pulse width
+			AnimatedComponent ac = new AnimatedComponent(currentDuration: 400, pulseDurationMillis: 100)
+
+		when:
+			int alpha = animationSystem.getPulsedAlpha(ac)
+
+		then:
+			// The result should be modulated by 255
+			alpha == 0
+	}
 }

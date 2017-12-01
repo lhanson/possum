@@ -51,8 +51,13 @@ class AnimationSystem extends GameSystem {
 			// For the first half of the pulse we're decreasing alpha
 			return 255 - (255 * (ac.currentDuration / ac.pulseDurationMillis))
 		} else {
-			// Second half of the pulse ramps back up to 255
-			return 255 * (ac.currentDuration / ac.pulseDurationMillis)
+			// Second half of the pulse ramps back up to 255. Note that if we're  called after
+			// more time than a pulse width between updates, we need to wrap the value.
+			int alpha = 255 * (ac.currentDuration / ac.pulseDurationMillis)
+			if (alpha > 255) {
+				alpha = alpha % 255
+			}
+			return alpha
 		}
 	}
 }
