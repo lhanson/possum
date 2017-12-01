@@ -59,7 +59,7 @@ class MainLoop {
 	class LoopTimer {
 		// Maximum number of frames the simulation can fall behind realtime
 		// before increasing SIMULATION_TIMESTEP to catch up
-		final int MAX_SLOWDOWN_FRAMES = 5
+		final int MAX_SLOWDOWN_FRAMES = 3
 
 		// The amount of real elapsed time since the previous frame that we need to simulate for
 		long lag = 0
@@ -73,15 +73,18 @@ class MainLoop {
 		private long fpsFrameCounter = 0
 
 		/**
-		 * Called once per main loop iteration
+		 * Called at the beginning of every main loop iteration
 		 */
 		void tick() {
 			long currentTime = System.currentTimeMillis()
 			long elapsed = currentTime - previousTime
 			previousTime = currentTime
 			lag += elapsed
-			log.debug "Main loop - {}ms frame, {}ms lag, rendering at {} fps",
-					elapsed, lag, currentFps
+			if (lag >= SIMULATION_TIMESTEP) {
+				println ''
+				log.debug "Main loop - {}ms frame, {}ms lag, rendering at {} fps",
+						elapsed, lag, currentFps
+			}
 
 			// Update current FPS calculation every half-second
 			fpsTimeCounter += elapsed
@@ -103,8 +106,9 @@ class MainLoop {
 		void updateSimulation(Closure update) {
 			long updatesStartTime = System.currentTimeMillis()
 			int updateIterations = 0
+			int maxUpdateIterations = 0
 
-			while (lag >= SIMULATION_TIMESTEP) {
+			while (lag >= SIMULATION_TIMESTEP && maxUpdateIterations++ <= MAX_SLOWDOWN_FRAMES) {
 				update.call()
 				updateIterations++
 				lag -= SIMULATION_TIMESTEP
@@ -112,8 +116,10 @@ class MainLoop {
 
 			long updatesTime = System.currentTimeMillis() - updatesStartTime
 			long timePerUpdate = updatesTime / (updateIterations ?: 1)
-			log.debug "{} game updates took {}ms, or {}ms per update. Simulated timestep is {}ms",
-					updateIterations, updatesTime, timePerUpdate, SIMULATION_TIMESTEP
+			if (updateIterations) {
+				log.debug "{} game updates took {}ms, or {}ms per update. Simulated timestep is {}ms",
+						updateIterations, updatesTime, timePerUpdate, SIMULATION_TIMESTEP
+			}
 
 			// Check to see whether our SIMULATION_HZ_GOAL is realistic, or whether
 			// we have to update in larger fixed timesteps to keep up.
@@ -143,7 +149,10 @@ class MainLoop {
 		void time(String description, Closure action) {
 			long startTime = System.currentTimeMillis()
 			action.call()
-			log.debug "$description took {}ms", System.currentTimeMillis() - startTime
+			def elapsed = System.currentTimeMillis() - startTime
+			if (elapsed > 10) {
+				log.debug "$description took {}ms", elapsed
+			}
 		}
 
 	}
