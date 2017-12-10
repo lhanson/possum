@@ -147,7 +147,9 @@ class Quadtree {
 				int index = getIndex(it)
 				if (index >= 0) {
 					log.debug("($level) Moving {} to subtree $index ({})", it.getComponentOfType(AreaComponent), nodes[index].bounds)
-					nodes[index].insert(it)
+					if (!nodes[index].insert(it)) {
+						remainingEntities.add(it)
+					}
 				} else {
 					log.debug("($level) Keeping {} at current level as it overlaps subquadrants", it.getComponentOfType(AreaComponent))
 					remainingEntities.add(it)
@@ -157,6 +159,7 @@ class Quadtree {
 			// This node will retain ownership of entities overlapping multiple quadrants
 			entities.addAll(remainingEntities)
 		}
+		return true
 	}
 
 	/**
@@ -194,4 +197,5 @@ class Quadtree {
 		}
 		return s
 	}
+
 }
