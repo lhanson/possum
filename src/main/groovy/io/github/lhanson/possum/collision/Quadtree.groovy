@@ -20,11 +20,14 @@ import org.slf4j.LoggerFactory
  * @see <a href="http://gameprogrammingpatterns.com/spatial-partition.html">http://gameprogrammingpatterns.com/spatial-partition.html</a>
  */
 class Quadtree {
+	static final int DEFAULT_MAX_OBJECTS = 10
+	static final int DEFAULT_MAX_LEVELS = 10
+
 	Logger log = LoggerFactory.getLogger(this.class)
 	/** Objects a node can hold before it splits */
-	int maxObjects = 10
+	int maxObjects = DEFAULT_MAX_OBJECTS
 	/** Deepest subnode level allowed */
-	int maxLevels = 10
+	int maxLevels = DEFAULT_MAX_LEVELS
 
 	int level = 0
 	List<GameEntity> entities = []
@@ -34,13 +37,15 @@ class Quadtree {
 	Quadtree() { }
 
 	Quadtree(AreaComponent bounds) {
-		this(0,bounds)
+		this(0, bounds)
 	}
 
-	Quadtree(int level, AreaComponent bounds) {
+	Quadtree(int level, AreaComponent bounds, int maxObjects = DEFAULT_MAX_OBJECTS, int maxLevels = DEFAULT_MAX_LEVELS) {
 		entities = []
 		this.level = level
 		this.bounds = bounds
+		this.maxObjects = maxObjects
+		this.maxLevels = maxLevels
 	}
 
 	/**
@@ -63,10 +68,10 @@ class Quadtree {
 		int x = bounds.x
 		int y = bounds.y
 
-		nodes[0] = new Quadtree(level + 1, new AreaComponent(x, y, subWidth, subHeight))
-		nodes[1] = new Quadtree(level + 1, new AreaComponent(x + subWidth, y, subWidth, subHeight))
-		nodes[2] = new Quadtree(level + 1, new AreaComponent(x, y + subHeight, subWidth, subHeight))
-		nodes[3] = new Quadtree(level + 1, new AreaComponent(x + subWidth, y + subHeight, subWidth, subHeight))
+		nodes[0] = new Quadtree(level + 1, new AreaComponent(x, y, subWidth, subHeight), maxObjects, maxLevels)
+		nodes[1] = new Quadtree(level + 1, new AreaComponent(x + subWidth, y, subWidth, subHeight), maxObjects, maxLevels)
+		nodes[2] = new Quadtree(level + 1, new AreaComponent(x, y + subHeight, subWidth, subHeight), maxObjects, maxLevels)
+		nodes[3] = new Quadtree(level + 1, new AreaComponent(x + subWidth, y + subHeight, subWidth, subHeight), maxObjects, maxLevels)
 	}
 
 	/**
@@ -130,8 +135,8 @@ class Quadtree {
 			}
 		}
 
-		log.debug("($level) Inserting $entity at level $level")
 		entities.add(entity)
+		log.debug("($level) Inserted $entity at level $level, have ${entities.size()} out of $maxObjects entities at this level")
 
 		// If we've reached our max threshold, split into subtrees
 		if (entities.size() > maxObjects && level < maxLevels) {
@@ -141,7 +146,7 @@ class Quadtree {
 			entities.each {
 				int index = getIndex(it)
 				if (index >= 0) {
-					log.debug("($level) Moving {} to subindex $index ({})", it.getComponentOfType(AreaComponent), nodes[index].bounds)
+					log.debug("($level) Moving {} to subtree $index ({})", it.getComponentOfType(AreaComponent), nodes[index].bounds)
 					nodes[index].insert(it)
 				} else {
 					log.debug("($level) Keeping {} at current level as it overlaps subquadrants", it.getComponentOfType(AreaComponent))

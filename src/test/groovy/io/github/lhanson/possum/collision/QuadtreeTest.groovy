@@ -41,6 +41,17 @@ class QuadtreeTest extends Specification {
 			quadtree.nodes.every { it }
 	}
 
+	def "Splits propagate parent node properties to children"() {
+		when:
+			quadtree.maxObjects = 6
+			quadtree.maxLevels = 7
+			quadtree.split()
+
+		then:
+			quadtree.nodes.every { it.maxObjects == 6 }
+			quadtree.nodes.every { it.maxLevels == 7 }
+	}
+
 	def "Splits accurately subdivide the existing area"() {
 		given:
 			quadtree.maxObjects = 1 // Force a split
