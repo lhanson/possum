@@ -178,5 +178,36 @@ class QuadtreeTest extends Specification {
 			matches.size() == 2
 	}
 
+	def "Count levels"() {
+		given:
+			quadtree.maxObjects = 1 // Force splits
+			quadtree.insert(new GameEntity(components: [new AreaComponent(0, 0, 1,1)]))
+			// Cause a split
+			quadtree.insert(new GameEntity(components: [new AreaComponent(9,9, 1,1)]))
+			// Another split
+			quadtree.insert(new GameEntity(components: [new AreaComponent(9,8, 1,1)]))
+			// Yet a third split
+			quadtree.insert(new GameEntity(components: [new AreaComponent(9, 7, 1,1)]))
 
+		when:
+			int levels = quadtree.countLevels()
+
+		then:
+			levels == 3
+	}
+
+	def "Count entities"() {
+		given:
+			quadtree.maxObjects = 1 // Force splits
+			quadtree.insert(new GameEntity(components: [new AreaComponent(0, 0, 1,1)]))
+			quadtree.insert(new GameEntity(components: [new AreaComponent(9,9, 1,1)]))
+			quadtree.insert(new GameEntity(components: [new AreaComponent(9,8, 1,1)]))
+
+		when:
+			int levels = quadtree.countEntities()
+
+		then:
+			levels == 3
+			println "$quadtree"
+	}
 }

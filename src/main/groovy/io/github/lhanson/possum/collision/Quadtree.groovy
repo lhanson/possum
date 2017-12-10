@@ -187,9 +187,33 @@ class Quadtree {
 		}
 	}
 
+	/** Returns the deepest level the quadtree has expanded to */
+	int countLevels() {
+		if (nodes[0] == null) {
+			return 1 // Bottomed out
+		}
+		return nodes.collect { it.countLevels() }.max() + 1
+	}
+
+	/** Returns the total number of entities contained by this and subtrees */
+	int countEntities () {
+		if (nodes[0] == null) {
+			return entities.size() // Bottomed out
+		}
+		return nodes.collect { it.entities.size() }.sum() + this.entities.size()
+	}
+
 	@Override
 	String toString() {
-		String s = ("\t" * level) + "Quadtree level $level, bounds $bounds, ${entities.size()} entities"
+		String s = ""
+		if (level == 0) {
+			s = "Quadtree statistics:\n" +
+				"====================\n" +
+					"Max objects per level: $maxObjects; max levels: $maxLevels\n" +
+					"Deepest level: ${countLevels()}\n" +
+					"Entity count: ${countEntities()}\n\n"
+		}
+		s += ("\t" * level) + "Quadtree level $level, bounds $bounds, ${entities.size()} entities"
 		if (nodes[0]) {
 			nodes.each {
 				s += "\n$it"
