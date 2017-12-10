@@ -197,10 +197,11 @@ class Quadtree {
 
 	/** Returns the total number of entities contained by this and subtrees */
 	int countEntities () {
-		if (nodes[0] == null) {
-			return entities.size() // Bottomed out
+		int count = entities.size()
+		if (nodes[0]) {
+			count += nodes.collect { it.countEntities() }.sum()
 		}
-		return nodes.collect { it.entities.size() }.sum() + this.entities.size()
+		return  count
 	}
 
 	@Override

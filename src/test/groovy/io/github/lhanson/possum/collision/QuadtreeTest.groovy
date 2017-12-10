@@ -200,14 +200,17 @@ class QuadtreeTest extends Specification {
 		given:
 			quadtree.maxObjects = 1 // Force splits
 			quadtree.insert(new GameEntity(components: [new AreaComponent(0, 0, 1,1)]))
-			quadtree.insert(new GameEntity(components: [new AreaComponent(9,9, 1,1)]))
-			quadtree.insert(new GameEntity(components: [new AreaComponent(9,8, 1,1)]))
+			quadtree.insert(new GameEntity(components: [new AreaComponent(9, 9, 1,1)]))
+			quadtree.insert(new GameEntity(components: [new AreaComponent(1, 0, 1,1)]))
+			quadtree.insert(new GameEntity(components: [new AreaComponent(1, 1, 1,1)]))
+			quadtree.insert(new GameEntity(components: [new AreaComponent(0, 6, 1,1)]))
 
 		when:
-			int levels = quadtree.countEntities()
+			int entities = quadtree.countEntities()
 
 		then:
-			levels == 3
-			println "$quadtree"
+			entities == 5
+		println "$quadtree"
 	}
+
 }
