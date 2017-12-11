@@ -54,7 +54,7 @@ class QuadtreeTest extends Specification {
 
 	def "Splits accurately subdivide the existing area"() {
 		given:
-			quadtree.maxObjects = 1 // Force a split
+			quadtree.maxObjects = 1
 			quadtree.insert(new GameEntity(components: [new AreaComponent(0, 0, 1,1)]))
 
 		when:
@@ -64,6 +64,20 @@ class QuadtreeTest extends Specification {
 		then:
 			quadtree.nodes[0].entities.size() == 1
 			quadtree.nodes[3].entities.size() == 1
+	}
+
+	def "Splits handle odd dimensions"() {
+		given:
+			int width = 11
+			int height = 11
+			quadtree = new Quadtree(new AreaComponent(0, 0, width, height))
+
+		when:
+			quadtree.split()
+
+		then:
+			quadtree.nodes[0].bounds.width + quadtree.nodes[1].bounds.width == width
+			quadtree.nodes[0].bounds.height + quadtree.nodes[2].bounds.height == height
 	}
 
 	def "Get index correctly identifies a quadrant given an area"() {
@@ -193,7 +207,7 @@ class QuadtreeTest extends Specification {
 			int levels = quadtree.countLevels()
 
 		then:
-			levels == 3
+			levels == 4
 	}
 
 	def "Count entities"() {

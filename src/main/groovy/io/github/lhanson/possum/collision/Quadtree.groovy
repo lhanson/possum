@@ -63,15 +63,17 @@ class Quadtree {
 	 * Splits the node into 4 subnodes
 	 */
 	void split() {
-		int subWidth = bounds.width / 2
-		int subHeight = bounds.height / 2
+		int subWidthLeft = Math.floor(bounds.width / 2)
+		int subWidthRight = Math.ceil(bounds.width / 2)
+		int subHeightTop = Math.floor(bounds.height / 2)
+		int subHeightBottom = Math.ceil(bounds.height / 2)
 		int x = bounds.x
 		int y = bounds.y
 
-		nodes[0] = new Quadtree(level + 1, new AreaComponent(x, y, subWidth, subHeight), maxObjects, maxLevels)
-		nodes[1] = new Quadtree(level + 1, new AreaComponent(x + subWidth, y, subWidth, subHeight), maxObjects, maxLevels)
-		nodes[2] = new Quadtree(level + 1, new AreaComponent(x, y + subHeight, subWidth, subHeight), maxObjects, maxLevels)
-		nodes[3] = new Quadtree(level + 1, new AreaComponent(x + subWidth, y + subHeight, subWidth, subHeight), maxObjects, maxLevels)
+		nodes[0] = new Quadtree(level + 1, new AreaComponent(x, y, subWidthLeft, subHeightTop), maxObjects, maxLevels)
+		nodes[1] = new Quadtree(level + 1, new AreaComponent(x + subWidthRight, y, subWidthRight, subHeightTop), maxObjects, maxLevels)
+		nodes[2] = new Quadtree(level + 1, new AreaComponent(x, y + subHeightBottom, subWidthLeft, subHeightBottom), maxObjects, maxLevels)
+		nodes[3] = new Quadtree(level + 1, new AreaComponent(x + subWidthRight, y + subHeightBottom, subWidthRight, subHeightBottom), maxObjects, maxLevels)
 	}
 
 	/**
@@ -121,7 +123,7 @@ class Quadtree {
 	 */
 	def insert(GameEntity entity) {
 		AreaComponent area = entity.getComponentOfType(AreaComponent)
-		if (!bounds.overlaps(area)) {
+		if (!bounds.contains(area)) {
 			log.debug("($level) Not inserting {}; {} is not contained within {}", entity, area, bounds)
 			return false
 		}
@@ -130,7 +132,7 @@ class Quadtree {
 		if (nodes[0]) {
 			int index = getIndex(area)
 			if (index != -1) {
-				log.debug("($level) Entity fits subtree $index, recursing")
+				log.debug("($level) Entity {} fits subtree $index ({}), recursing", area, nodes[index].bounds)
 				return nodes[index].insert(entity)
 			}
 		}
