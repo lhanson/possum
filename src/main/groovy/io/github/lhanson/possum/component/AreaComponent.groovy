@@ -102,6 +102,15 @@ class AreaComponent implements GameComponent {
 	}
 
 	/**
+	 * Computes whether this area completely contains the provided one
+	 * @param that the area we're checking to see if we contain
+	 * @return whether this area completely contains the provided one
+	 */
+	boolean contains(AreaComponent that) {
+		this.union(that) == that
+	}
+
+	/**
 	 * Computes the areas remaining after subtractedAreas are subtracted from this one by
 	 * individually subtracting each area from the subject, and then subtracting the overlaps
 	 * resulting from these individual decompositions.

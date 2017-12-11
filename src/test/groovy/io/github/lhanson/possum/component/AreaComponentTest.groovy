@@ -49,6 +49,23 @@ class AreaComponentTest extends Specification {
 			area1.overlaps(area2)
 	}
 
+	def "Determining if an area is completely contained by another"() {
+		when:
+			def bigArea = new AreaComponent(0, 0, 100, 100)
+			def internalArea = new AreaComponent(10, 10, 10, 10)
+			def overlappingArea = new AreaComponent(50, 50, 100, 100)
+
+		then:
+			bigArea.overlaps(internalArea)
+			bigArea.overlaps(overlappingArea)
+
+			bigArea.union(internalArea) == internalArea
+			bigArea.contains(internalArea)
+
+			bigArea.union(overlappingArea) != overlappingArea
+			!bigArea.contains(overlappingArea)
+	}
+
 	def "Union of same area"() {
 		given:
 			def area1 = new AreaComponent(0, 0, 4,4)
@@ -273,4 +290,5 @@ class AreaComponentTest extends Specification {
 					new AreaComponent(0, 1, 4, 3)
 			] as Set
 	}
+
 }
