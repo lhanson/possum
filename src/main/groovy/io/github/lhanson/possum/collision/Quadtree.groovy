@@ -71,9 +71,9 @@ class Quadtree {
 		int y = bounds.y
 
 		nodes[0] = new Quadtree(level + 1, new AreaComponent(x, y, subWidthLeft, subHeightTop), maxObjects, maxLevels)
-		nodes[1] = new Quadtree(level + 1, new AreaComponent(x + subWidthRight, y, subWidthRight, subHeightTop), maxObjects, maxLevels)
-		nodes[2] = new Quadtree(level + 1, new AreaComponent(x, y + subHeightBottom, subWidthLeft, subHeightBottom), maxObjects, maxLevels)
-		nodes[3] = new Quadtree(level + 1, new AreaComponent(x + subWidthRight, y + subHeightBottom, subWidthRight, subHeightBottom), maxObjects, maxLevels)
+		nodes[1] = new Quadtree(level + 1, new AreaComponent(x + subWidthLeft, y, subWidthRight, subHeightTop), maxObjects, maxLevels)
+		nodes[2] = new Quadtree(level + 1, new AreaComponent(x, y + subHeightTop, subWidthLeft, subHeightBottom), maxObjects, maxLevels)
+		nodes[3] = new Quadtree(level + 1, new AreaComponent(x + subWidthLeft, y + subHeightTop, subWidthRight, subHeightBottom), maxObjects, maxLevels)
 	}
 
 	/**
@@ -86,34 +86,22 @@ class Quadtree {
 	}
 
 	int getIndex(AreaComponent area) {
-		int index = -1
-		int verticalMidpoint = bounds.x + (bounds.width / 2)
-		int horizontalMidpoint = bounds.y + (bounds.height / 2)
+		log.debug("($level) Computing index of area {} within total bounds of {}", area, bounds)
 
-		// Object can completely fit within the top quadrants
-		boolean topHalf = (area.y < horizontalMidpoint && area.y + area.height <= horizontalMidpoint)
-		// Object can completely fit within the bottom quadrants
-		boolean bottomHalf = (area.y >= horizontalMidpoint)
-		// Object can completely fit within the left quadrants
-		if (area.x < verticalMidpoint && area.x + area.width <= verticalMidpoint) {
-			if (topHalf) {
-				index = 0
-			}
-			else if (bottomHalf) {
-				index = 2
+		if (nodes[0] != null) {
+			if (nodes[0].bounds.contains(area)) {
+				return 0
+			} else if (nodes[1].bounds.contains(area)) {
+				return 1
+			} else if (nodes[2].bounds.contains(area)) {
+				return 2
+			} else if (nodes[3].bounds.contains(area)) {
+				return 3
 			}
 		}
-		// Object can completely fit within the right quadrants
-		else if (area.x >= verticalMidpoint) {
-			if (topHalf) {
-				index = 1
-			}
-			else if (bottomHalf) {
-				index = 3
-			}
-		}
+		// area doesn't fit neatly into a child quadrant
+		return -1
 
-		return index
 	}
 
 	/**
@@ -124,7 +112,7 @@ class Quadtree {
 	def insert(GameEntity entity) {
 		AreaComponent area = entity.getComponentOfType(AreaComponent)
 		if (!bounds.contains(area)) {
-			log.debug("($level) Not inserting {}; {} is not contained within {}", entity, area, bounds)
+			log.error("($level) Not inserting {}; {} is not contained within {}", entity, area, bounds)
 			return false
 		}
 
@@ -138,7 +126,7 @@ class Quadtree {
 		}
 
 		entities.add(entity)
-		log.debug("($level) Inserted $entity at level $level, have ${entities.size()} out of $maxObjects entities at this level")
+		log.debug("($level) Inserted $entity ({}) at level $level, have ${entities.size()} out of $maxObjects entities at this level", area)
 
 		// If we've reached our max threshold, split into subtrees
 		if (entities.size() > maxObjects && level < maxLevels) {
@@ -149,9 +137,7 @@ class Quadtree {
 				int index = getIndex(it)
 				if (index >= 0) {
 					log.debug("($level) Moving {} to subtree $index ({})", it.getComponentOfType(AreaComponent), nodes[index].bounds)
-					if (!nodes[index].insert(it)) {
-						remainingEntities.add(it)
-					}
+					nodes[index].insert(it)
 				} else {
 					log.debug("($level) Keeping {} at current level as it overlaps subquadrants", it.getComponentOfType(AreaComponent))
 					remainingEntities.add(it)
@@ -160,6 +146,7 @@ class Quadtree {
 			entities.clear()
 			// This node will retain ownership of entities overlapping multiple quadrants
 			entities.addAll(remainingEntities)
+			log.debug("($level) Split complete")
 		}
 		return true
 	}

@@ -60,10 +60,12 @@ class QuadtreeTest extends Specification {
 		when:
 			// Cause a split
 			quadtree.insert(new GameEntity(components: [new AreaComponent(9,9, 1,1)]))
+			def nodeAreas = quadtree.nodes.collect { return it.bounds.width * it.bounds.height }.sum()
 
 		then:
 			quadtree.nodes[0].entities.size() == 1
 			quadtree.nodes[3].entities.size() == 1
+			nodeAreas == quadtree.bounds.width * quadtree.bounds.height
 	}
 
 	def "Splits handle odd dimensions"() {
@@ -74,13 +76,20 @@ class QuadtreeTest extends Specification {
 
 		when:
 			quadtree.split()
+			def nodes = quadtree.nodes
 
 		then:
-			quadtree.nodes[0].bounds.width + quadtree.nodes[1].bounds.width == width
-			quadtree.nodes[0].bounds.height + quadtree.nodes[2].bounds.height == height
+			nodes[0].bounds.width + nodes[1].bounds.width == width
+			nodes[0].bounds.height + nodes[2].bounds.height == height
+		and:
+			nodes[0].bounds.y + nodes[0].bounds.height == nodes[2].bounds.y
 	}
 
 	def "Get index correctly identifies a quadrant given an area"() {
+		given:
+			// We won't be calculating an index unless we have subnodes, so force a split
+			quadtree.split()
+
 		when:
 			int multipleQuads = quadtree.getIndex(new AreaComponent(0, 0, 6, 6))
 			int upperLeft = quadtree.getIndex(new AreaComponent(0, 0, 1, 1))
@@ -97,6 +106,10 @@ class QuadtreeTest extends Specification {
 	}
 
 	def "Get index when entity is on border of quadrant"() {
+		given:
+			// We won't be calculating an index unless we have subnodes, so force a split
+			quadtree.split()
+
 		when:
 			int upperLeft = quadtree.getIndex(new AreaComponent(4, 4, 1, 1))
 			int upperRight = quadtree.getIndex(new AreaComponent(5, 4, 1, 1))
@@ -198,7 +211,7 @@ class QuadtreeTest extends Specification {
 			quadtree.insert(new GameEntity(components: [new AreaComponent(0, 0, 1,1)]))
 			// Cause a split
 			quadtree.insert(new GameEntity(components: [new AreaComponent(9,9, 1,1)]))
-			// Another split
+			// Causes three splits because the entities are so close
 			quadtree.insert(new GameEntity(components: [new AreaComponent(9,8, 1,1)]))
 			// Yet a third split
 			quadtree.insert(new GameEntity(components: [new AreaComponent(9, 7, 1,1)]))
@@ -207,7 +220,7 @@ class QuadtreeTest extends Specification {
 			int levels = quadtree.countLevels()
 
 		then:
-			levels == 4
+			levels == 5
 	}
 
 	def "Count entities"() {
@@ -224,7 +237,6 @@ class QuadtreeTest extends Specification {
 
 		then:
 			entities == 5
-		println "$quadtree"
 	}
 
 }
