@@ -33,6 +33,7 @@ class CellularAutomatonCaveGenerator {
 	 * @return a GridEntity representing the final results
 	 */
 	GridEntity generate(int generations = 10) {
+		log.debug "Creating a cave with $generations smoothing generations"
 		if (!initialized) {
 			init()
 		}

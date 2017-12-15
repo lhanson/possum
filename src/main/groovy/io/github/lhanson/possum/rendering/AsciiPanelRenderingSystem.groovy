@@ -71,6 +71,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 
 	void initScene(Scene scene) {
 		logger.debug "Initializing scene {}", scene
+		long startTime = System.currentTimeMillis()
 		scene.getEntitiesMatching([RelativePositionComponent]).each { GameEntity entity ->
 			logger.trace "Initializing entity ${entity.name}"
 			// Center viewport on focused entity, important that this happens
@@ -145,6 +146,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		// Repaint entire scene
 		scene.entities.each { scene.entityNeedsRendering(it) }
 		terminal.clear()
+		logger.debug "Scene initialization took ${System.currentTimeMillis() - startTime} ms"
 	}
 
 	@Override
