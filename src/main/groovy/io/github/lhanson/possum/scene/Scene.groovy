@@ -1,10 +1,10 @@
 package io.github.lhanson.possum.scene
 
+import io.github.lhanson.possum.collision.Quadtree
 import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.GameComponent
 import io.github.lhanson.possum.component.InventoryComponent
 import io.github.lhanson.possum.component.TextComponent
-import io.github.lhanson.possum.component.VelocityComponent
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.GaugeEntity
 import io.github.lhanson.possum.entity.PanelEntity
@@ -31,6 +31,7 @@ class Scene {
 	private Map<Class, List<GameEntity>> entitiesByComponentType = [:]
 	// A set of entities modified in such a way as to require re-rendering
 	private Set<GameEntity> entitiesToBeRendered = []
+	Quadtree quadtree
 
 	/** Unique identifier for this scene */
 	String id
@@ -63,6 +64,8 @@ class Scene {
 
 	void setEntities(List<GameEntity> entities) {
 		this.entities = entities
+		int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE,
+			maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE
 		entitiesByComponentType.clear()
 		entities.each { entity ->
 			entity.eventBroker = eventBroker
@@ -71,7 +74,23 @@ class Scene {
 					entitiesByComponentType[component.class] = []
 				}
 				entitiesByComponentType[component.class] << entity
+
+				if (component instanceof AreaComponent) {
+					if (component.x < minX) minX = component.x
+					if (component.y < minY) minY = component.y
+					if (component.x + component.width > maxX) maxX = component.x + component.width
+					if (component.y + component.height > maxY) maxY = component.y + component.height
+				}
 			}
+		}
+		quadtree = new Quadtree(new AreaComponent(minX, minY, maxX, maxY))
+
+		if (entitiesByComponentType[AreaComponent]) {
+			def areaEntities = entitiesByComponentType[AreaComponent].size()
+			log.debug "Initializing quadtree with $areaEntities area entities with bounds [$minX, $minY] to [$maxX, $maxY], total grid space of ${(maxX - minX) * (maxY - minY)} locations"
+			long start = System.currentTimeMillis()
+			entitiesByComponentType[AreaComponent].each { quadtree.insert it }
+			log.debug("Initialized quadtree in {} ms", System.currentTimeMillis() - start)
 		}
 	}
 
@@ -107,6 +126,10 @@ class Scene {
 	}
 
 	/**
+	 * Returns all entities in this scene with components of the given type.
+	 * NOTE: This can be a big performance bottleneck if used indiscriminately
+	 *       on large collections of entities.
+	 *
 	 * @param componentTypes the component types which matching entities will contain
 	 * @return the list of entities which contain all of the specified component types.
 	 */
@@ -159,22 +182,17 @@ class Scene {
 	}
 
 	/**
-	 * @return all movable {@link GameEntity} objects
-	 */
-	List<GameEntity> getMobileEntities() {
-		getEntitiesMatching([AreaComponent, VelocityComponent])
-	}
-
-	/**
 	 * Finds all non-Panel entities located within the given area
 	 * @param area the boundaries for which we want to find entities
 	 * @return any entities within the provided area
 	 */
 	List<GameEntity> findNonPanelWithin(AreaComponent area) {
-		entities.findAll { entity ->
-			!(entity instanceof PanelEntity) &&
-				entity.getComponentOfType(AreaComponent)?.overlaps(area)
+		long start = System.currentTimeMillis()
+		def result = quadtree.retrieve(area).findAll { !(it instanceof PanelEntity) }
+		if (log.isTraceEnabled()) {
+			log.trace "Finding {} non-panels within {} took {} ms", result.size(), area, System.currentTimeMillis() - start
 		}
+		return result
 	}
 
 	/**
