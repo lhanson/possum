@@ -16,7 +16,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
-import org.springframework.util.StopWatch
 
 @Component
 class MovementSystem extends GameSystem {
@@ -26,11 +25,17 @@ class MovementSystem extends GameSystem {
 	Logger log = LoggerFactory.getLogger(this.class)
 	String name = 'MovementSystem'
 	VelocityComponent still = new VelocityComponent(0, 0)
+	Set<GameEntity> movingEntities
+
+	@Override
+	void initScene(Scene scene) {
+		movingEntities = scene
+				.getEntitiesMatching([VelocityComponent])
+				.findAll { it.getComponentOfType(VelocityComponent) != still }
+	}
 
 	@Override
 	void doUpdate(Scene scene, double ticks) {
-		StopWatch stopwatch = new StopWatch(name)
-		stopwatch.start('Processing active input')
 		if (scene.activeInput) {
 			log.trace("Updating movements for {} active inputs", scene.activeInput.size())
 			scene.getEntitiesMatching([PlayerInputAwareComponent]).each { entity ->
@@ -52,14 +57,18 @@ class MovementSystem extends GameSystem {
 							break
 					}
 				}
-				entity.getComponentOfType(VelocityComponent).vector2.add(newVelocity)
+				VelocityComponent velocity = entity.getComponentOfType(VelocityComponent)
+				velocity.vector2.add(newVelocity)
+				if (velocity != still) {
+					movingEntities.add(entity)
+				} else {
+					movingEntities.remove(entity)
+				}
 			}
 		}
-		stopwatch.stop()
 
 		// Move entities
-		stopwatch.start('Moving mobile entities')
-		scene.mobileEntities.each {
+		movingEntities.each {
 			AreaComponent ac = it.getComponentOfType(AreaComponent)
 			VelocityComponent vc = it.getComponentOfType(VelocityComponent)
 			if (vc != still) {
@@ -69,10 +78,8 @@ class MovementSystem extends GameSystem {
 				scene.entityNeedsRendering(it, oldPos)
 			}
 		}
-		stopwatch.stop()
 
-		stopwatch.start('Calculating collisions')
-		scene.mobileEntities.each { entity ->
+		movingEntities.each { entity ->
 			List<GameEntity> colliders = scene.findNonPanelWithin(entity.getComponentOfType(AreaComponent)) - entity
 			colliders.each {
 				if (!(it instanceof PanelEntity)) {
@@ -84,14 +91,9 @@ class MovementSystem extends GameSystem {
 				}
 			}
 		}
-		stopwatch.stop()
 
 		// Stop entities
-		stopwatch.start('Stopping entity velocity')
-		scene.mobileEntities.each { it.getComponentOfType(VelocityComponent).vector2.setValues(0, 0) }
-		stopwatch.stop()
-
-		log.trace "{}", stopwatch
+		movingEntities.each { it.getComponentOfType(VelocityComponent).vector2.setValues(0, 0) }
 	}
 
 	/**

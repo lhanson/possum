@@ -16,11 +16,20 @@ import org.slf4j.LoggerFactory
  */
 abstract class GameSystem {
 	Logger log = LoggerFactory.getLogger(this.class)
+	Scene previousScene
 
 	/**
 	 * @return the name of this {@code GameSystem}
 	 */
 	abstract String getName()
+
+	/**
+	 * Allows systems to do scene-specific initialization before
+	 * a scene transition.
+	 *
+	 * @param scene the scene being transitioned to
+	 */
+	void initScene(Scene scene) { }
 
 	/**
 	 * For each main loop iteration, each system has the opportunity to
@@ -33,6 +42,10 @@ abstract class GameSystem {
 	 * @param elapsed the amount of time since the last game update
 	 */
 	void update(Scene scene, double elapsed) {
+		if (scene != previousScene) {
+			initScene(scene)
+			previousScene = scene
+		}
 		long startTime = System.currentTimeMillis()
 		doUpdate(scene, elapsed)
 		long updateTime = System.currentTimeMillis() - startTime
