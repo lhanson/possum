@@ -11,7 +11,9 @@ class MovementSystemTest extends Specification {
 	MovementSystem movementSystem
 
 	def setup() {
-		movementSystem = new MovementSystem(collisionSystem: Mock(CollisionSystem))
+		movementSystem = new MovementSystem(
+				collisionSystem: Mock(CollisionSystem),
+				movingEntities: [])
 	}
 
 	def "Simple bounding box is correctly computed"() {
