@@ -52,7 +52,6 @@ class Scene {
 	Scene(String id, List<GameEntity> entities, List<InputContext> inputContexts = []) {
 		log.debug "Initializing scene $id"
 		this.id = id
-		this.id = id
 		setEntities(entities)
 		this.inputContexts = inputContexts
 
