@@ -26,8 +26,18 @@ class MainLoop {
 
 	void run() {
 		Scene scene = sceneBuilder.getNextScene()
+		Scene nextScene = scene
 		while (scene) {
-			timer.tick()
+			if (nextScene != scene) {
+				log.debug("Scene change from {} to {}", scene, nextScene)
+				scene = nextScene
+				systems.each { it.initScene(scene) }
+				renderers.each { it.initScene(scene) }
+				renderers.each { it.render(scene) }
+				timer = new LoopTimer()
+			} else {
+				timer.tick()
+			}
 
 			timer.updateSimulation {
 				scene.processInput()
@@ -39,7 +49,7 @@ class MainLoop {
 				renderers.each { it.render(scene) }
 			}
 
-			scene = sceneBuilder.getNextScene()
+			nextScene = sceneBuilder.getNextScene()
 		}
 
 		log.debug "Exiting"

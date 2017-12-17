@@ -28,7 +28,7 @@ class MovementSystem extends GameSystem {
 	Set<GameEntity> movingEntities
 
 	@Override
-	void initScene(Scene scene) {
+	void doInitScene(Scene scene) {
 		movingEntities = scene
 				.getEntitiesMatching([VelocityComponent])
 				.findAll { it.getComponentOfType(VelocityComponent) != still }

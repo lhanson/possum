@@ -31,4 +31,13 @@ interface RenderingSystem {
 	 * @param position the specified coordinates
 	 */
 	void centerViewport(VectorComponent position)
+
+	/**
+	 * Allows renderers to do scene-specific initialization before
+	 * a scene transition.
+	 *
+	 * @param scene the scene being transitioned to
+	 */
+	void initScene(Scene scene)
+
 }

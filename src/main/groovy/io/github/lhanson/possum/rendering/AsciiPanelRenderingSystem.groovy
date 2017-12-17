@@ -69,6 +69,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		setVisible(true)
 	}
 
+	@Override
 	void initScene(Scene scene) {
 		logger.debug "Initializing scene {}", scene
 		long startTime = System.currentTimeMillis()
@@ -146,18 +147,13 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		// Repaint entire scene
 		scene.entities.each { scene.entityNeedsRendering(it) }
 		terminal.clear()
-		logger.debug "Scene initialization took ${System.currentTimeMillis() - startTime} ms"
+		logger.debug "Renderer initialization took ${System.currentTimeMillis() - startTime} ms"
 	}
 
 	@Override
 	void render(Scene scene) {
 		StopWatch stopwatch = new StopWatch('rendering')
 		logger.trace "Rendering"
-
-		if (scene != lastScene) {
-			lastScene = scene
-			initScene(scene)
-		}
 
 		stopwatch.start('checkScrollBoundaries')
 		checkScrollBoundaries(scene)
