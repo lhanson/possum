@@ -26,15 +26,14 @@ class MainLoop {
 
 	void run() {
 		Scene scene = sceneBuilder.getNextScene()
-		Scene nextScene = scene
 		while (scene) {
-			if (nextScene != scene) {
-				log.debug("Scene change from {} to {}", scene, nextScene)
-				scene = nextScene
+			if (!scene.initialized) {
+				log.debug("Initializing scene {}", scene)
 				systems.each { it.initScene(scene) }
 				renderers.each { it.initScene(scene) }
 				renderers.each { it.render(scene) }
-				timer = new LoopTimer()
+				timer = new LoopTimer() // reset counts after init
+				scene.initialized = true
 			} else {
 				timer.tick()
 			}
@@ -49,7 +48,7 @@ class MainLoop {
 				renderers.each { it.render(scene) }
 			}
 
-			nextScene = sceneBuilder.getNextScene()
+			scene = sceneBuilder.getNextScene()
 		}
 
 		log.debug "Exiting"

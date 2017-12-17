@@ -39,6 +39,8 @@ class Scene {
 	Set<MappedInput> activeInput = []
 	/** Event broker for this scene */
 	EventBroker eventBroker = new EventBroker()
+	/** Whether the scene has been initialized yet */
+	boolean initialized = false
 	/** Whether the simulation is in debug mode */
 	volatile boolean debug = false
 	/** If we're in debug mode, how long to pause while showing rendering hints */
