@@ -3,6 +3,10 @@ package io.github.lhanson.possum.system
 import io.github.lhanson.possum.component.AnimatedComponent
 import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.ColorComponent
+import io.github.lhanson.possum.entity.GameEntity
+import io.github.lhanson.possum.events.ComponentAddedEvent
+import io.github.lhanson.possum.events.ComponentRemovedEvent
+import io.github.lhanson.possum.events.Subscription
 import io.github.lhanson.possum.scene.Scene
 import org.springframework.stereotype.Component
 
@@ -11,10 +15,17 @@ import java.awt.Color
 @Component
 class AnimationSystem extends GameSystem {
 	String name = 'AnimationSystem'
+	List<GameEntity> animatedEntities
+
+	@Override
+	void doInitScene(Scene scene) {
+		scene.eventBroker.subscribe(this)
+		animatedEntities =  scene.getEntitiesMatching([AnimatedComponent])
+	}
 
 	@Override
 	void doUpdate(Scene scene, double elapsed) {
-		scene.getEntitiesMatching([AnimatedComponent]).each { entity ->
+		animatedEntities.each { entity ->
 			AnimatedComponent ac = entity.getComponentOfType(AnimatedComponent)
 			ColorComponent cc = entity.getComponentOfType(ColorComponent)
 
@@ -60,4 +71,21 @@ class AnimationSystem extends GameSystem {
 			return alpha
 		}
 	}
+
+	@Subscription
+	void componentAdded(ComponentAddedEvent event) {
+		if (event.component instanceof AnimatedComponent) {
+			log.debug("Added {} to animated lookup list", event.entity)
+			animatedEntities.add(event.entity)
+		}
+	}
+
+	@Subscription
+	void componentRemoved(ComponentRemovedEvent event) {
+		if (event.component instanceof AnimatedComponent) {
+			animatedEntities.remove(event.entity)
+		}
+		log.debug("Removed {} from animated lookup list", event.entity)
+	}
+
 }
