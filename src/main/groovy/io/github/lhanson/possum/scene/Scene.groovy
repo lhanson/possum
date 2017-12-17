@@ -3,10 +3,8 @@ package io.github.lhanson.possum.scene
 import io.github.lhanson.possum.collision.Quadtree
 import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.GameComponent
-import io.github.lhanson.possum.component.InventoryComponent
 import io.github.lhanson.possum.component.TextComponent
 import io.github.lhanson.possum.entity.GameEntity
-import io.github.lhanson.possum.entity.GaugeEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.RerenderEntity
 import io.github.lhanson.possum.events.ComponentAddedEvent
@@ -151,23 +149,6 @@ class Scene {
 			}
 		}
 		return matches
-	}
-
-	/**
-	 * @return GaugeEntities in the scene, from both the top-level entities list
-	 *         as well as entities nested in {@code InventoryComponents}
-	 */
-	List<GaugeEntity> getGauges() {
-		def results = entities.findAll { it instanceof GaugeEntity }
-		def inventories = getComponents(InventoryComponent)
-		def inventoryGauges = inventories?.findResults { InventoryComponent ic ->
-			ic.inventory.findAll { it instanceof GaugeEntity }
-		}?.flatten()
-		if (inventoryGauges) {
-			results.addAll(inventoryGauges)
-			results.flatten()
-		}
-		return results
 	}
 
 	/**
