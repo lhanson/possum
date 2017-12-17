@@ -31,7 +31,6 @@ class MainLoop {
 				log.debug("Initializing scene {}", scene)
 				systems.each { it.initScene(scene) }
 				renderers.each { it.initScene(scene) }
-				renderers.each { it.render(scene) }
 				timer = new LoopTimer() // reset counts after init
 				scene.initialized = true
 			} else {
