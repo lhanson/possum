@@ -18,6 +18,7 @@ class AnimationSystemTest extends Specification {
 			Scene scene = new Scene('scene',
 					[new GameEntity(components: [animatedComponent])],
 					[])
+			animationSystem.initScene(scene)
 		when:
 			animationSystem.doUpdate(scene, 10)
 		then:
@@ -32,6 +33,7 @@ class AnimationSystemTest extends Specification {
 			Scene scene = new Scene('scene',
 					[new GameEntity(components: [animatedComponent])],
 					[])
+			animationSystem.initScene(scene)
 		when:
 			animationSystem.doUpdate(scene, 100)
 		then:
