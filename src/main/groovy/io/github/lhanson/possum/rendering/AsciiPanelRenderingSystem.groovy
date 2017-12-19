@@ -29,7 +29,6 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	VectorComponent initialViewportSize
 	// the entire visible area being rendered
 	AreaComponent viewport
-	Scene lastScene
 	// Panel areas in the scene, sorted by x, y coordinates
 	List<AreaComponent> scenePanelAreas
 
