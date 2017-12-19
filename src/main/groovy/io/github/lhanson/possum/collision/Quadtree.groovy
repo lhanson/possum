@@ -17,6 +17,15 @@ import org.slf4j.LoggerFactory
  * filter off any which don't overlap the search area regardless of
  * the implementation details of what quadrants things are stored in.
  *
+ * Operations supported:
+ *      - insert
+ *      - query
+ *
+ * Unsupported:
+ *      - move
+ *      - remove
+ *      - re-balancing after removals
+ *
  * @see <a href="http://gameprogrammingpatterns.com/spatial-partition.html">http://gameprogrammingpatterns.com/spatial-partition.html</a>
  */
 class Quadtree {
@@ -108,8 +117,10 @@ class Quadtree {
 	 * Insert the object into the quadtree. If the node
 	 * exceeds the capacity, it will split and add all
 	 * objects to their corresponding nodes.
+	 *
+	 * Returns whether insertion was successful.
 	 */
-	def insert(GameEntity entity) {
+	boolean insert(GameEntity entity) {
 		AreaComponent area = entity.getComponentOfType(AreaComponent)
 		if (!bounds.contains(area)) {
 			log.error("($level) Not inserting {}; {} is not contained within {}", entity, area, bounds)
@@ -148,6 +159,32 @@ class Quadtree {
 			entities.addAll(remainingEntities)
 			log.debug("($level) Split complete")
 		}
+		return true
+	}
+
+	/**
+	 * Remove the object from the quadtree.
+	 *
+	 * Returns whether removal was successful.
+	 */
+	boolean remove(GameEntity entity) {
+		AreaComponent area = entity.getComponentOfType(AreaComponent)
+		if (!bounds.contains(area)) {
+			log.error("($level) Not removing {}; {} is not contained within {}", entity, area, bounds)
+			return false
+		}
+
+		// If we have a subtree where the entity fits, remove it there
+		if (nodes[0]) {
+			int index = getIndex(area)
+			if (index != -1) {
+				log.debug("($level) Entity {} fits subtree $index ({}), recursing", area, nodes[index].bounds)
+				return nodes[index].remove(entity)
+			}
+		}
+
+		entities.remove(entity)
+		log.debug("($level) Removed $entity ({}) at level $level, have ${entities.size()} out of $maxObjects entities at this level", area)
 		return true
 	}
 

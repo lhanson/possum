@@ -178,7 +178,7 @@ class QuadtreeTest extends Specification {
 			parentMatch.size() == 1
 	}
 
-	def "Entities moved to subnodes are still searchable"() {
+	def "Entities moved to subnodes after a split are still searchable"() {
 		given:
 			quadtree.maxObjects = 1 // Force splits
 			quadtree.insert(new GameEntity(components: [new AreaComponent(0, 0, 1,1)]))
@@ -237,6 +237,19 @@ class QuadtreeTest extends Specification {
 
 		then:
 			entities == 5
+	}
+
+	def "Entities can be removed from the quadtree"() {
+		given:
+			GameEntity entity = new GameEntity(components: [new AreaComponent(0, 0, 1,1)])
+			quadtree.insert(entity)
+
+		when:
+			quadtree.remove(entity)
+			def results = quadtree.retrieve(entity.getComponentOfType(AreaComponent))
+
+		then:
+			results == []
 	}
 
 }
