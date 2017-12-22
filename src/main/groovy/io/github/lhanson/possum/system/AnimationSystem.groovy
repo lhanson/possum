@@ -16,7 +16,7 @@ import java.awt.Color
 class AnimationSystem extends GameSystem {
 	String name = 'AnimationSystem'
 	List<GameEntity> animatedEntities
-	boolean removingEntity = false
+	boolean removingComponent = false
 
 	@Override
 	void doInitScene(Scene scene) {
@@ -43,9 +43,9 @@ class AnimationSystem extends GameSystem {
 					ac.currentDuration = ac.currentDuration - ac.pulseDurationMillis
 				} else {
 					// Temporarily ignore removal events since we're triggering one ourselves
-					removingEntity = true
+					removingComponent = true
 					entity.removeComponent(ac)
-					removingEntity = false
+					removingComponent = false
 				}
 			}
 			scene.entityNeedsRendering(entity, entity.getComponentOfType(AreaComponent))
@@ -86,7 +86,7 @@ class AnimationSystem extends GameSystem {
 
 	@Subscription
 	void componentRemoved(ComponentRemovedEvent event) {
-		if (!removingEntity && event.component instanceof AnimatedComponent) {
+		if (!removingComponent && event.component instanceof AnimatedComponent) {
 			animatedEntities.remove(event.entity)
 		}
 		log.debug("Removed {} from animated lookup list", event.entity)
