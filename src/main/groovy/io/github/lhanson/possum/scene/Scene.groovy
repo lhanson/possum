@@ -9,6 +9,7 @@ import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.RerenderEntity
 import io.github.lhanson.possum.events.ComponentAddedEvent
 import io.github.lhanson.possum.events.ComponentRemovedEvent
+import io.github.lhanson.possum.events.EntityMovedEvent
 import io.github.lhanson.possum.events.EventBroker
 import io.github.lhanson.possum.events.Subscription
 import io.github.lhanson.possum.input.InputAdapter
@@ -106,6 +107,12 @@ class Scene {
 	void componentRemoved(ComponentRemovedEvent event) {
 		entitiesByComponentType[event.component.class].remove(event.entity)
 		log.debug("Removed {} from component lookup list for {}", event.entity, event.component)
+	}
+
+	@Subscription
+	void entityMoved(EntityMovedEvent event) {
+		quadtree.move(event.entity, event.oldPosition, event.newPosition)
+		log.debug("Moved quadtree location of {} from {} to {}", event.entity, event.oldPosition, event.newPosition)
 	}
 
 	/**

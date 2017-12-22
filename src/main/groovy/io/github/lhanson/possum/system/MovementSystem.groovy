@@ -8,6 +8,7 @@ import io.github.lhanson.possum.component.PositionComponent
 import io.github.lhanson.possum.component.VelocityComponent
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.PanelEntity
+import io.github.lhanson.possum.events.EntityMovedEvent
 import io.github.lhanson.possum.input.MappedInput
 import io.github.lhanson.possum.rendering.RenderingSystem
 import io.github.lhanson.possum.scene.Scene
@@ -76,6 +77,7 @@ class MovementSystem extends GameSystem {
 				ac.position.vector2.add(vc.vector2)
 				log.trace "Entity {} moved from {} to {}", it.name, oldPos.position, ac.position
 				scene.entityNeedsRendering(it, oldPos)
+				scene.eventBroker.publish(new EntityMovedEvent(it, oldPos, ac))
 			}
 		}
 
