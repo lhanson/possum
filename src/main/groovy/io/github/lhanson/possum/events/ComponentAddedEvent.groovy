@@ -1,11 +1,13 @@
 package io.github.lhanson.possum.events
 
+import groovy.transform.ToString
 import io.github.lhanson.possum.component.GameComponent
 import io.github.lhanson.possum.entity.GameEntity
 
 /**
  * Event indicating that a component was added to an entity
  */
+@ToString
 class ComponentAddedEvent {
 	/** The entity which the component is newly associated with */
 	GameEntity entity
