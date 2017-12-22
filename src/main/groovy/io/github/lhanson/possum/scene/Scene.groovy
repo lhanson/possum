@@ -23,10 +23,29 @@ import org.slf4j.LoggerFactory
  * a particular segment of a game.
  */
 class Scene {
-	Logger log = LoggerFactory.getLogger(this.class)
 	InputAdapter inputAdapter
+	/** Unique identifier for this scene */
+	String id
+	/** The input collected for this scene to process */
+	Set<MappedInput> activeInput = []
+	/** Event broker for this scene */
+	EventBroker eventBroker = new EventBroker()
+	/** Whether the scene has been initialized yet */
+	boolean initialized = false
+	/** Whether the simulation is in debug mode */
+	volatile boolean debug = false
+	/** If we're in debug mode, how long to pause while showing rendering hints */
+	volatile int debugPauseMillis = 1000
+	/** Whether the simulation is paused */
+	volatile boolean paused = false
+
+	private Logger log = LoggerFactory.getLogger(this.class)
+	// Initialize (or reinitialize) the scene
+	private SceneInitializer sceneInitializer
 	// Top-level entities active in this scene, does not include entities in inventories
 	private List<GameEntity> entities = []
+	// Input contexts for this scene
+	private List<InputContext> inputContexts = []
 	private Map<Class, List<GameEntity>> entitiesByComponentType = [:]
 	// A set of entities modified in such a way as to require re-rendering
 	private Set<GameEntity> entitiesToBeRendered = []
@@ -34,24 +53,6 @@ class Scene {
 	            maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE
 	Quadtree quadtree = new Quadtree()
 
-	/** Unique identifier for this scene */
-	String id
-	/** Input contexts for this scene */
-	List<InputContext> inputContexts = []
-	/** The input collected for this scene to process */
-	Set<MappedInput> activeInput = []
-	/** Event broker for this scene */
-	EventBroker eventBroker = new EventBroker()
-	/** Whether the scene has been initialized yet */
-	boolean initialized = false
-	/** Initialize (or reinitialize) the scene */
-	SceneInitializer sceneInitializer
-	/** Whether the simulation is in debug mode */
-	volatile boolean debug = false
-	/** If we're in debug mode, how long to pause while showing rendering hints */
-	volatile int debugPauseMillis = 1000
-	/** Whether the simulation is paused */
-	volatile boolean paused = false
 
 	/**
 	 * Constructor for simple scenes with no input.
