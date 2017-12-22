@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component
 class TimerSystem extends GameSystem {
 	String name = 'timerSystem'
 	List<GameEntity> timers
+	boolean removingComponent = false
 
 	@Override
 	void doInitScene(Scene scene) {
@@ -24,15 +25,19 @@ class TimerSystem extends GameSystem {
 	@Override
 	void doUpdate(Scene scene, double ticks) {
 		timers.each { entity ->
+			def expiredTimers = []
 			entity.getComponentsOfType(TimerComponent)
 					.each { TimerComponent tc ->
 				log.trace "TimerComponent, ticks left: ${tc.ticksRemaining}"
 				tc.ticksRemaining -= ticks
 				if (tc.ticksRemaining <= 0) {
 					tc.alarm()
-					entity.components.remove(tc)
+					expiredTimers << tc
 				}
 			}
+			removingComponent = true
+			expiredTimers.each { entity.removeComponent(it) }
+			removingComponent = false
 		}
 	}
 
@@ -46,7 +51,9 @@ class TimerSystem extends GameSystem {
 
 	@Subscription
 	void componentRemoved(ComponentRemovedEvent event) {
-		timers.remove(event.entity)
+		if (!removingComponent && event.component instanceof TimerComponent) {
+			timers.remove(event.entity)
+		}
 		log.debug("Removed {} from timer lookup list", event.entity)
 	}
 
