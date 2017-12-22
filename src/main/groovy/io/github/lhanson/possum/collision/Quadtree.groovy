@@ -118,26 +118,30 @@ class Quadtree {
 	 * exceeds the capacity, it will split and add all
 	 * objects to their corresponding nodes.
 	 *
-	 * Returns whether insertion was successful.
+	 * @param entity the entity to insert
+	 * @param location the location to add it to; if not provided, it will be looked up from the entity
+	 * @return whether insertion was successful.
 	 */
-	boolean insert(GameEntity entity) {
-		AreaComponent area = entity.getComponentOfType(AreaComponent)
-		if (!bounds.contains(area)) {
-			log.error("($level) Not inserting {}; {} is not contained within {}", entity, area, bounds)
+	boolean insert(GameEntity entity, AreaComponent location = null) {
+		if (!location) {
+			location = entity.getComponentOfType(AreaComponent)
+		}
+		if (!bounds.contains(location)) {
+			log.error("($level) Not inserting {}; {} is not contained within {}", entity, location, bounds)
 			return false
 		}
 
 		// If we have a subtree where the entity fits, add it there
 		if (nodes[0]) {
-			int index = getIndex(area)
+			int index = getIndex(location)
 			if (index != -1) {
-				log.debug("($level) Entity {} fits subtree $index ({}), recursing", area, nodes[index].bounds)
-				return nodes[index].insert(entity)
+				log.debug("($level) Entity {} fits subtree $index ({}), recursing", location, nodes[index].bounds)
+				return nodes[index].insert(entity, location)
 			}
 		}
 
 		entities.add(entity)
-		log.debug("($level) Inserted $entity ({}) at level $level, have ${entities.size()} out of $maxObjects entities at this level", area)
+		log.debug("($level) Inserted $entity ({}) at level $level, have ${entities.size()} out of $maxObjects entities at this level", location)
 
 		// If we've reached our max threshold, split into subtrees
 		if (entities.size() > maxObjects && level < maxLevels) {
@@ -165,27 +169,46 @@ class Quadtree {
 	/**
 	 * Remove the object from the quadtree.
 	 *
-	 * Returns whether removal was successful.
+	 * @param entity the entity to remove
+	 * @param location the location to remove it from; if not provided, it will be looked up from the entity
+	 * @return whether removal was successful.
 	 */
-	boolean remove(GameEntity entity) {
-		AreaComponent area = entity.getComponentOfType(AreaComponent)
-		if (!bounds.contains(area)) {
-			log.error("($level) Not removing {}; {} is not contained within {}", entity, area, bounds)
+	boolean remove(GameEntity entity, AreaComponent location = null) {
+		if (!location) {
+			location = entity.getComponentOfType(AreaComponent)
+		}
+
+		if (!bounds.contains(location)) {
+			log.error("($level) Not removing {}; {} is not contained within {}", entity, location, bounds)
 			return false
 		}
 
 		// If we have a subtree where the entity fits, remove it there
 		if (nodes[0]) {
-			int index = getIndex(area)
+			int index = getIndex(location)
 			if (index != -1) {
-				log.debug("($level) Entity {} fits subtree $index ({}), recursing", area, nodes[index].bounds)
+				log.debug("($level) Entity {} fits subtree $index ({}), recursing", location, nodes[index].bounds)
 				return nodes[index].remove(entity)
 			}
 		}
 
 		entities.remove(entity)
-		log.debug("($level) Removed $entity ({}) at level $level, have ${entities.size()} out of $maxObjects entities at this level", area)
+		log.debug("($level) Removed $entity ({}) at level $level, have ${entities.size()} out of $maxObjects entities at this level", location)
 		return true
+	}
+
+	/**
+	 * Moves the entity from one location to another in the quadtree
+	 *
+	 * @param entity the entity to move
+	 * @param from the entity's previous location
+	 * @param to the entity's current location
+	 */
+	def move(GameEntity entity, AreaComponent from, AreaComponent to) {
+		// TODO: This is a naive implementation, we can definitely do better
+		log.debug("($level) Moving {} from {} to {}", entity, from, to)
+		remove(entity, from)
+		insert(entity, to)
 	}
 
 	/**

@@ -252,4 +252,27 @@ class QuadtreeTest extends Specification {
 			results == []
 	}
 
+	def "A moving entity is correctly moved to a different node"() {
+		given:
+			quadtree.maxObjects = 1 // Force splits
+			def oldLocation = new AreaComponent(9, 9, 1,1)
+			def newLocation = new AreaComponent(9, 0, 1,1)
+			GameEntity stationaryEntity = new GameEntity(components: [new AreaComponent(0, 0, 1,1)])
+			GameEntity mobileEntity = new GameEntity(components: [oldLocation])
+			quadtree.insert(stationaryEntity)
+			quadtree.insert(mobileEntity)
+
+		when:
+			mobileEntity.removeComponent(oldLocation)
+			mobileEntity.addComponent(newLocation)
+			def moveSuccess = quadtree.move(mobileEntity, oldLocation, newLocation)
+			def entitiesAtOldLocation = quadtree.retrieve(oldLocation)
+			def entitiesAtNewLocation = quadtree.retrieve(newLocation)
+
+		then:
+			moveSuccess
+			entitiesAtOldLocation == []
+			entitiesAtNewLocation == [mobileEntity]
+	}
+
 }
