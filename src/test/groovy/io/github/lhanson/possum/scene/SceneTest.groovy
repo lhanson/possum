@@ -99,4 +99,17 @@ class SceneTest extends Specification {
 			results == []
 	}
 
+	def "Deferred initialization"() {
+		given:
+			boolean initialized = false
+			Scene scene = new Scene('testId', [], [], { initialized = true})
+
+		when:
+			scene.init()
+
+		then:
+			initialized == true
+			scene.initialized == true
+	}
+
 }

@@ -28,11 +28,11 @@ class MainLoop {
 		Scene scene = sceneBuilder.getNextScene()
 		while (scene) {
 			if (!scene.initialized) {
-				log.debug("Initializing scene {}", scene)
+				log.debug("Initializing scene {}", scene.id)
+				scene.init()
 				systems.each { it.initScene(scene) }
 				renderers.each { it.initScene(scene) }
 				timer = new LoopTimer() // reset counts after init
-				scene.initialized = true
 			} else {
 				timer.tick()
 			}
@@ -89,7 +89,6 @@ class MainLoop {
 			previousTime = currentTime
 			lag += elapsed
 			if (lag >= SIMULATION_TIMESTEP) {
-				println ''
 				log.debug "Main loop - {}ms frame, {}ms lag, rendering at {} fps",
 						elapsed, lag, currentFps
 			}

@@ -52,7 +52,7 @@ class MovementSystemTest extends Specification {
 	def "Duplicate input signals are not handled each frame"() {
 		given:
 			GameEntity hero = heroAt(0, 0)
-			Scene scene = new Scene('testScene', [hero], null)
+			Scene scene = new Scene('testScene', [hero])
 			scene.activeInput.addAll([MappedInput.RIGHT, MappedInput.RIGHT])
 		when:
 			movementSystem.update(scene, 0)

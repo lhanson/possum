@@ -22,6 +22,7 @@ import io.github.lhanson.possum.input.MappedInput
 import io.github.lhanson.possum.rendering.RenderingSystem
 import io.github.lhanson.possum.scene.PossumSceneBuilder
 import io.github.lhanson.possum.scene.Scene
+import io.github.lhanson.possum.scene.SceneInitializer
 import io.github.lhanson.possum.system.MovementSystem
 import io.github.lhanson.possum.terrain.WallCarver
 import io.github.lhanson.possum.terrain.cave.CellularAutomatonCaveGenerator
@@ -67,193 +68,196 @@ class CellularAutomatonCaveGen {
 		@Autowired CellularAutomatonCaveGenerator caveGenerator
 
 		@PostConstruct
-		void initializeScenes() {
-			[startScene(), caveScene(), quittingScene(), winScene()].each {
+		void addScenes() {
+			[startScene, caveScene, quittingScene, winScene].each {
 				addScene(it)
 			}
 		}
 
-		Scene startScene() {
-			new Scene(
-					SceneBuilder.START,
-					[
-							new TextEntity(
-									name: 'menuTitle',
-									components: [
-											new TextComponent('Main Menu'),
-											new RelativePositionComponent(50, 50)
-									]),
-							new TextEntity(
-									name: 'pressStart',
-									components: [
-											new TextComponent('-- press [enter] to start, [esc] to quit --'),
-											new RelativePositionComponent( 50, 90)
-									])
-					],
-					[
-							// Main menu context
-							new InputContext() {
-								@Override MappedInput mapInput(InputEvent rawInput) {
-									if (rawInput instanceof KeyEvent) {
-										switch (rawInput.keyCode) {
-											case rawInput.VK_ESCAPE:
-												transition(QUITTING)
-												break
-											case rawInput.VK_ENTER:
-												transition(CAVE)
-												break
+		Scene startScene = new Scene(
+				START,
+				[
+						new TextEntity(
+								name: 'menuTitle',
+								components: [
+										new TextComponent('Main Menu'),
+										new RelativePositionComponent(50, 50)
+								]),
+						new TextEntity(
+								name: 'pressStart',
+								components: [
+										new TextComponent('-- press [enter] to start, [esc] to quit --'),
+										new RelativePositionComponent( 50, 90)
+								])
+				],
+				[
+						// Main menu context
+						new InputContext() {
+							@Override MappedInput mapInput(InputEvent rawInput) {
+								if (rawInput instanceof KeyEvent) {
+									switch (rawInput.keyCode) {
+										case rawInput.VK_ESCAPE:
+											transition(QUITTING)
+											break
+										case rawInput.VK_ENTER:
+											transition(CAVE)
+											break
+									}
+								}
+								// Menu contexts gobble all input, none pass through
+								null
+							}
+						}
+				]
+		)
+
+		Scene quittingScene = new Scene(
+				QUITTING,
+				[new GameEntity(
+								name: 'quitText',
+								components: [
+										new TextComponent('Goodbye see you!'),
+										new RelativePositionComponent(50, 50),
+										new TimerComponent(ticksRemaining: 1000, alarm: { transition(null) })
+								])],
+		)
+
+		SceneInitializer caveInitializer = new SceneInitializer() {
+			@Override
+			void initScene(Scene scene) {
+				caveGenerator.width = 300
+				caveGenerator.height = 300
+				caveGenerator.initialFactor = 50
+				GridEntity grid = caveGenerator.generate(10)
+				def entities = WallCarver.getWalls(grid, (char) 219)
+
+				AreaComponent startPos = movementSystem.randomPassableSpaceWithin(entities)
+				AreaComponent finishPos = movementSystem.randomPassableSpaceWithin(entities)
+				while (finishPos == startPos) {
+					log.warn "Random finish position is same as start, recalculating"
+					finishPos = movementSystem.randomPassableSpaceWithin(entities)
+				}
+
+				def hero = new GameEntity(
+						name: 'hero',
+						components: [
+								new TextComponent('@'),
+								startPos,
+								new VelocityComponent(0, 0),
+								new AnimatedComponent(pulseDurationMillis: 1000, repeat: true),
+								new PlayerInputAwareComponent(),
+								new CameraFocusComponent()
+						])
+				entities << hero
+
+				entities << new GameEntity(
+						name: 'finish',
+						components: [
+								new TextComponent('>'),
+								finishPos,
+								new CollisionHandlingComponent() {
+									@Override void handleCollision(GameEntity entity) {
+										if (entity == hero) {
+											transition(WIN)
 										}
 									}
-									// Menu contexts gobble all input, none pass through
-									null
 								}
-							}
-					]
-			)
+						])
+
+				def leftHudPanel = new PanelEntity(name: 'leftHudPanel', padding: 1)
+				def playerPositionGauge = new GaugeEntity(
+						name: 'playerPositionGauge',
+						parent: leftHudPanel
+				)
+				playerPositionGauge.update = { ticks ->
+					AreaComponent ac = hero.getComponentOfType(AreaComponent)
+					playerPositionGauge.text = "${ac.position}"
+				}
+				leftHudPanel.components.addAll([
+						new RelativePositionComponent(0, 100),
+						new RelativeWidthComponent(80),
+						new InventoryComponent([playerPositionGauge])
+				])
+				entities << leftHudPanel
+
+				def rightHudPanel = new PanelEntity(name: 'rightHudPanel', padding: 1)
+				def simulationHzGauge
+				simulationHzGauge = new GaugeEntity(
+						name: 'simulationHzGauge',
+						parent: rightHudPanel
+				)
+				simulationHzGauge.update = { ticks ->
+					def simHz = (1 / ticks) * 1000
+					def formatted = new DecimalFormat("#0").format(simHz)
+					simulationHzGauge.text = "$formatted Hz"
+				}
+				def fpsGauge = new GaugeEntity(
+						name: 'fpsGauge',
+						parent: rightHudPanel
+				)
+				fpsGauge.components << new AreaComponent(0, 1, 0, 1)
+				fpsGauge.update = {
+					// The number of ticks being simulated doesn't reflect rendering
+					// frequency, so we get the actual timing from the main loop.
+					def fps = mainLoop.currentFps
+					def formatted = new DecimalFormat("#0").format(fps)
+					fpsGauge.text = "$formatted fps"
+				}
+				rightHudPanel.components.addAll([
+						new RelativePositionComponent(100, 100),
+						new RelativeWidthComponent(20),
+						new InventoryComponent([simulationHzGauge, fpsGauge])
+				])
+				entities << rightHudPanel
+
+				scene.setEntities(entities)
+			}
 		}
 
-		Scene quittingScene() {
-			new Scene(
-					QUITTING,
-					[
-							new GameEntity(
-									name: 'quitText',
-									components: [
-											new TextComponent('Goodbye see you!'),
-											new RelativePositionComponent(50, 50),
-											new TimerComponent(ticksRemaining: 1000, alarm: { transition(null) })
-									])
-					],
-			)
-		}
+		Scene caveScene = new Scene(
+				CAVE,
+				[],
+				[
+				  new InputContext() {
+					  @Override
+					  MappedInput mapInput(InputEvent rawInput) {
+						  if (rawInput instanceof KeyEvent) {
+							  switch (rawInput.keyCode) {
+								  case rawInput.VK_UP:
+									  return MappedInput.UP
+								  case rawInput.VK_DOWN:
+									  return MappedInput.DOWN
+								  case rawInput.VK_LEFT:
+									  return MappedInput.LEFT
+								  case rawInput.VK_RIGHT:
+									  return MappedInput.RIGHT
+								  case rawInput.VK_PLUS:
+								  case rawInput.VK_ADD:
+								  case rawInput.VK_SHIFT | rawInput.VK_EQUALS:
+									  return MappedInput.INCREASE_DEBUG_PAUSE
+								  case rawInput.VK_MINUS:
+									  return MappedInput.DECREASE_DEBUG_PAUSE
+								  case rawInput.VK_ESCAPE:
+									  transition(START)
+									  break
+								  case rawInput.VK_D:
+									  return MappedInput.DEBUG
+									  break
+								  case rawInput.VK_P:
+									  return MappedInput.PAUSE
+									  break
+							  }
+						  }
+						  null
+					  }
+				  }
+				],
+				caveInitializer
+		)
 
-		Scene caveScene() {
-			GridEntity grid = caveGenerator.generate()
-			def entities = WallCarver.getWalls(grid, (char)219)
-
-			AreaComponent startPos = movementSystem.randomPassableSpaceWithin(entities)
-			AreaComponent finishPos = movementSystem.randomPassableSpaceWithin(entities)
-			while (finishPos == startPos) {
-				log.warn "Random finish position is same as start, recalculating"
-				finishPos = movementSystem.randomPassableSpaceWithin(entities)
-			}
-
-			def hero = new GameEntity(
-					name: 'hero',
-					components: [
-							new TextComponent('@'),
-							startPos,
-							new VelocityComponent(0, 0),
-							new AnimatedComponent(pulseDurationMillis: 1000, repeat: true),
-							new PlayerInputAwareComponent(),
-							new CameraFocusComponent()
-					])
-			entities << hero
-
-			entities << new GameEntity(
-					name: 'finish',
-					components: [
-							new TextComponent('>'),
-							finishPos,
-							new CollisionHandlingComponent() {
-								@Override void handleCollision(GameEntity entity) {
-									if (entity == hero) {
-										transition(WIN)
-									}
-								}
-							}
-					])
-
-			def leftHudPanel = new PanelEntity(name: 'leftHudPanel', padding: 1)
-			def playerPositionGauge = new GaugeEntity(
-					name: 'playerPositionGauge',
-					parent: leftHudPanel
-			)
-			playerPositionGauge.update = { ticks ->
-				AreaComponent ac = hero.getComponentOfType(AreaComponent)
-				playerPositionGauge.text = "${ac.position}"
-			}
-			leftHudPanel.components.addAll([
-					new RelativePositionComponent(0, 100),
-					new RelativeWidthComponent(80),
-					new InventoryComponent([playerPositionGauge])
-			])
-			entities << leftHudPanel
-
-			def rightHudPanel = new PanelEntity(name: 'rightHudPanel', padding: 1)
-			def simulationHzGauge
-			simulationHzGauge = new GaugeEntity(
-					name: 'simulationHzGauge',
-					parent: rightHudPanel
-			)
-			simulationHzGauge.update = { ticks ->
-				def simHz = (1 / ticks) * 1000
-				def formatted = new DecimalFormat("#0").format(simHz)
-				simulationHzGauge.text = "$formatted Hz"
-			}
-			def fpsGauge = new GaugeEntity(
-					name: 'fpsGauge',
-					parent: rightHudPanel
-			)
-			fpsGauge.components << new AreaComponent(0, 1, 0, 1)
-			fpsGauge.update = {
-				// The number of ticks being simulated doesn't reflect rendering
-				// frequency, so we get the actual timing from the main loop.
-				def fps = mainLoop.currentFps
-				def formatted = new DecimalFormat("#0").format(fps)
-				fpsGauge.text = "$formatted fps"
-			}
-			rightHudPanel.components.addAll([
-					new RelativePositionComponent(100, 100),
-					new RelativeWidthComponent(20),
-					new InventoryComponent([simulationHzGauge, fpsGauge])
-			])
-			entities << rightHudPanel
-
-			new Scene(
-					CAVE,
-					entities,
-					[
-							new InputContext() {
-								@Override MappedInput mapInput(InputEvent rawInput) {
-									if (rawInput instanceof KeyEvent) {
-										switch (rawInput.keyCode) {
-											case rawInput.VK_UP:
-												return MappedInput.UP
-											case rawInput.VK_DOWN:
-												return MappedInput.DOWN
-											case rawInput.VK_LEFT:
-												return MappedInput.LEFT
-											case rawInput.VK_RIGHT:
-												return MappedInput.RIGHT
-											case rawInput.VK_PLUS:
-											case rawInput.VK_ADD:
-											case rawInput.VK_SHIFT | rawInput.VK_EQUALS:
-												return MappedInput.INCREASE_DEBUG_PAUSE
-											case rawInput.VK_MINUS:
-												return MappedInput.DECREASE_DEBUG_PAUSE
-											case rawInput.VK_ESCAPE:
-												transition(START)
-												break
-											case rawInput.VK_D:
-												return MappedInput.DEBUG
-												break
-											case rawInput.VK_P:
-												return MappedInput.PAUSE
-												break
-										}
-									}
-									null
-								}
-							}
-					]
-			)
-		}
-
-		Scene winScene() {
-			new Scene(
-					WIN,
-					[
+		Scene winScene = new Scene(
+				WIN,
+				[
 							new GameEntity(
 									name: 'winText',
 									components: [
@@ -264,5 +268,5 @@ class CellularAutomatonCaveGen {
 					],
 			)
 		}
-	}
+
 }

@@ -30,7 +30,9 @@ class Scene {
 	private Map<Class, List<GameEntity>> entitiesByComponentType = [:]
 	// A set of entities modified in such a way as to require re-rendering
 	private Set<GameEntity> entitiesToBeRendered = []
-	Quadtree quadtree
+	private int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE,
+	            maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE
+	Quadtree quadtree = new Quadtree()
 
 	/** Unique identifier for this scene */
 	String id
@@ -42,6 +44,8 @@ class Scene {
 	EventBroker eventBroker = new EventBroker()
 	/** Whether the scene has been initialized yet */
 	boolean initialized = false
+	/** Initialize (or reinitialize) the scene */
+	SceneInitializer sceneInitializer
 	/** Whether the simulation is in debug mode */
 	volatile boolean debug = false
 	/** If we're in debug mode, how long to pause while showing rendering hints */
@@ -49,23 +53,82 @@ class Scene {
 	/** Whether the simulation is paused */
 	volatile boolean paused = false
 
+	/**
+	 * Constructor for simple scenes with no input.
+	 *
+	 * @param id the ID of the scene
+	 * @param entities the entities to add to the scene
+	 */
+	Scene(String id, List<GameEntity> entities) {
+		this(id, entities, null, null)
+	}
 
-	Scene(String id, List<GameEntity> entities, List<InputContext> inputContexts = []) {
-		log.debug "Initializing scene $id"
+	/**
+	 * Simple constructor for simple scenes. For scenes with more expensive initialization needs,
+	 * see the constructor which takes a deferred initialization routine.
+	 *
+	 * @param id the ID of the scene
+	 * @param entities the entities to add to the scene
+	 * @param inputContexts input contexts for handling this scene's input
+	 */
+	Scene(String id, List<GameEntity> entities, List<InputContext> inputContexts) {
+		this(id, entities, inputContexts, null)
+	}
+
+	/**
+	 * Constructor which takes an initialization Runnable for scenes with expensive
+	 * initialization requirements (many entities, for example) or which may need to
+	 * be reinitialized multiple times.
+	 *
+	 * @param id the ID of the scene
+	 * @param entities the entities to add to the scene
+	 * @param inputContexts input contexts for handling this scene's input
+	 * @param initialize the runnable to execute when (re-)initializing the scene
+	 */
+	Scene(String id, List<GameEntity> entities, List<InputContext> inputContexts, SceneInitializer sceneInitializer) {
+		log.debug "Creating scene '$id'"
+		long startTime = System.currentTimeMillis()
+
 		this.id = id
-		setEntities(entities)
 		this.inputContexts = inputContexts
-
+		this.sceneInitializer = sceneInitializer
 		eventBroker.subscribe(this)
+
+		setEntities(entities)
+
+		log.debug "Created scene '{}' in {} ms", id, System.currentTimeMillis() - startTime
+	}
+
+	/**
+	 * Initializes the scene. Called explicitly because we may or may not have
+	 * a SceneInitializer which generates entities, and other initialization
+	 * steps may operate on those entities.
+	 */
+	void init() {
+		log.debug "Initializing scene '$id'"
+		long startTime = System.currentTimeMillis()
+
+		sceneInitializer?.initScene(this)
+
+		// Initialize quadtree
+		quadtree = new Quadtree(new AreaComponent(minX, minY, maxX, maxY))
+		if (entitiesByComponentType[AreaComponent]) {
+			def areaEntities = entitiesByComponentType[AreaComponent].size()
+			log.debug "Initializing quadtree with $areaEntities area entities with bounds [$minX, $minY] to [$maxX, $maxY], total grid space of ${(maxX - minX) * (maxY - minY)} locations"
+			long start = System.currentTimeMillis()
+			entitiesByComponentType[AreaComponent].each { quadtree.insert it }
+			log.debug("Initialized quadtree in {} ms", System.currentTimeMillis() - start)
+		}
 
 		// All entities will need to be rendered initially
 		entitiesToBeRendered.addAll entities
+
+		initialized = true
+		log.debug "Initialized scene '{}' in {} ms", id, System.currentTimeMillis() - startTime
 	}
 
 	void setEntities(List<GameEntity> entities) {
 		this.entities = entities
-		int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE,
-			maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE
 		entitiesByComponentType.clear()
 		entities.each { entity ->
 			entity.eventBroker = eventBroker
@@ -82,15 +145,6 @@ class Scene {
 					if (component.y + component.height > maxY) maxY = component.y + component.height
 				}
 			}
-		}
-		quadtree = new Quadtree(new AreaComponent(minX, minY, maxX, maxY))
-
-		if (entitiesByComponentType[AreaComponent]) {
-			def areaEntities = entitiesByComponentType[AreaComponent].size()
-			log.debug "Initializing quadtree with $areaEntities area entities with bounds [$minX, $minY] to [$maxX, $maxY], total grid space of ${(maxX - minX) * (maxY - minY)} locations"
-			long start = System.currentTimeMillis()
-			entitiesByComponentType[AreaComponent].each { quadtree.insert it }
-			log.debug("Initialized quadtree in {} ms", System.currentTimeMillis() - start)
 		}
 	}
 

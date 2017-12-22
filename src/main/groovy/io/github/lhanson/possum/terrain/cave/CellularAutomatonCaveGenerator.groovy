@@ -34,6 +34,7 @@ class CellularAutomatonCaveGenerator {
 	 */
 	GridEntity generate(int generations = 10) {
 		log.debug "Creating a cave with $generations smoothing generations"
+		long startTime = System.currentTimeMillis()
 		if (!initialized) {
 			init()
 		}
@@ -56,6 +57,7 @@ class CellularAutomatonCaveGenerator {
 			grid = nextGrid
 		}
 
+		log.debug "Cave creation finished in {} ms", System.currentTimeMillis() - startTime
 		return getGridEntity()
 	}
 

@@ -2,9 +2,7 @@ package io.github.lhanson.possum.scene
 
 import io.github.lhanson.possum.input.InputAdapter
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Component
 
-@Component
 abstract class PossumSceneBuilder {
 	static String START = 'start' // The scene ID every game starts in by default
 	String nextSceneId = START
