@@ -76,7 +76,7 @@ class CellularAutomatonCaveGen {
 
 		Scene startScene = new Scene(
 				START,
-				[
+				{[
 						new TextEntity(
 								name: 'menuTitle',
 								components: [
@@ -89,7 +89,7 @@ class CellularAutomatonCaveGen {
 										new TextComponent('-- press [enter] to start, [esc] to quit --'),
 										new RelativePositionComponent( 50, 90)
 								])
-				],
+				]},
 				[
 						// Main menu context
 						new InputContext() {
@@ -113,18 +113,19 @@ class CellularAutomatonCaveGen {
 
 		Scene quittingScene = new Scene(
 				QUITTING,
-				[new GameEntity(
-								name: 'quitText',
-								components: [
-										new TextComponent('Goodbye see you!'),
-										new RelativePositionComponent(50, 50),
-										new TimerComponent(ticksRemaining: 1000, alarm: { transition(null) })
-								])],
+				{[new GameEntity(
+						name: 'quitText',
+						components: [
+								new TextComponent('Goodbye see you!'),
+								new RelativePositionComponent(50, 50),
+								new TimerComponent(ticksRemaining: 1000, alarm: { transition(null) })
+						])
+				]},
 		)
 
 		SceneInitializer caveInitializer = new SceneInitializer() {
 			@Override
-			void initScene(Scene scene) {
+			List<GameEntity> initScene() {
 				caveGenerator.width = 300
 				caveGenerator.height = 300
 				caveGenerator.initialFactor = 50
@@ -210,13 +211,13 @@ class CellularAutomatonCaveGen {
 				])
 				entities << rightHudPanel
 
-				scene.setEntities(entities)
+				return entities
 			}
 		}
 
 		Scene caveScene = new Scene(
 				CAVE,
-				[],
+				caveInitializer,
 				[
 				  new InputContext() {
 					  @Override
@@ -252,21 +253,20 @@ class CellularAutomatonCaveGen {
 					  }
 				  }
 				],
-				caveInitializer
 		)
 
 		Scene winScene = new Scene(
 				WIN,
-				[
-							new GameEntity(
-									name: 'winText',
-									components: [
-											new TextComponent('Congrats, you won!'),
-											new RelativePositionComponent(50, 50),
-											new TimerComponent(ticksRemaining: 1000, alarm: { transition(START) })
-									])
-					],
-			)
-		}
+				{[
+						new GameEntity(
+								name: 'winText',
+								components: [
+										new TextComponent('Congrats, you won!'),
+										new RelativePositionComponent(50, 50),
+										new TimerComponent(ticksRemaining: 1000, alarm: { transition(START) })
+								])
+				]}
+		)
+	}
 
 }

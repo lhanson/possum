@@ -16,8 +16,8 @@ class AnimationSystemTest extends Specification {
 		given:
 			AnimatedComponent animatedComponent = new AnimatedComponent(pulseDurationMillis: 100)
 			Scene scene = new Scene('scene',
-					[new GameEntity(components: [animatedComponent])],
-					[])
+					{[new GameEntity(components: [animatedComponent])]})
+			scene.init()
 			animationSystem.initScene(scene)
 		when:
 			animationSystem.doUpdate(scene, 10)
@@ -31,8 +31,8 @@ class AnimationSystemTest extends Specification {
 		given:
 			AnimatedComponent animatedComponent = new AnimatedComponent(pulseDurationMillis: 100)
 			Scene scene = new Scene('scene',
-					[new GameEntity(components: [animatedComponent])],
-					[])
+					{[new GameEntity(components: [animatedComponent])]})
+			scene.init()
 			animationSystem.initScene(scene)
 		when:
 			animationSystem.doUpdate(scene, 100)

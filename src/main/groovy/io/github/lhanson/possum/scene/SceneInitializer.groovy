@@ -1,5 +1,7 @@
 package io.github.lhanson.possum.scene
 
+import io.github.lhanson.possum.entity.GameEntity
+
 /**
  * It initializes scenes, what do you think it does?
  */
@@ -9,7 +11,7 @@ interface SceneInitializer {
 	 * is intended to be an idempotent initialization which can be run
 	 * multiple times to reset the scene to its initial state if desired.
 	 *
-	 * @param scene the scene about to be run
+	 * @return the list of game entities in the scene
 	 */
-	void initScene(Scene scene)
+	List<GameEntity> initScene()
 }

@@ -16,7 +16,8 @@ class SceneTest extends Specification {
 			def entity = new GameEntity(
 					name: 'testEntity',
 					components: [new AreaComponent()])
-			Scene scene = new Scene('testScene', [entity])
+			Scene scene = new Scene('testScene', {[entity]})
+			scene.init()
 		when:
 			def entities = scene.getEntitiesMatching([AreaComponent])
 		then:
@@ -29,7 +30,8 @@ class SceneTest extends Specification {
 			def textPanel = new PanelEntity(
 					name: 'textPanel',
 					components: [new TextEntity(), new TextEntity()])
-			Scene scene = new Scene('testScene', [textPanel])
+			Scene scene = new Scene('testScene', {[textPanel]})
+			scene.init()
 		when:
 			// This is slightly odd in that TextEntity is not technically a GameComponent,
 			// but it's still useful to find and there doesn't appear to be a reason to
@@ -42,7 +44,8 @@ class SceneTest extends Specification {
 	def "findAt works with no matches"() {
 		given:
 			GameEntity testEntity = new GameEntity(name: 'testEntity')
-			Scene scene = new Scene('testId', [testEntity])
+			Scene scene = new Scene('testId', {[testEntity]})
+			scene.init()
 		when:
 			def result = scene.findNonPanelWithin(new AreaComponent())
 		then:
@@ -52,7 +55,8 @@ class SceneTest extends Specification {
 	def "setEntities clears existing entries in entitiesByComponentType "() {
 		given:
 			GameEntity testEntity = new GameEntity(name: 'testEntity', components: [TextComponent])
-			Scene scene = new Scene('testId', [testEntity])
+			Scene scene = new Scene('testId', {[testEntity]})
+			scene.init()
 		when:
 			scene.setEntities([])
 			def results = scene.getEntitiesMatching([TextComponent])
@@ -63,7 +67,8 @@ class SceneTest extends Specification {
 	def "setEntities updates entitiesByComponentType lookup table"() {
 		given:
 			GameEntity testEntity = new GameEntity(name: 'testEntity', components: [new TextComponent()])
-			Scene scene = new Scene('testId', [testEntity])
+			Scene scene = new Scene('testId', {[testEntity]})
+			scene.init()
 		when:
 			def results = scene.getEntitiesMatching([TextComponent])
 		then:
@@ -73,7 +78,8 @@ class SceneTest extends Specification {
 	def "Component added events are processed"() {
 		given:
 			GameEntity testEntity = new GameEntity(name: 'testEntity')
-			Scene scene = new Scene('testId', [testEntity])
+			Scene scene = new Scene('testId', {[testEntity]})
+			scene.init()
 			ComponentAddedEvent addEvent = new ComponentAddedEvent(testEntity, new TextComponent())
 
 		when:
@@ -88,7 +94,8 @@ class SceneTest extends Specification {
 		given:
 			TextComponent textComponent = new TextComponent()
 			GameEntity testEntity = new GameEntity(name: 'testEntity', components: [textComponent])
-			Scene scene = new Scene('testId', [testEntity])
+			Scene scene = new Scene('testId', {[testEntity]})
+			scene.init()
 			ComponentRemovedEvent removeEvent = new ComponentRemovedEvent(testEntity, textComponent)
 
 		when:
@@ -99,17 +106,24 @@ class SceneTest extends Specification {
 			results == []
 	}
 
-	def "Deferred initialization"() {
+	def "Before initializing"() {
+		when:
+			Scene scene = new Scene('testId', {[new GameEntity()]})
+
+		then:
+			!scene.initialized
+			scene.entities.size() == 0
+	}
+
+	def "After initializing"() {
 		given:
-			boolean initialized = false
-			Scene scene = new Scene('testId', [], [], { initialized = true})
+			Scene scene = new Scene('testId', {[new GameEntity()]})
 
 		when:
 			scene.init()
 
 		then:
-			initialized == true
-			scene.initialized == true
+			scene.initialized
+			scene.entities.size() == 1
 	}
-
 }

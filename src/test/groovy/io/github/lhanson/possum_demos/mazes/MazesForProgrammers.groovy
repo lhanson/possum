@@ -75,8 +75,8 @@ class MazesForProgrammers {
 
 		Scene startScene() {
 			new Scene(
-					SceneBuilder.START,
-					[
+					START,
+					{[
 							new TextEntity(
 									name: 'menuTitle',
 									components: [
@@ -87,9 +87,9 @@ class MazesForProgrammers {
 									name: 'pressStart',
 									components: [
 											new TextComponent('-- press [enter] to start, [esc] to quit --'),
-											new RelativePositionComponent( 50, 90)
+											new RelativePositionComponent(50, 90)
 									])
-					],
+					]},
 					[
 							// Main menu context
 							new InputContext() {
@@ -115,15 +115,15 @@ class MazesForProgrammers {
 		Scene quittingScene() {
 			new Scene(
 					QUITTING,
-					[
-							new GameEntity(
+					{
+						[new GameEntity(
 								name: 'quitText',
 								components: [
 										new TextComponent('Goodbye see you!'),
 										new RelativePositionComponent(50, 50),
 										new TimerComponent(ticksRemaining: 1000, alarm: { transition(null) })
-								])
-					],
+								])]
+					}
 			)
 		}
 
@@ -213,7 +213,7 @@ class MazesForProgrammers {
 
 			new Scene(
 					MAZE,
-					entities,
+					{ entities },
 					[
 							new InputContext() {
 								@Override MappedInput mapInput(InputEvent rawInput) {
@@ -254,15 +254,15 @@ class MazesForProgrammers {
 		Scene winScene() {
 			new Scene(
 					WIN,
-					[
-							new GameEntity(
-									name: 'winText',
-									components: [
-											new TextComponent('Congrats, you won!'),
-											new RelativePositionComponent(50, 50),
-											new TimerComponent(ticksRemaining: 1000, alarm: { transition(START) })
-									])
-					],
+					{
+						[new GameEntity(
+								name: 'winText',
+								components: [
+										new TextComponent('Congrats, you won!'),
+										new RelativePositionComponent(50, 50),
+										new TimerComponent(ticksRemaining: 1000, alarm: { transition(START) })
+								])]
+					}
 			)
 		}
 	}

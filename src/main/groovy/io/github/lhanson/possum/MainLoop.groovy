@@ -27,16 +27,6 @@ class MainLoop {
 	void run() {
 		Scene scene = sceneBuilder.getNextScene()
 		while (scene) {
-			if (!scene.initialized) {
-				log.debug("Initializing scene {}", scene.id)
-				scene.init()
-				systems.each { it.initScene(scene) }
-				renderers.each { it.initScene(scene) }
-				timer = new LoopTimer() // reset counts after init
-			} else {
-				timer.tick()
-			}
-
 			timer.updateSimulation {
 				scene.processInput()
 				systems.each { it.update(scene, SIMULATION_TIMESTEP) }
@@ -114,6 +104,8 @@ class MainLoop {
 			long updatesStartTime = System.currentTimeMillis()
 			int updateIterations = 0
 			int maxUpdateIterations = 0
+
+			tick()
 
 			while (lag >= SIMULATION_TIMESTEP && maxUpdateIterations++ <= MAX_SLOWDOWN_FRAMES) {
 				update.call()

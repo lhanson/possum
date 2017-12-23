@@ -9,7 +9,7 @@ class PauseSystemTest extends Specification {
 	def "Pause events cause the game thread to wait"() {
 		given:
 			PauseSystem pauseSystem = new PauseSystem()
-			Scene scene = new Scene('test-scene', [], [])
+			Scene scene = new Scene('test-scene', {[]})
 			scene.activeInput = [MappedInput.PAUSE]
 			Runnable game = { pauseSystem.doUpdate(scene, 1) }
 			Thread gameThread = new Thread(game)

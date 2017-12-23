@@ -58,22 +58,9 @@ class Scene {
 	 * Constructor for simple scenes with no input.
 	 *
 	 * @param id the ID of the scene
-	 * @param entities the entities to add to the scene
 	 */
-	Scene(String id, List<GameEntity> entities) {
-		this(id, entities, null, null)
-	}
-
-	/**
-	 * Simple constructor for simple scenes. For scenes with more expensive initialization needs,
-	 * see the constructor which takes a deferred initialization routine.
-	 *
-	 * @param id the ID of the scene
-	 * @param entities the entities to add to the scene
-	 * @param inputContexts input contexts for handling this scene's input
-	 */
-	Scene(String id, List<GameEntity> entities, List<InputContext> inputContexts) {
-		this(id, entities, inputContexts, null)
+	Scene(String id, SceneInitializer sceneInitializer) {
+		this(id, sceneInitializer, null)
 	}
 
 	/**
@@ -82,12 +69,11 @@ class Scene {
 	 * be reinitialized multiple times.
 	 *
 	 * @param id the ID of the scene
-	 * @param entities the entities to add to the scene
+	 * @param sceneInitializer the initialization code to execute when (re-)initializing the scene
 	 * @param inputContexts input contexts for handling this scene's input
-	 * @param initialize the runnable to execute when (re-)initializing the scene
 	 */
-	Scene(String id, List<GameEntity> entities, List<InputContext> inputContexts, SceneInitializer sceneInitializer) {
-		log.debug "Creating scene '$id'"
+	Scene(String id, SceneInitializer sceneInitializer, List<InputContext> inputContexts) {
+		log.debug "Creating scene '$id' with {} input contexts", inputContexts?.size() ?: 0
 		long startTime = System.currentTimeMillis()
 
 		this.id = id
@@ -101,15 +87,14 @@ class Scene {
 	}
 
 	/**
-	 * Initializes the scene. Called explicitly because we may or may not have
-	 * a SceneInitializer which generates entities, and other initialization
-	 * steps may operate on those entities.
+	 * Initializes the scene. Executes common init code as well
+	 * as the scene-specific {@link SceneInitializer}.
 	 */
 	void init() {
 		log.debug "Initializing scene '$id'"
 		long startTime = System.currentTimeMillis()
 
-		sceneInitializer?.initScene(this)
+		setEntities(sceneInitializer.initScene())
 
 		// Initialize quadtree
 		quadtree = new Quadtree(new AreaComponent(minX, minY, maxX, maxY))
@@ -126,6 +111,18 @@ class Scene {
 
 		initialized = true
 		log.debug "Initialized scene '{}' in {} ms", id, System.currentTimeMillis() - startTime
+	}
+
+	/**
+	 * Uninitializes a scene. When a scene is completed, this will free up
+	 * any resources it may be holding.
+	 */
+	void uninit() {
+		log.debug "Uninitializing scene '$id'"
+		entities.clear()
+		entitiesByComponentType.clear()
+		entitiesToBeRendered.clear()
+		initialized = false
 	}
 
 	void setEntities(List<GameEntity> entities) {
