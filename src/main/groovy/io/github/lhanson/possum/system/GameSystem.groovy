@@ -29,7 +29,7 @@ abstract class GameSystem {
 	 * @param scene the scene being transitioned to
 	 */
 	final void initScene(Scene scene) {
-		log.debug("Initializing {} for {}", name, scene)
+		log.debug("Initializing {} for {}", name, scene.id)
 		doInitScene(scene)
 	}
 
