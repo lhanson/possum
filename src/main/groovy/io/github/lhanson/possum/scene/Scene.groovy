@@ -158,7 +158,7 @@ class Scene {
 
 	@Subscription
 	void componentRemoved(ComponentRemovedEvent event) {
-		entitiesByComponentType[event.component.class].remove(event.entity)
+		entitiesByComponentType[event.component.class]?.remove(event.entity)
 		log.debug("Removed {} from component lookup list for {}", event.entity, event.component)
 	}
 
