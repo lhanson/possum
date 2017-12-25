@@ -7,6 +7,7 @@ import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.TextEntity
 import io.github.lhanson.possum.events.ComponentAddedEvent
 import io.github.lhanson.possum.events.ComponentRemovedEvent
+import io.github.lhanson.possum.events.EventBroker
 import spock.lang.Specification
 
 class SceneTest extends Specification {
@@ -17,6 +18,7 @@ class SceneTest extends Specification {
 					name: 'testEntity',
 					components: [new AreaComponent()])
 			Scene scene = new Scene('testScene', {[entity]})
+			scene.eventBroker = new EventBroker()
 			scene.init()
 		when:
 			def entities = scene.getEntitiesMatching([AreaComponent])
@@ -31,6 +33,7 @@ class SceneTest extends Specification {
 					name: 'textPanel',
 					components: [new TextEntity(), new TextEntity()])
 			Scene scene = new Scene('testScene', {[textPanel]})
+			scene.eventBroker = new EventBroker()
 			scene.init()
 		when:
 			// This is slightly odd in that TextEntity is not technically a GameComponent,
@@ -45,6 +48,7 @@ class SceneTest extends Specification {
 		given:
 			GameEntity testEntity = new GameEntity(name: 'testEntity')
 			Scene scene = new Scene('testId', {[testEntity]})
+			scene.eventBroker = new EventBroker()
 			scene.init()
 		when:
 			def result = scene.findNonPanelWithin(new AreaComponent())
@@ -56,6 +60,7 @@ class SceneTest extends Specification {
 		given:
 			GameEntity testEntity = new GameEntity(name: 'testEntity', components: [TextComponent])
 			Scene scene = new Scene('testId', {[testEntity]})
+			scene.eventBroker = new EventBroker()
 			scene.init()
 		when:
 			scene.setEntities([])
@@ -68,6 +73,7 @@ class SceneTest extends Specification {
 		given:
 			GameEntity testEntity = new GameEntity(name: 'testEntity', components: [new TextComponent()])
 			Scene scene = new Scene('testId', {[testEntity]})
+			scene.eventBroker = new EventBroker()
 			scene.init()
 		when:
 			def results = scene.getEntitiesMatching([TextComponent])
@@ -79,6 +85,7 @@ class SceneTest extends Specification {
 		given:
 			GameEntity testEntity = new GameEntity(name: 'testEntity')
 			Scene scene = new Scene('testId', {[testEntity]})
+			scene.eventBroker = new EventBroker()
 			scene.init()
 			ComponentAddedEvent addEvent = new ComponentAddedEvent(testEntity, new TextComponent())
 
@@ -95,6 +102,7 @@ class SceneTest extends Specification {
 			TextComponent textComponent = new TextComponent()
 			GameEntity testEntity = new GameEntity(name: 'testEntity', components: [textComponent])
 			Scene scene = new Scene('testId', {[testEntity]})
+			scene.eventBroker = new EventBroker()
 			scene.init()
 			ComponentRemovedEvent removeEvent = new ComponentRemovedEvent(testEntity, textComponent)
 
@@ -118,6 +126,7 @@ class SceneTest extends Specification {
 	def "After initializing"() {
 		given:
 			Scene scene = new Scene('testId', {[new GameEntity()]})
+			scene.eventBroker = new EventBroker()
 
 		when:
 			scene.init()

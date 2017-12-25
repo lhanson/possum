@@ -4,19 +4,22 @@ import io.github.lhanson.possum.component.TimerComponent
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.events.ComponentAddedEvent
 import io.github.lhanson.possum.events.ComponentRemovedEvent
+import io.github.lhanson.possum.events.EventBroker
 import io.github.lhanson.possum.events.Subscription
 import io.github.lhanson.possum.scene.Scene
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 @Component
 class TimerSystem extends GameSystem {
+	@Autowired EventBroker eventBroker
 	String name = 'timerSystem'
 	List<GameEntity> timers
 	boolean removingComponent = false
 
 	@Override
 	void doInitScene(Scene scene) {
-		scene.eventBroker.subscribe(this)
+		eventBroker.subscribe(this)
 		timers = scene.entities.findAll {
 			it.components.findAll { it instanceof TimerComponent }
 		}

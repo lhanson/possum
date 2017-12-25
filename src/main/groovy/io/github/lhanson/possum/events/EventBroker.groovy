@@ -2,6 +2,8 @@ package io.github.lhanson.possum.events
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Component
+
 import java.lang.reflect.Method
 
 /**
@@ -10,6 +12,7 @@ import java.lang.reflect.Method
  * have a corresponding {@link Subscription}-annotated
  * method called whene such events are published.
  */
+@Component
 class EventBroker {
 	Logger log = new LoggerFactory().getLogger(this.class)
 	Map<Class, List<Subscription>> subscriptionsByEventClass = [:]

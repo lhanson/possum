@@ -3,6 +3,7 @@ package io.github.lhanson.possum.system
 import io.github.lhanson.possum.collision.CollisionSystem
 import io.github.lhanson.possum.component.*
 import io.github.lhanson.possum.entity.GameEntity
+import io.github.lhanson.possum.events.EventBroker
 import io.github.lhanson.possum.input.MappedInput
 import io.github.lhanson.possum.scene.Scene
 import spock.lang.Specification
@@ -13,7 +14,8 @@ class MovementSystemTest extends Specification {
 	def setup() {
 		movementSystem = new MovementSystem(
 				collisionSystem: Mock(CollisionSystem),
-				movingEntities: [])
+				movingEntities: [],
+				eventBroker: new EventBroker())
 	}
 
 	def "Simple bounding box is correctly computed"() {
@@ -53,6 +55,7 @@ class MovementSystemTest extends Specification {
 		given:
 			GameEntity hero = heroAt(0, 0)
 			Scene scene = new Scene('testScene', {[hero]})
+			scene.eventBroker = new EventBroker()
 			scene.init()
 			scene.activeInput.addAll([MappedInput.RIGHT, MappedInput.RIGHT])
 		when:

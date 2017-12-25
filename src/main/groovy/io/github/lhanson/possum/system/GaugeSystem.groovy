@@ -4,18 +4,21 @@ import io.github.lhanson.possum.component.InventoryComponent
 import io.github.lhanson.possum.entity.GaugeEntity
 import io.github.lhanson.possum.events.ComponentAddedEvent
 import io.github.lhanson.possum.events.ComponentRemovedEvent
+import io.github.lhanson.possum.events.EventBroker
 import io.github.lhanson.possum.events.Subscription
 import io.github.lhanson.possum.scene.Scene
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 @Component
 class GaugeSystem extends GameSystem {
+	@Autowired EventBroker eventBroker
 	String name = 'GaugeSystem'
 	List<GaugeEntity> gauges
 
 	@Override
 	void doInitScene(Scene scene) {
-		scene.eventBroker.subscribe(this)
+		eventBroker.subscribe(this)
 
 		// Locate GaugeEntities in the scene, from both the top-level entities list
 		//  as well as entities nested in InventoryComponents

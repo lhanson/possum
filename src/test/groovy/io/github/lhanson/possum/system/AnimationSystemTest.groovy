@@ -2,6 +2,7 @@ package io.github.lhanson.possum.system
 
 import io.github.lhanson.possum.component.AnimatedComponent
 import io.github.lhanson.possum.entity.GameEntity
+import io.github.lhanson.possum.events.EventBroker
 import io.github.lhanson.possum.scene.Scene
 import spock.lang.Specification
 
@@ -9,7 +10,7 @@ class AnimationSystemTest extends Specification {
 	AnimationSystem animationSystem
 
 	def setup() {
-		animationSystem = new AnimationSystem()
+		animationSystem = new AnimationSystem(eventBroker: new EventBroker())
 	}
 
 	def "Animation durations are updated properly"() {
@@ -17,6 +18,7 @@ class AnimationSystemTest extends Specification {
 			AnimatedComponent animatedComponent = new AnimatedComponent(pulseDurationMillis: 100)
 			Scene scene = new Scene('scene',
 					{[new GameEntity(components: [animatedComponent])]})
+			scene.eventBroker = new EventBroker()
 			scene.init()
 			animationSystem.initScene(scene)
 		when:
@@ -32,6 +34,7 @@ class AnimationSystemTest extends Specification {
 			AnimatedComponent animatedComponent = new AnimatedComponent(pulseDurationMillis: 100)
 			Scene scene = new Scene('scene',
 					{[new GameEntity(components: [animatedComponent])]})
+			scene.eventBroker = new EventBroker()
 			scene.init()
 			animationSystem.initScene(scene)
 		when:

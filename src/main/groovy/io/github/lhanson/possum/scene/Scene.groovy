@@ -29,7 +29,7 @@ class Scene {
 	/** The input collected for this scene to process */
 	Set<MappedInput> activeInput = []
 	/** Event broker for this scene */
-	EventBroker eventBroker = new EventBroker()
+	EventBroker eventBroker
 	/** Whether the scene has been initialized yet */
 	boolean initialized = false
 	/** Whether the simulation is in debug mode */
@@ -79,7 +79,6 @@ class Scene {
 		this.id = id
 		this.inputContexts = inputContexts
 		this.sceneInitializer = sceneInitializer
-		eventBroker.subscribe(this)
 
 		setEntities(entities)
 
@@ -93,6 +92,8 @@ class Scene {
 	void init() {
 		log.debug "Initializing scene '$id'"
 		long startTime = System.currentTimeMillis()
+
+		eventBroker.subscribe(this)
 
 		setEntities(sceneInitializer.initScene())
 
