@@ -17,7 +17,7 @@ class EventBrokerTest extends Specification {
 		}
 	}
 
-	def "Subscribers can register event handlers with the broker"() {
+	def "Annotated subscribers can register event handlers with the broker"() {
 		when:
 			broker.subscribe(subscriber)
 
@@ -68,4 +68,18 @@ class EventBrokerTest extends Specification {
 		then:
 			notified == 2
 	}
+
+	def "Non-annotated subscription"() {
+		given:
+			boolean handled = false
+			def handler = { handled = true }
+			broker.subscribe(this, SceneInitializedEvent, handler)
+
+		when:
+			broker.publish(SceneInitializedEvent)
+
+		then:
+			handled
+	}
+
 }
