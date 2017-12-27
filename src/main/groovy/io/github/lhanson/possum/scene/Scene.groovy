@@ -11,6 +11,7 @@ import io.github.lhanson.possum.events.ComponentAddedEvent
 import io.github.lhanson.possum.events.ComponentRemovedEvent
 import io.github.lhanson.possum.events.EntityMovedEvent
 import io.github.lhanson.possum.events.EventBroker
+import io.github.lhanson.possum.events.SceneInitializedEvent
 import io.github.lhanson.possum.events.Subscription
 import io.github.lhanson.possum.input.InputAdapter
 import io.github.lhanson.possum.input.InputContext
@@ -112,6 +113,7 @@ class Scene {
 
 		initialized = true
 		log.debug "Initialized scene '{}' in {} ms", id, System.currentTimeMillis() - startTime
+		eventBroker.publish(new SceneInitializedEvent(id))
 	}
 
 	/**

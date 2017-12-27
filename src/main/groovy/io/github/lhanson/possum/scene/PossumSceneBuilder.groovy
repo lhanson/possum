@@ -1,5 +1,6 @@
 package io.github.lhanson.possum.scene
 
+import io.github.lhanson.possum.events.EventBroker
 import io.github.lhanson.possum.input.InputAdapter
 import io.github.lhanson.possum.rendering.RenderingSystem
 import io.github.lhanson.possum.system.GameSystem
@@ -7,7 +8,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 
-abstract class PossumSceneBuilder {
+class PossumSceneBuilder {
 	static String START = 'start' // The scene ID every game starts in by default
 	Logger log = LoggerFactory.getLogger(this.class)
 	String nextSceneId = START
@@ -15,6 +16,7 @@ abstract class PossumSceneBuilder {
 	Map<String, Scene> scenesById = [:]
 	@Autowired List<RenderingSystem> renderers
 	@Autowired(required = false) List<GameSystem> systems
+	@Autowired EventBroker eventBroker
 
 	@Autowired
 	InputAdapter inputAdapter
@@ -24,7 +26,10 @@ abstract class PossumSceneBuilder {
 	 * @param scene the scene to register
 	 */
 	void addScene(Scene scene) {
+		// We do a bit of manual wiring of dependencies
+		// here since Scene isn't a Spring Bean.
 		scene.inputAdapter = inputAdapter
+		scene.eventBroker = eventBroker
 		scenesById[scene.id] = scene
 	}
 
@@ -40,10 +45,12 @@ abstract class PossumSceneBuilder {
 	Scene getNextScene() {
 		// This scene will loop until any of its components specify otherwise
 		Scene nextScene = scenesById[nextSceneId]
-		if (nextScene && !nextScene.initialized) {
+		if (nextScene && nextScene != currentScene) {
 			log.info "Scene change detected from {} to {}", currentScene?.id, nextScene?.id
 			currentScene?.uninit()
-			nextScene.init()
+			if (!nextScene.initialized) {
+				nextScene.init()
+			}
 			systems.each { it.initScene(nextScene) }
 			renderers.each { it.initScene(nextScene) }
 			currentScene = nextScene

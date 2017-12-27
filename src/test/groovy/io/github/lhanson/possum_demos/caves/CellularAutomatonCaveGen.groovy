@@ -17,6 +17,8 @@ import io.github.lhanson.possum.entity.GaugeEntity
 import io.github.lhanson.possum.entity.GridEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.TextEntity
+import io.github.lhanson.possum.events.EventBroker
+import io.github.lhanson.possum.events.SceneInitializedEvent
 import io.github.lhanson.possum.input.InputContext
 import io.github.lhanson.possum.input.MappedInput
 import io.github.lhanson.possum.rendering.RenderingSystem
@@ -45,8 +47,8 @@ import java.text.DecimalFormat
 		'io.github.lhanson.possum'
 ])
 class CellularAutomatonCaveGen {
-	@Autowired
-	MainLoop mainLoop
+	@Autowired MainLoop mainLoop
+	@Autowired EventBroker eventBroker
 
 	static void main(String[] args) {
 		def context = new SpringApplicationBuilder(CellularAutomatonCaveGen)
@@ -62,6 +64,7 @@ class CellularAutomatonCaveGen {
 		final String CAVE = 'cave'
 		final String QUITTING = 'quitting'
 		final String WIN = 'win'
+		final String LOADING = 'loading'
 		Logger log = LoggerFactory.getLogger(this.class)
 		@Autowired MovementSystem movementSystem
 		@Autowired RenderingSystem renderingSystem
@@ -69,7 +72,7 @@ class CellularAutomatonCaveGen {
 
 		@PostConstruct
 		void addScenes() {
-			[startScene, caveScene, quittingScene, winScene].each {
+			[startScene, loadingCave, caveScene, quittingScene, winScene].each {
 				addScene(it)
 			}
 		}
@@ -100,7 +103,7 @@ class CellularAutomatonCaveGen {
 											transition(QUITTING)
 											break
 										case rawInput.VK_ENTER:
-											transition(CAVE)
+											transition(LOADING)
 											break
 									}
 								}
@@ -109,6 +112,26 @@ class CellularAutomatonCaveGen {
 							}
 						}
 				]
+		)
+
+		Scene loadingCave = new Scene(
+				LOADING,
+				{
+					log.debug "Pre-loading cave in the background"
+					def handler = { SceneInitializedEvent event ->
+						if (event.sceneId == CAVE) {
+							transition(CAVE)
+						}
+					}
+					eventBroker.subscribe(this, SceneInitializedEvent, handler)
+					Thread.start { caveScene.init() }
+					def entities = [new GameEntity(
+						name: 'loadingText',
+						components: [
+								new TextComponent('Loading...'),
+								new RelativePositionComponent(50, 50) ])]
+					return entities
+				}
 		)
 
 		Scene quittingScene = new Scene(
