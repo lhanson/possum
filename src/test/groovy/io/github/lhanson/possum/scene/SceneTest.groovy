@@ -134,5 +134,45 @@ class SceneTest extends Specification {
 		then:
 			scene.initialized
 			scene.entities.size() == 1
+			!scene.eventBroker.subscriptionsByEventClass.empty
 	}
+
+	def "Uninitialize"() {
+		given:
+			Scene scene = new Scene('testId', {
+				[new GameEntity(components: [new AreaComponent()])]
+			})
+			scene.eventBroker = new EventBroker()
+
+		when:
+			scene.init()
+			scene.uninit()
+
+		then:
+			!scene.initialized
+			scene.entities.empty
+			scene.getEntitiesMatching([AreaComponent]).empty
+			scene.eventBroker.subscriptionsByEventClass.findAll { it.value } == [:]
+	}
+
+	def "Loading scene is uninitialized with parent scene"() {
+		given:
+			EventBroker eventBroker = new EventBroker()
+			Scene loadingScene = new Scene('loading', {[]})
+			Scene mainScene = new Scene('scene', {[]}, [], loadingScene)
+			mainScene.eventBroker = eventBroker
+			loadingScene.eventBroker = eventBroker
+
+		when:
+			// PossumSceneBuilder normally handles the chained initialization
+			loadingScene.init()
+			mainScene.init()
+		and:
+			mainScene.uninit()
+
+		then:
+			!mainScene.initialized
+			!loadingScene.initialized
+	}
+
 }

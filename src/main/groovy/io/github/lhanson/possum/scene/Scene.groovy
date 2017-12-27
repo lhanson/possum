@@ -1,5 +1,6 @@
 package io.github.lhanson.possum.scene
 
+import groovy.transform.ToString
 import io.github.lhanson.possum.collision.Quadtree
 import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.GameComponent
@@ -23,12 +24,15 @@ import org.slf4j.LoggerFactory
  * A Scene encapsulates entities and input representing
  * a particular segment of a game.
  */
+@ToString(includes = 'id')
 class Scene {
 	InputAdapter inputAdapter
 	/** Unique identifier for this scene */
 	String id
 	/** The input collected for this scene to process */
 	Set<MappedInput> activeInput = []
+	/** A scene to run while we do initialization */
+	Scene loadingScene
 	/** Event broker for this scene */
 	EventBroker eventBroker
 	/** Whether the scene has been initialized yet */
@@ -72,14 +76,16 @@ class Scene {
 	 * @param id the ID of the scene
 	 * @param sceneInitializer the initialization code to execute when (re-)initializing the scene
 	 * @param inputContexts input contexts for handling this scene's input
+	 * @param loadingScene if supplied, a scene which will run while this one's initialization occurs
 	 */
-	Scene(String id, SceneInitializer sceneInitializer, List<InputContext> inputContexts) {
+	Scene(String id, SceneInitializer sceneInitializer, List<InputContext> inputContexts, Scene loadingScene = null) {
 		log.debug "Creating scene '$id' with {} input contexts", inputContexts?.size() ?: 0
 		long startTime = System.currentTimeMillis()
 
 		this.id = id
 		this.inputContexts = inputContexts
 		this.sceneInitializer = sceneInitializer
+		this.loadingScene = loadingScene
 
 		setEntities(entities)
 
@@ -94,6 +100,7 @@ class Scene {
 		log.debug "Initializing scene '$id'"
 		long startTime = System.currentTimeMillis()
 
+		if (!eventBroker) throw new IllegalStateException("No event broker for scene $id")
 		eventBroker.subscribe(this)
 
 		setEntities(sceneInitializer.initScene())
@@ -109,7 +116,9 @@ class Scene {
 		}
 
 		// All entities will need to be rendered initially
-		entitiesToBeRendered.addAll entities
+		if (entities) {
+			entitiesToBeRendered.addAll entities
+		}
 
 		initialized = true
 		log.debug "Initialized scene '{}' in {} ms", id, System.currentTimeMillis() - startTime
@@ -121,10 +130,14 @@ class Scene {
 	 * any resources it may be holding.
 	 */
 	void uninit() {
+		if (loadingScene) {
+			loadingScene.uninit()
+		}
 		log.debug "Uninitializing scene '$id'"
 		entities.clear()
 		entitiesByComponentType.clear()
 		entitiesToBeRendered.clear()
+		eventBroker.unsubscribe(this)
 		initialized = false
 	}
 

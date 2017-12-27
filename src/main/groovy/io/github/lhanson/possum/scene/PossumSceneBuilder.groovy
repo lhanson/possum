@@ -1,6 +1,7 @@
 package io.github.lhanson.possum.scene
 
 import io.github.lhanson.possum.events.EventBroker
+import io.github.lhanson.possum.events.SceneInitializedEvent
 import io.github.lhanson.possum.input.InputAdapter
 import io.github.lhanson.possum.rendering.RenderingSystem
 import io.github.lhanson.possum.system.GameSystem
@@ -30,7 +31,13 @@ class PossumSceneBuilder {
 		// here since Scene isn't a Spring Bean.
 		scene.inputAdapter = inputAdapter
 		scene.eventBroker = eventBroker
+		if (scene.loadingScene) {
+			scene.loadingScene.eventBroker = eventBroker
+		}
 		scenesById[scene.id] = scene
+		if (scene.loadingScene) {
+			addScene(scene.loadingScene)
+		}
 	}
 
 	/**
@@ -47,6 +54,19 @@ class PossumSceneBuilder {
 		Scene nextScene = scenesById[nextSceneId]
 		if (nextScene && nextScene != currentScene) {
 			log.info "Scene change detected from {} to {}", currentScene?.id, nextScene?.id
+			if (nextScene.loadingScene && !nextScene.loadingScene.initialized) {
+				log.info "Running loading scene {}, while waiting for {} to initialize", nextScene.loadingScene, nextScene.id
+				def handler = { String nextId, SceneInitializedEvent event ->
+					if (event.sceneId == nextId) {
+						transition(nextId)
+					}
+				}.curry(nextScene.id)
+
+				eventBroker.subscribe(this, SceneInitializedEvent, handler)
+				Thread.start { nextScene.init() }
+				transition(nextScene.loadingScene.id)
+				nextScene = nextScene.loadingScene
+			}
 			currentScene?.uninit()
 			if (!nextScene.initialized) {
 				nextScene.init()
