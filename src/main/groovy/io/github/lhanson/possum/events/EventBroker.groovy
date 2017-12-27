@@ -51,6 +51,13 @@ class EventBroker {
 		log.debug("Registered subscription for {} to event type {}", subscriber, eventClass)
 	}
 
+	/** Remove any subscriptions registered by the provided subscriber */
+	void unsubscribe(Object subscriber) {
+		subscriptionsByEventClass.values().each { List<Subscription> subscriptions ->
+			subscriptions.removeAll { it.subscriber == subscriber }
+		}
+	}
+
 	/**
 	 * Invokes the {@code Subscription}-annotated method
 	 * on each subscriber registered for this type of event.

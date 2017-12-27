@@ -82,4 +82,13 @@ class EventBrokerTest extends Specification {
 			handled
 	}
 
+	def "Unsubscribe"() {
+		when:
+			broker.subscribe(subscriber)
+			broker.unsubscribe(subscriber)
+
+		then:
+			broker.subscriptionsByEventClass[String] == []
+	}
+
 }
