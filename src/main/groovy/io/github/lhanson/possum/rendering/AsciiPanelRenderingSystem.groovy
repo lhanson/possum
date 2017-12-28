@@ -1,6 +1,7 @@
 package io.github.lhanson.possum.rendering
 
 import asciiPanel.AsciiPanel
+import io.github.lhanson.possum.collision.Quadtree
 import io.github.lhanson.possum.component.*
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.GaugeEntity
@@ -226,12 +227,25 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 				}
 			}
 
+			drawQuadtreeOutline(scene.quadtree, new Color(50, 50, 50))
+
 			if (pauseForHints) {
 				terminal.paintImmediately(0, 0, terminal.width, terminal.height)
 				logger.debug "Pausing to display render hints for ${scene.debugPauseMillis} ms"
 				Thread.sleep(scene.debugPauseMillis)
 			}
 			stopwatch.stop()
+		}
+	}
+
+	void drawQuadtreeOutline(Quadtree quadtree, Color color) {
+		AreaComponent bounds = translateWorldToScreen(quadtree.bounds, viewport)
+		Graphics g = terminal.offscreenGraphics
+		g.drawRect(bounds.x * terminal.charWidth, bounds.y * terminal.charHeight, bounds.width * terminal.charWidth, bounds.height * terminal.charHeight)
+		if (quadtree.nodes[0]) {
+			quadtree.nodes.each {
+				drawQuadtreeOutline(it, color)
+			}
 		}
 	}
 
