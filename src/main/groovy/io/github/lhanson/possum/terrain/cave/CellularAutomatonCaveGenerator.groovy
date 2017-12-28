@@ -138,7 +138,11 @@ class CellularAutomatonCaveGenerator {
 		log.debug "Grid is ${(emptyCells / (width * height)) * 100}% open with $emptyCells empty cells"
 	}
 
-	def countRooms() {
+	/**
+	 * Examines the generated grid and returns distinct rooms
+	 * @return unconnected rooms within the grid
+	 */
+	def getRooms() {
 		def rooms = []
 		def openCells = gridEntity.cellList.findAll { !it.wall }
 		while (openCells) {
