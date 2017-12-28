@@ -63,6 +63,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
 		// We're doing active rendering, so we don't need to be told when to repaint
 		setIgnoreRepaint(true)
+		setResizable(false)
 		add(terminal)
 		pack()
 		setVisible(true)
@@ -161,17 +162,26 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		renderDebugHints(scene, stopwatch)
 
 		stopwatch.start('processing each entity')
+		def dirtyRectangles = []
 		scene.entitiesToBeRendered.each { entity ->
 			if (entity instanceof PanelEntity) {
-				renderPanelBorders(entity)
+				dirtyRectangles << renderPanelBorders(entity)
 			} else if (entity instanceof RerenderEntity) {
-				AreaComponent area = translateWorldToScreen(entity.getComponentOfType(AreaComponent), viewport)
-				logger.debug "Clearing {}", area
+				AreaComponent ac = entity.getComponentOfType(AreaComponent)
+				AreaComponent area
+				if (ac) {
+					area = translateWorldToScreen(ac, viewport)
+				} else {
+					// Empty RerenderEntity means do the whole screen
+					area = new AreaComponent(0, 0, viewportWidth, viewportHeight)
+				}
+				dirtyRectangles << area
 				terminal.clear(' ' as char, area.x, area.y, area.width, area.height)
 			} else if (entity.parent) {
 				TextComponent tc = entity.getComponentOfType(TextComponent)
 				AreaComponent pc = entity.parent.getComponentOfType(AreaComponent)
 				AreaComponent ac = translateChildToParent(entity.getComponentOfType(AreaComponent), pc)
+				dirtyRectangles << ac
 				if (entity.parent instanceof PanelEntity) {
 					ac.x += entity.parent.padding
 					ac.y += entity.parent.padding
@@ -183,6 +193,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 					Color color = entity.getComponentOfType(ColorComponent)?.color ?: AsciiPanel.white
 					TextComponent tc = entity.getComponentOfType(TextComponent)
 					AreaComponent ac = translateWorldToScreen(entity.getComponentOfType(AreaComponent), viewport)
+					dirtyRectangles << ac
 					write(tc.text, ac.x, ac.y, color)
 				}
 			}
@@ -190,8 +201,10 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		stopwatch.stop()
 
 		stopwatch.start('terminal render')
-		terminal.paintImmediately(0, 0, terminal.width, terminal.height)
 		scene.entitiesToBeRendered.clear()
+		dirtyRectangles.each { AreaComponent area ->
+			terminal.paintImmediately(area.x * terminal.charWidth, area.y * terminal.charHeight, area.width * terminal.charWidth, area.height * terminal.charHeight)
+		}
 		stopwatch.stop()
 		logger.trace "Render complete. {}", stopwatch
 	}
@@ -368,8 +381,9 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	 * That's currently handled by the main render() logic.
 	 *
 	 * @param panel the panel to render borders for
+	 * @return the area which is being rendered
 	 */
-	void renderPanelBorders(PanelEntity panel) {
+	AreaComponent renderPanelBorders(PanelEntity panel) {
 		AreaComponent ac = panel.getComponentOfType(AreaComponent)
 		String h  = String.valueOf((char)205) // ═
 		String v  = String.valueOf((char)186) // ║
@@ -389,6 +403,8 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		}
 		// Bottom border
 		terminal.write(ll + ("$h" * (ac.width - 2)) + lr, ac.x, ac.y + (ac.height - 1))
+
+		return ac
 	}
 
 	int relativeX(RelativePositionComponent rpc) {

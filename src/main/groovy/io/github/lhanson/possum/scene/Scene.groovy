@@ -115,10 +115,8 @@ class Scene {
 			log.debug("Initialized quadtree in {} ms", System.currentTimeMillis() - start)
 		}
 
-		// All entities will need to be rendered initially
-		if (entities) {
-			entitiesToBeRendered.addAll entities
-		}
+		// The whole viewport will need to be rendered initially
+		entitiesToBeRendered << new RerenderEntity(components: [])
 
 		initialized = true
 		log.debug "Initialized scene '{}' in {} ms", id, System.currentTimeMillis() - startTime
