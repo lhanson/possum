@@ -1,5 +1,7 @@
 package io.github.lhanson.possum.component
 
+import groovy.transform.TailRecursive
+
 /**
  * Represents a single cell of indeterminately-sized space
  * within a larger grid, with the potential to be spatially
@@ -47,17 +49,25 @@ class GridCellComponent implements GameComponent {
 	}
 
 	/**
-	 * Performs a recursive flood fill beginning at the provided cell.
+	 * Performs a flood fill beginning at this cell.
 	 *
-	 * @return all cells in the target cell's "room", defined by whether it's a wall or not
+	 * @return all cells in the cell's "room", defined by whether it's a wall or not
 	 */
-	static List<GridCellComponent> floodFill(GridCellComponent cell) {
-		def results = [cell]
+	List<GridCellComponent> floodFill() {
+		floodFillRecursive(this, neighborhood8Way())
+	}
+
+	@TailRecursive
+	private List<GridCellComponent> floodFillRecursive(GridCellComponent cell, unvisited = [], results = []) {
 		cell.visited = true
-		cell.neighborhood8Way()
-				.findAll { !it.visited && it.wall == cell.wall }
-				.each { results.addAll(floodFill(it)) }
-		return results
+		results << cell
+		unvisited.remove(cell)
+		unvisited.addAll(cell.neighborhood8Way().findAll { !it.visited && it.wall == cell.wall })
+		if (unvisited.empty) {
+			return results
+		} else {
+			return floodFillRecursive(unvisited.pop(), unvisited, results)
+		}
 	}
 
 	@Override

@@ -1,6 +1,5 @@
 package io.github.lhanson.possum.terrain.cave
 
-import io.github.lhanson.possum.component.GridCellComponent
 import io.github.lhanson.possum.entity.GridEntity
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -144,7 +143,7 @@ class CellularAutomatonCaveGenerator {
 		def openCells = gridEntity.cellList.findAll { !it.wall }
 		while (openCells) {
 			def cell = openCells.pop()
-			def roomCells = GridCellComponent.floodFill(cell)
+			def roomCells = cell.floodFill()
 			rooms.add roomCells
 			openCells.removeAll(roomCells)
 		}
