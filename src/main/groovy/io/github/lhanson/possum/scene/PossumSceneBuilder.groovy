@@ -63,7 +63,8 @@ class PossumSceneBuilder {
 				}.curry(nextScene.id)
 
 				eventBroker.subscribe(this, SceneInitializedEvent, handler)
-				Thread.start { nextScene.init() }
+				final Scene backgroundLoadedScene = nextScene
+				Thread.start { backgroundLoadedScene.init() }
 				transition(nextScene.loadingScene.id)
 				nextScene = nextScene.loadingScene
 			}
