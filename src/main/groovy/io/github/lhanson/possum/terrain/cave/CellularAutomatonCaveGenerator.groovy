@@ -1,5 +1,6 @@
 package io.github.lhanson.possum.terrain.cave
 
+import io.github.lhanson.possum.component.GridCellComponent
 import io.github.lhanson.possum.entity.GridEntity
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -142,7 +143,7 @@ class CellularAutomatonCaveGenerator {
 	 * Examines the generated grid and returns distinct rooms
 	 * @return unconnected rooms within the grid
 	 */
-	def getRooms() {
+	List<List<GridCellComponent>> getRooms() {
 		def rooms = []
 		def openCells = gridEntity.cellList.findAll { !it.wall }
 		while (openCells) {
