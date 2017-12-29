@@ -277,7 +277,7 @@ class Scene {
 	 */
 	void entityNeedsRendering(GameEntity entity, AreaComponent previousArea = null) {
 		entitiesToBeRendered << entity
-		if (previousArea!= entity.getComponentOfType(AreaComponent)) {
+		if (previousArea && previousArea != entity.getComponentOfType(AreaComponent)) {
 			// Need to repaint what's at the entity's previous location
 			def uncoveredEntities = findNonPanelWithin(previousArea)
 			if (uncoveredEntities) {
