@@ -10,12 +10,16 @@ import spock.lang.Specification
 
 class MovementSystemTest extends Specification {
 	MovementSystem movementSystem
+	Scene scene
 
 	def setup() {
 		movementSystem = new MovementSystem(
 				collisionSystem: Mock(CollisionSystem),
 				movingEntities: [],
 				eventBroker: new EventBroker())
+		scene = new Scene('testScene')
+		scene.eventBroker = new EventBroker()
+		scene.init()
 	}
 
 	def "Simple bounding box is correctly computed"() {
@@ -54,15 +58,37 @@ class MovementSystemTest extends Specification {
 	def "Duplicate input signals are not handled each frame"() {
 		given:
 			GameEntity hero = heroAt(0, 0)
-			Scene scene = new Scene('testScene', {[hero]})
-			scene.eventBroker = new EventBroker()
-			scene.init()
+			scene.addEntity(hero)
 			scene.activeInput.addAll([MappedInput.RIGHT, MappedInput.RIGHT])
 		when:
 			movementSystem.update(scene, 0)
 		then:
 			// Having two queued right inputs shouldn't move twice
 			hero.getComponentOfType(AreaComponent) == new AreaComponent(1, 0, 1, 1)
+	}
+
+	def "Still entity has zero velocity"() {
+		given:
+			GameEntity hero = heroAt(0, 0)
+			scene.addEntity(hero)
+		when:
+			movementSystem.update(scene, 0)
+			VelocityComponent heroVelocity = hero.getComponentOfType(VelocityComponent)
+		then:
+			heroVelocity == movementSystem.still
+	}
+
+	def "Moving entities are stopped at the end of each frame"() {
+		given:
+			GameEntity hero = heroAt(0, 0)
+			scene.addEntity(hero)
+			scene.activeInput.addAll([MappedInput.RIGHT])
+		when:
+			movementSystem.update(scene, 0)
+			VelocityComponent heroVelocity = hero.getComponentOfType(VelocityComponent)
+		then:
+			heroVelocity == movementSystem.still
+			movementSystem.movingEntities.empty
 	}
 
 	GameEntity heroAt(int x, int y) {

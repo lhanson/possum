@@ -98,6 +98,7 @@ class MovementSystem extends GameSystem {
 
 		// Stop entities
 		movingEntities.each { it.getComponentOfType(VelocityComponent).vector2.setValues(0, 0) }
+		movingEntities.clear()
 	}
 
 	/**
