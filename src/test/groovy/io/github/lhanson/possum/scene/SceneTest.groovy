@@ -1,5 +1,6 @@
 package io.github.lhanson.possum.scene
 
+import io.github.lhanson.possum.collision.ImpassableComponent
 import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.TextComponent
 import io.github.lhanson.possum.entity.GameEntity
@@ -44,16 +45,18 @@ class SceneTest extends Specification {
 			gaugedEntities
 	}
 
-	def "findAt works with no matches"() {
+	def "When no entity is found at a location, we assume it's a wall square and create it dynamically"() {
 		given:
-			GameEntity testEntity = new GameEntity(name: 'testEntity')
-			Scene scene = new Scene('testId', {[testEntity]})
+			Scene scene = new Scene('testId')
 			scene.eventBroker = new EventBroker()
 			scene.init()
 		when:
 			def result = scene.findNonPanelWithin(new AreaComponent())
 		then:
-			result == []
+			result.size() == 1
+			result[0].name == 'wall'
+			result[0].getComponentOfType(ImpassableComponent)
+			scene.entities.size() == 1
 	}
 
 	def "setEntities clears existing entries in entitiesByComponentType "() {
@@ -158,8 +161,8 @@ class SceneTest extends Specification {
 	def "Loading scene is uninitialized with parent scene"() {
 		given:
 			EventBroker eventBroker = new EventBroker()
-			Scene loadingScene = new Scene('loading', {[]})
-			Scene mainScene = new Scene('scene', {[]}, [], loadingScene)
+			Scene loadingScene = new Scene('loading')
+			Scene mainScene = new Scene('scene', {}, [], loadingScene)
 			mainScene.eventBroker = eventBroker
 			loadingScene.eventBroker = eventBroker
 
@@ -173,6 +176,17 @@ class SceneTest extends Specification {
 		then:
 			!mainScene.initialized
 			!loadingScene.initialized
+	}
+
+	def "Add entity"() {
+		given:
+			Scene scene = new Scene('testId')
+			GameEntity hero = new GameEntity(name: 'hero')
+		when:
+			scene.addEntity(hero)
+		then:
+			scene.entities.size() == 1
+			scene.entities.contains(hero)
 	}
 
 }

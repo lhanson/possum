@@ -17,6 +17,7 @@ import io.github.lhanson.possum.events.Subscription
 import io.github.lhanson.possum.input.InputAdapter
 import io.github.lhanson.possum.input.InputContext
 import io.github.lhanson.possum.input.MappedInput
+import io.github.lhanson.possum.terrain.WallCarver
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -64,7 +65,7 @@ class Scene {
 	 *
 	 * @param id the ID of the scene
 	 */
-	Scene(String id, SceneInitializer sceneInitializer) {
+	Scene(String id, SceneInitializer sceneInitializer = null) {
 		this(id, sceneInitializer, null)
 	}
 
@@ -103,7 +104,7 @@ class Scene {
 		if (!eventBroker) throw new IllegalStateException("No event broker for scene $id")
 		eventBroker.subscribe(this)
 
-		setEntities(sceneInitializer.initScene())
+		setEntities(sceneInitializer?.initScene())
 
 		// Initialize quadtree
 		quadtree = new Quadtree(new AreaComponent(minX, minY, maxX, maxY))
@@ -140,26 +141,41 @@ class Scene {
 	}
 
 	void setEntities(List<GameEntity> entities) {
-		this.entities = entities
+		this.entities = entities ?: []
 		entitiesByComponentType.clear()
 		entities.each { entity ->
 			entity.eventBroker = eventBroker
-			entity.components.each { component ->
-				if (entitiesByComponentType[component.class] == null) {
-					entitiesByComponentType[component.class] = []
-				}
-				entitiesByComponentType[component.class] << entity
-
-				if (component instanceof AreaComponent) {
-					if (component.x < minX) minX = component.x
-					if (component.y < minY) minY = component.y
-					if (component.x + component.width > maxX) maxX = component.x + component.width
-					if (component.y + component.height > maxY) maxY = component.y + component.height
-				}
-			}
+			addEntityByComponentTypes(entity)
 		}
 	}
 
+	/**
+	 * Adds the entity to the scene.
+	 *
+	 * @param entity the entity to add to this scene
+	 */
+	void addEntity(GameEntity entity) {
+		entities << entity
+		entity.eventBroker = eventBroker
+		addEntityByComponentTypes(entity)
+	}
+
+	void addEntityByComponentTypes(GameEntity entity) {
+		entity.components.each { component ->
+			if (entitiesByComponentType[component.class] == null) {
+				entitiesByComponentType[component.class] = []
+			}
+			entitiesByComponentType[component.class] << entity
+
+			// NOTE: if we're doing this post-init and the bounds are expanded further, we don't currently act on this
+			if (component instanceof AreaComponent) {
+				if (component.x < minX) minX = component.x
+				if (component.y < minY) minY = component.y
+				if (component.x + component.width > maxX) maxX = component.x + component.width
+				if (component.y + component.height > maxY) maxY = component.y + component.height
+			}
+		}
+	}
 	@Subscription
 	void componentAdded(ComponentAddedEvent event) {
 		if (entitiesByComponentType[event.component.class] == null) {
@@ -247,6 +263,12 @@ class Scene {
 		if (log.isTraceEnabled()) {
 			log.trace "Finding {} non-panels within {} took {} ms", result.size(), area, System.currentTimeMillis() - start
 		}
+		// We're treating floor tiles as passable entities, everything else must be a wall so create it on the fly.
+		if (result.empty) {
+			GameEntity wall = WallCarver.buildWall(area)
+			result << wall
+			addEntity(wall)
+		}
 		return result
 	}
 
@@ -255,7 +277,7 @@ class Scene {
 	 */
 	void entityNeedsRendering(GameEntity entity, AreaComponent previousArea = null) {
 		entitiesToBeRendered << entity
-		if (previousArea) {
+		if (previousArea!= entity.getComponentOfType(AreaComponent)) {
 			// Need to repaint what's at the entity's previous location
 			def uncoveredEntities = findNonPanelWithin(previousArea)
 			if (uncoveredEntities) {
