@@ -57,13 +57,27 @@ class WallCarver {
 	}
 
 	/**
-	 * @param grid a grid wherein walls explicitly represented by cells
+	 * @param grid a grid wherein walls are explicitly represented by cells
 	 * @return a set of 2D entities representing the grid walls
 	 */
 	static List<GameEntity> getWalls(GridEntity grid, char wallChar = (char) 176/* ░ */) {
 		grid.cellList.findResults { GridCellComponent cell ->
 			cell.wall ? buildWall(cell.x, cell.y, wallChar) : null
 		}
+	}
+
+	/**
+	 * @param grid a grid wherein floors are explicitly represented by cells
+	 * @return a set of 2D entities representing the grid floors
+	 */
+	static List<GameEntity> getFloors(GridEntity grid, char floorChar = (char) 249 /* ∙ */) {
+		grid.cellList.findResults { GridCellComponent cell ->
+			!cell.wall ? buildFloor(cell.x, cell.y, floorChar) : null
+		}
+	}
+
+	static GameEntity buildWall(AreaComponent location, char wallChar = (char) 176/* ░ */) {
+		buildWall(location.x, location.y, wallChar)
 	}
 
 	static GameEntity buildWall(int x, int y, char wallChar = (char) 176/* ░ */) {
@@ -73,6 +87,15 @@ class WallCarver {
 						new AreaComponent(x, y, 1, 1),
 						new ImpassableComponent(),
 						new TextComponent(String.valueOf(wallChar))
+				])
+	}
+
+	static GameEntity buildFloor(int x, int y, char floorChar = (char) 249/* ∙ */) {
+		new GameEntity(
+				name: 'floor',
+				components: [
+						new AreaComponent(x, y, 1, 1),
+						new TextComponent(String.valueOf(floorChar))
 				])
 	}
 

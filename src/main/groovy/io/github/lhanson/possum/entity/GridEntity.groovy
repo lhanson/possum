@@ -48,6 +48,19 @@ class GridEntity extends GameEntity {
 	}
 
 	/**
+	 * Initialize a grid from an existing collection of cells
+	 * @param copyCells the cells which will constitute open space in the grid
+	 */
+	GridEntity(int width, int height, List<GridCellComponent> copyCells) {
+		this(width, height)
+		cellList.each { it.wall = true }
+		copyCells.each { GridCellComponent copyCell ->
+			GridCellComponent cell = cellAt(copyCell.x, copyCell.y)
+			cell.wall = copyCell.wall
+		}
+	}
+
+	/**
 	 * Returns the grid cell specified by the coordinates
 	 * @param x the horizontal coordinate
 	 * @param y the vertical coordinate
