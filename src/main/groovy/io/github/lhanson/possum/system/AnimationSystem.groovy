@@ -35,10 +35,15 @@ class AnimationSystem extends GameSystem {
 
 			ac.currentDuration += elapsed
 
+			boolean needsUpdate = false
 			if (cc == null) {
 				entity.addComponent(new ColorComponent(color: new Color(255, 255, 255, 0)))
 			} else {
-				cc.color = new Color(cc.color.red, cc.color.green, cc.color.blue, getPulsedAlpha(ac))
+				int newAlpha = getPulsedAlpha(ac)
+				if (newAlpha != cc.color.alpha) {
+					needsUpdate = true
+					cc.color = new Color(cc.color.red, cc.color.green, cc.color.blue, newAlpha)
+				}
 			}
 			if (ac.currentDuration >= ac.pulseDurationMillis) {
 				// Pulse cycle complete, either repeat or stop
@@ -51,7 +56,9 @@ class AnimationSystem extends GameSystem {
 					removingComponent = false
 				}
 			}
-			scene.entityNeedsRendering(entity, entity.getComponentOfType(AreaComponent))
+			if (needsUpdate) {
+				scene.entityNeedsRendering(entity, entity.getComponentOfType(AreaComponent))
+			}
 		}
 	}
 
