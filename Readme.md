@@ -23,9 +23,10 @@ to your choice of rendering system or UI.
   Out of the box, support for [AsciiPanel](https://github.com/trystan/AsciiPanel)
   rendering and Swing keyboard input adapter.
 * Basic animation system using alpha blending
-* Internal event broker
+* Event broker
 * Rendering debug mode with visual hints
-* Customizable cave generation using cellular automata
+* Cave generation using cellular automata
+* Quadtree-based spacial partitioning for efficient entity lookup
 
 
 # Writing a Possum-powered game
