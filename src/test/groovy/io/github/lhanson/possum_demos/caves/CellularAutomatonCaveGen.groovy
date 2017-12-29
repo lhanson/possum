@@ -237,12 +237,16 @@ class CellularAutomatonCaveGen {
 						  if (rawInput instanceof KeyEvent) {
 							  switch (rawInput.keyCode) {
 								  case rawInput.VK_UP:
+								  case rawInput.VK_K:
 									  return MappedInput.UP
 								  case rawInput.VK_DOWN:
+								  case rawInput.VK_J:
 									  return MappedInput.DOWN
 								  case rawInput.VK_LEFT:
+								  case rawInput.VK_H:
 									  return MappedInput.LEFT
 								  case rawInput.VK_RIGHT:
+								  case rawInput.VK_L:
 									  return MappedInput.RIGHT
 								  case rawInput.VK_PLUS:
 								  case rawInput.VK_ADD:
