@@ -23,7 +23,7 @@ class PossumSceneBuilderTest extends Specification {
 
 	def "Basic scene addition"() {
 		given:
-			Scene scene = new Scene('testScene', {})
+			Scene scene = new Scene('testScene')
 		when:
 			sceneBuilder.addScene(scene)
 		then:
@@ -34,7 +34,7 @@ class PossumSceneBuilderTest extends Specification {
 		given:
 			InputAdapter inputAdapter = [:] as InputAdapter
 			EventBroker eventBroker = [:] as EventBroker
-			Scene scene = new Scene('testScene', {})
+			Scene scene = new Scene('testScene')
 
 		when:
 			sceneBuilder.inputAdapter = inputAdapter
@@ -49,7 +49,7 @@ class PossumSceneBuilderTest extends Specification {
 	def "Scene addition sets fields on loading scenes appropriately"() {
 		given:
 			EventBroker eventBroker = [:] as EventBroker
-			Scene loadingScene = new Scene('loadingScene', {})
+			Scene loadingScene = new Scene('loadingScene')
 			Scene scene = new Scene('sceneWithLoading', {}, [], loadingScene)
 
 		when:
@@ -62,7 +62,7 @@ class PossumSceneBuilderTest extends Specification {
 
 	def "Get next scene"() {
 		given:
-			Scene startScene = new Scene(PossumSceneBuilder.START, {})
+			Scene startScene = new Scene(PossumSceneBuilder.START)
 		when:
 			sceneBuilder.addScene(startScene)
 			Scene nextScene = sceneBuilder.getNextScene()
@@ -72,8 +72,8 @@ class PossumSceneBuilderTest extends Specification {
 
 	def "Transition to next scene"() {
 		given:
-			Scene startScene = new Scene(PossumSceneBuilder.START, {})
-			Scene scene2 = new Scene('scene2', {})
+			Scene startScene = new Scene(PossumSceneBuilder.START)
+			Scene scene2 = new Scene('scene2')
 			sceneBuilder.addScene(startScene)
 			sceneBuilder.addScene(scene2)
 
@@ -87,7 +87,7 @@ class PossumSceneBuilderTest extends Specification {
 
 	def "Loading scenes are detected and added automatically"() {
 		given:
-			Scene loadingScene = new Scene('loading', {})
+			Scene loadingScene = new Scene('loading')
 			Scene bigScene = new Scene(PossumSceneBuilder.START, {}, [], loadingScene)
 
 		when:
@@ -99,7 +99,7 @@ class PossumSceneBuilderTest extends Specification {
 
 	def "Loading scenes are run while the parent scene is being initialized"() {
 		given:
-			Scene loadingScene = new Scene('loading', {})
+			Scene loadingScene = new Scene('loading')
 			Scene bigScene = new Scene(PossumSceneBuilder.START, {}, [], loadingScene)
 
 		when:
