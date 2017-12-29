@@ -67,6 +67,7 @@ class CellularAutomatonCaveGen {
 		@Autowired MovementSystem movementSystem
 		@Autowired RenderingSystem renderingSystem
 		@Autowired CellularAutomatonCaveGenerator caveGenerator
+		@Autowired Random random
 
 		@PostConstruct
 		void addScenes() {
@@ -138,18 +139,22 @@ class CellularAutomatonCaveGen {
 		SceneInitializer caveInitializer = new SceneInitializer() {
 			@Override
 			List<GameEntity> initScene() {
-				caveGenerator.width = 300
-				caveGenerator.height = 300
+				caveGenerator.width = 100
+				caveGenerator.height = 100
 				caveGenerator.initialFactor = 50
-				GridEntity grid = caveGenerator.generate(10)
-				def entities = WallCarver.getWalls(grid, (char) 219)
+				caveGenerator.generate(10)
+				def room = caveGenerator.rooms.sort().first()
+				GridEntity grid = new GridEntity(caveGenerator.width, caveGenerator.height, room)
+				def entities = WallCarver.getFloors(grid, (char) 249) // ∙ (bullet)
 
-				AreaComponent startPos = movementSystem.randomPassableSpaceWithin(entities)
-				AreaComponent finishPos = movementSystem.randomPassableSpaceWithin(entities)
-				while (finishPos == startPos) {
+				def startIndex = random.nextInt(entities.size())
+				def finishIndex = random.nextInt(entities.size())
+				while (finishIndex == startIndex) {
 					log.warn "Random finish position is same as start, recalculating"
-					finishPos = movementSystem.randomPassableSpaceWithin(entities)
+					finishIndex = random.nextInt(entities.size())
 				}
+				AreaComponent startPos = entities[startIndex].getComponentOfType(AreaComponent)
+				AreaComponent finishPos = entities[finishIndex].getComponentOfType(AreaComponent)
 
 				def hero = new GameEntity(
 						name: 'hero',
