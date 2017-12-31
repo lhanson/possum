@@ -147,6 +147,75 @@ class QuadtreeTest extends Specification {
 			matches.size() == 2
 	}
 
+	def "Multiple entities in the exact same location are stored as a collection"() {
+		given:
+			quadtree.maxObjects = 1 // would normally cause a split
+			quadtree.insert(new GameEntity(name: 'hero', components: [new AreaComponent(0, 0, 1,1)]))
+			quadtree.insert(new GameEntity(name: 'item', components: [new AreaComponent(0, 0, 1,1)]))
+			quadtree.insert(new GameEntity(name: 'floor', components: [new AreaComponent(0, 0, 1,1)]))
+
+		when:
+			def matches = quadtree.retrieve(new AreaComponent(0, 0,5, 5))
+
+		then:
+			matches.size() == 3
+			quadtree.countLevels() == 1
+	}
+
+	def "Multiple entities in the exact same location are correct after one moves"() {
+		given:
+			GameEntity hero = new GameEntity(name: 'hero', components: [new AreaComponent(0, 0, 1,1)])
+			GameEntity floor = new GameEntity(name: 'floor', components: [new AreaComponent(0, 0, 1,1)])
+			quadtree.maxObjects = 1
+			quadtree.insert(hero)
+			quadtree.insert(floor)
+
+		when:
+			quadtree.move(hero, hero.getComponentOfType(AreaComponent), new AreaComponent(1, 0, 1, 1))
+			hero.getComponentOfType(AreaComponent).x = 1
+			def originalLocation = quadtree.retrieve(new AreaComponent(0, 0,1, 1))
+			def newLocation = quadtree.retrieve(new AreaComponent(1, 0,1, 1))
+
+		then:
+			originalLocation == [floor]
+			newLocation == [hero]
+	}
+
+	def "Removal"() {
+		given:
+			AreaComponent location = new AreaComponent(0, 0, 1, 1)
+			GameEntity hero = new GameEntity(name: 'hero', components: [location])
+			quadtree.insert(hero)
+
+		when:
+			boolean removed = quadtree.remove(hero, location)
+
+		then:
+			removed
+			quadtree.entities.size() == 0
+	}
+
+	def "Entity storage locations aren't vulnerable to external mutation "() {
+		given:
+			AreaComponent oldPos = new AreaComponent(0, 0, 1,1)
+			GameEntity hero = new GameEntity(name: 'hero', components: [new AreaComponent(oldPos)])
+			quadtree.insert(hero)
+
+		when:
+			AreaComponent newPos = new AreaComponent(1, 0, 1,1)
+			hero.removeComponent(oldPos)
+			hero.addComponent(newPos)
+			boolean moved = quadtree.move(hero, oldPos, newPos)
+			def oldLocation = quadtree.retrieve(new AreaComponent(0, 0,1, 1))
+			def results = quadtree.retrieve(new AreaComponent(1, 0,1, 1))
+
+		then:
+			moved
+			quadtree.entities.size() == 1
+			oldLocation == []
+			results == [hero]
+	}
+
 	def "Only returns entities in relevant quadrant"() {
 		given:
 			quadtree.maxObjects = 1 // Force a split
@@ -256,15 +325,14 @@ class QuadtreeTest extends Specification {
 		given:
 			quadtree.maxObjects = 1 // Force splits
 			def oldLocation = new AreaComponent(9, 9, 1,1)
-			def newLocation = new AreaComponent(9, 0, 1,1)
-			GameEntity stationaryEntity = new GameEntity(components: [new AreaComponent(0, 0, 1,1)])
 			GameEntity mobileEntity = new GameEntity(components: [oldLocation])
-			quadtree.insert(stationaryEntity)
 			quadtree.insert(mobileEntity)
-
-		when:
+		and: "Mutate the entity's position"
+			def newLocation = new AreaComponent(9, 0, 1,1)
 			mobileEntity.removeComponent(oldLocation)
 			mobileEntity.addComponent(newLocation)
+
+		when:
 			def moveSuccess = quadtree.move(mobileEntity, oldLocation, newLocation)
 			def entitiesAtOldLocation = quadtree.retrieve(oldLocation)
 			def entitiesAtNewLocation = quadtree.retrieve(newLocation)

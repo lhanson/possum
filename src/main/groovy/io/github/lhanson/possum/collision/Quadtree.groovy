@@ -5,7 +5,6 @@ import io.github.lhanson.possum.entity.GameEntity
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-
 /**
  * Data structure for partitioning entities into spacial quadrants
  * for efficient lookup of nearby objects for collision detection.
@@ -17,13 +16,17 @@ import org.slf4j.LoggerFactory
  * filter off any which don't overlap the search area regardless of
  * the implementation details of what quadrants things are stored in.
  *
+ * This tree will store multiple entities with identical locations
+ * (e.g. to represent stacks of items on the same 2D tile) while only counting
+ * once against a node's total entry count before causing a split.
+ *
  * Operations supported:
  *      - insert
  *      - query
- *
- * Unsupported:
  *      - move
  *      - remove
+ *
+ * Unsupported:
  *      - re-balancing after removals
  *
  * @see <a href="http://gameprogrammingpatterns.com/spatial-partition.html">http://gameprogrammingpatterns.com/spatial-partition.html</a>
@@ -39,7 +42,7 @@ class Quadtree {
 	int maxLevels = DEFAULT_MAX_LEVELS
 
 	int level = 0
-	List<GameEntity> entities = []
+	QuadtreeNodeEntities entities
 	AreaComponent bounds = new AreaComponent()
 	Quadtree[] nodes = new Quadtree[4]
 
@@ -50,7 +53,7 @@ class Quadtree {
 	}
 
 	Quadtree(int level, AreaComponent bounds, int maxObjects = DEFAULT_MAX_OBJECTS, int maxLevels = DEFAULT_MAX_LEVELS) {
-		entities = []
+		entities = new QuadtreeNodeEntities()
 		this.level = level
 		this.bounds = bounds
 		this.maxObjects = maxObjects
@@ -143,8 +146,8 @@ class Quadtree {
 		entities.add(entity)
 		log.debug("($level) Inserted $entity ({}) at level $level, have ${entities.size()} out of $maxObjects entities at this level", location)
 
-		// If we've reached our max threshold, split into subtrees
-		if (entities.size() > maxObjects && level < maxLevels) {
+		// If we've reached our max threshold of distinct locations in this node, split into subtrees
+		if (entities.locationCount() > maxObjects && level < maxLevels) {
 			log.debug("($level) Reached object threshold, splitting to level ${level + 1}")
 			def remainingEntities = [] // Entities which don't fit in a sub-quadrant
 			split()
@@ -188,7 +191,7 @@ class Quadtree {
 			int index = getIndex(location)
 			if (index != -1) {
 				log.debug("($level) Entity {} fits subtree $index ({}), recursing", location, nodes[index].bounds)
-				return nodes[index].remove(entity)
+				return nodes[index].remove(entity, location)
 			}
 		}
 
@@ -203,12 +206,12 @@ class Quadtree {
 	 * @param entity the entity to move
 	 * @param from the entity's previous location
 	 * @param to the entity's current location
+	 * @return whether the move was successful
 	 */
 	def move(GameEntity entity, AreaComponent from, AreaComponent to) {
 		// TODO: This is a naive implementation, we can definitely do better
 		log.debug("($level) Moving {} from {} to {}", entity, from, to)
-		remove(entity, from)
-		insert(entity, to)
+		return remove(entity, from) && insert(entity, to)
 	}
 
 	/**
