@@ -160,7 +160,7 @@ class CellularAutomatonCaveGen {
 						name: 'hero',
 						components: [
 								new TextComponent('@'),
-								startPos,
+								new AreaComponent(startPos),
 								new VelocityComponent(0, 0),
 								new AnimatedComponent(pulseDurationMillis: 1000, repeat: true),
 								new PlayerInputAwareComponent(),
