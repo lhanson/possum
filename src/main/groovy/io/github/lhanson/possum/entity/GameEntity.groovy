@@ -1,5 +1,6 @@
 package io.github.lhanson.possum.entity
 
+import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.GameComponent
 import io.github.lhanson.possum.events.ComponentAddedEvent
 import io.github.lhanson.possum.events.ComponentRemovedEvent
@@ -99,6 +100,6 @@ class GameEntity {
 
 	@Override
 	String toString() {
-		name ?: this.class.name
+		(name ?: this.class.name) + ": " + getComponentOfType(AreaComponent)
 	}
 }
