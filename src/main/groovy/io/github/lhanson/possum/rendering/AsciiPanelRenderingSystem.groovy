@@ -202,12 +202,15 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		stopwatch.stop()
 
 		stopwatch.start('terminal render')
+		int entitiesRerendered = scene.entitiesToBeRendered.size()
 		scene.entitiesToBeRendered.clear()
 		dirtyRectangles.each { AreaComponent area ->
 			terminal.paintImmediately(area.x * terminal.charWidth, area.y * terminal.charHeight, area.width * terminal.charWidth, area.height * terminal.charHeight)
 		}
 		stopwatch.stop()
-		logger.trace "Render complete. {}", stopwatch
+		if (entitiesRerendered > 0 || dirtyRectangles.size() > 0) {
+			logger.trace "Render complete, {} entities with {} dirty rectangles. {}", entitiesRerendered, dirtyRectangles.size(), stopwatch
+		}
 	}
 
 	void renderDebugHints(Scene scene, StopWatch stopwatch) {
