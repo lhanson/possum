@@ -24,7 +24,6 @@ class AnimationSystemTest extends Specification {
 		when:
 			animationSystem.doUpdate(scene, 10)
 		then:
-			println "Entity: ${scene.entities[0]}"
 			scene.entities[0].components[0] == animatedComponent
 			animatedComponent.currentDuration == 10
 	}
