@@ -14,7 +14,7 @@ class RandomConfig {
 
 	/**
 	 * Use a single pseudo-random number generator across the app. This allows
-	 * for determinism and repeatabilty with a known seed.
+	 * for determinism and repeatability with a known seed.
 	 * @return an instance of {@link Random}
 	 */
 	@Bean
