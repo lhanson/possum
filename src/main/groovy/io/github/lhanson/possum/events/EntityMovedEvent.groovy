@@ -1,11 +1,13 @@
 package io.github.lhanson.possum.events
 
+import groovy.transform.ToString
 import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.entity.GameEntity
 
 /**
  * Event indicating that an entity has changed position
  */
+@ToString
 class EntityMovedEvent {
 	/** The entity which the component is newly associated with */
 	GameEntity entity
