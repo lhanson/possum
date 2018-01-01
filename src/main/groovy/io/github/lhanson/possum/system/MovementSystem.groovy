@@ -14,7 +14,7 @@ import io.github.lhanson.possum.input.MappedInput
 import io.github.lhanson.possum.rendering.RenderingSystem
 import io.github.lhanson.possum.scene.Scene
 import io.github.lhanson.possum.terrain.WallCarver
-import mikera.vectorz.Vector2
+import mikera.vectorz.Vector3
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -28,7 +28,7 @@ class MovementSystem extends GameSystem {
 	@Autowired EventBroker eventBroker
 	Logger log = LoggerFactory.getLogger(this.class)
 	String name = 'MovementSystem'
-	VelocityComponent still = new VelocityComponent(0, 0)
+	VelocityComponent still = new VelocityComponent(0, 0, 0)
 	Set<GameEntity> movingEntities
 
 	@Override
@@ -44,25 +44,25 @@ class MovementSystem extends GameSystem {
 			log.trace("Updating movements for {} active inputs", scene.activeInput.size())
 			scene.getEntitiesMatching([PlayerInputAwareComponent]).each { entity ->
 				log.trace "Applying {} to {}", scene.activeInput, entity.name
-				Vector2 newVelocity = new Vector2()
+				Vector3 newVelocity = new Vector3()
 				scene.activeInput.each { input ->
 					switch (input) {
 						case (MappedInput.UP):
-							newVelocity.add(0, -1)
+							newVelocity.add(0, -1, 0)
 							break
 						case (MappedInput.DOWN):
-							newVelocity.add(0, 1)
+							newVelocity.add(0, 1, 0)
 							break
 						case (MappedInput.LEFT):
-							newVelocity.add(-1, 0)
+							newVelocity.add(-1, 0, 0)
 							break
 						case (MappedInput.RIGHT):
-							newVelocity.add(1, 0)
+							newVelocity.add(1, 0, 0)
 							break
 					}
 				}
 				VelocityComponent velocity = entity.getComponentOfType(VelocityComponent)
-				velocity.vector2.add(newVelocity)
+				velocity.vector3.add(newVelocity)
 				if (velocity != still) {
 					movingEntities.add(entity)
 				}
@@ -75,7 +75,7 @@ class MovementSystem extends GameSystem {
 			VelocityComponent vc = it.getComponentOfType(VelocityComponent)
 			if (vc != still) {
 				def oldPos = new AreaComponent(ac)
-				ac.position.vector2.add(vc.vector2)
+				ac.position.vector3.add(vc.vector3)
 				log.trace "Entity {} moved from {} to {}", it.name, oldPos.position, ac.position
 				scene.entityNeedsRendering(it, oldPos)
 				eventBroker.publish(new EntityMovedEvent(it, oldPos, ac))
@@ -104,7 +104,7 @@ class MovementSystem extends GameSystem {
 		}
 
 		// Stop entities
-		movingEntities.each { it.getComponentOfType(VelocityComponent).vector2.setValues(0, 0) }
+		movingEntities.each { it.getComponentOfType(VelocityComponent).vector3.setValues(0, 0, 0) }
 		movingEntities.clear()
 	}
 

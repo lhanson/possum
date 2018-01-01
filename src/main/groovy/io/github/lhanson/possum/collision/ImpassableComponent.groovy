@@ -19,9 +19,9 @@ class ImpassableComponent implements CollisionHandlingComponent {
 		AreaComponent ac = collidingEntity.getComponentOfType(AreaComponent)
 		VelocityComponent vc = collidingEntity.getComponentOfType(VelocityComponent)
 		log.trace "Collision detected between {} and {}, reversing position with vector {}",
-				collidingEntity, this, vc.vector2
+				collidingEntity, this, vc.vector3
 		AreaComponent original = new AreaComponent(ac)
-		ac.position.vector2.sub(vc.vector2)
+		ac.position.vector3.sub(vc.vector3)
 		collidingEntity.eventBroker.publish(new EntityMovedEvent(collidingEntity, original, ac))
 	}
 

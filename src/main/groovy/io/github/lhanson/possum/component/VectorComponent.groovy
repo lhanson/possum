@@ -1,53 +1,68 @@
 package io.github.lhanson.possum.component
 
-import mikera.vectorz.Vector2
+import mikera.vectorz.Vector3
+
 /**
  * Component representing a 2-dimensional vector
  */
 class VectorComponent implements GameComponent {
-	Vector2 vector2 = new Vector2()
+	Vector3 vector3 = new Vector3()
 
 	VectorComponent() {}
 
-	VectorComponent(int x, int y) {
-		vector2.x = x
-		vector2.y = y
+	VectorComponent(int x, int y, int z = 0) {
+		vector3.x = x
+		vector3.y = y
+		vector3.z = z
 	}
 
 	VectorComponent(VectorComponent v) {
-		vector2.x = v.x
-		vector2.y = v.y
+		vector3.x = v.x
+		vector3.y = v.y
+		vector3.z = v.z
 	}
 
 	Integer getX() {
-		vector2.x
+		vector3.x
 	}
 
 	void setX(int x) {
-		vector2.x = x
+		vector3.x = x
 	}
 
 	Integer getY() {
-		vector2?.y
+		vector3?.y
 	}
 
 	void setY(int y) {
-		vector2.y = y
+		vector3.y = y
+	}
+
+	Integer getZ() {
+		vector3.z
+	}
+
+	void setZ(int z) {
+		vector3.z = z
 	}
 
 	@Override
 	boolean equals(Object v) {
+		// We're currently only using the z-dimension as a simple way to
+		// stack multiple entities on a single 2D location, so this equals
+		// represents a comparison in only two dimensions.
 		v instanceof VectorComponent &&
-				vector2 == v.vector2
+				vector3.x == v.vector3.x &&
+				vector3.y == v.vector3.y
 	}
 
 	@Override
 	int hashCode() {
-		(vector2 != null ? vector2.hashCode() : 0)
+		(vector3 != null ? vector3.hashCode() : 0)
 	}
 
 	@Override
 	String toString() {
-		"[${(int) vector2.x}, ${(int) vector2.y}]"
+		"[${(int) vector3.x}, ${(int) vector3.y}, ${(int) vector3.z}]"
 	}
 }

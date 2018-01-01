@@ -1,5 +1,6 @@
 package io.github.lhanson.possum.entity
 
+import groovy.transform.Sortable
 import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.GameComponent
 import io.github.lhanson.possum.events.ComponentAddedEvent
@@ -13,14 +14,20 @@ import org.slf4j.LoggerFactory
  * {@link GameComponent}s which describe its capabilities and state.
  * {@code GameEntity} behavior is processed by {@link io.github.lhanson.possum.system.GameSystem}s.
  */
+@Sortable(includes = ['name', 'id'])
 class GameEntity {
+	static int nextId = 0
+
 	Logger logger = LoggerFactory.getLogger(this.class)
+
+	/** Used to easily differentiate object equality */
+	int id
 
 	/** The name of the entity */
 	String name
 
 	/** The {@link GameComponent}s describing this entity's properties */
-	private List<GameComponent> components = []
+	List<GameComponent> components = []
 	/** Map used for internal lookups of components by type without iterating each time */
 	Map<Class, List<GameComponent>> componentsByType = [:]
 
@@ -29,6 +36,10 @@ class GameEntity {
 
 	/** Broker for publishing events */
 	EventBroker eventBroker
+
+	GameEntity() {
+		id = nextId++
+	}
 
 	/**
 	 * @return the components associated with this entity

@@ -25,6 +25,14 @@ class AreaComponentTest extends Specification {
 			area1.overlaps(area2)
 	}
 
+	def "Same area overlaps with ignored z-component"() {
+		when:
+			def area1 = new AreaComponent(0, 0, 0, 1, 1)
+			def area2 = new AreaComponent(0, 0, 1, 1, 1)
+		then:
+			area1.overlaps(area2)
+	}
+
 	def "No overlap"() {
 		when:
 			def area1 = new AreaComponent(0, 0, 1, 1)
@@ -73,8 +81,17 @@ class AreaComponentTest extends Specification {
 		when:
 			def union = area1.union(area2)
 		then:
-			println "a: $union"
-			println "b: $area1"
+			union == area1
+			union == area2
+	}
+
+	def "Union of same area ignores z-component"() {
+		given:
+			def area1 = new AreaComponent(0, 0, 0, 4,4)
+			def area2 = new AreaComponent(0, 0, 1, 4,4)
+		when:
+			def union = area1.union(area2)
+		then:
 			union == area1
 			union == area2
 	}

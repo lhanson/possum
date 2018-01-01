@@ -53,7 +53,12 @@ class Scene {
 	private List<InputContext> inputContexts = []
 	private Map<Class, List<GameEntity>> entitiesByComponentType = [:]
 	// A set of entities modified in such a way as to require re-rendering
-	private Set<GameEntity> entitiesToBeRendered = []
+	private SortedSet<GameEntity> entitiesToBeRendered = new TreeSet({ GameEntity a, GameEntity b ->
+		AreaComponent acA = a.getComponentOfType(AreaComponent)
+		AreaComponent acB = b.getComponentOfType(AreaComponent)
+		// Order by z-axis if they differ, otherwise use natural object comparator
+		return acA?.position?.z <=> acB?.position?.z ?: a <=> b
+	})
 	private int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE,
 	            maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE
 	Quadtree quadtree = new Quadtree()
@@ -89,7 +94,7 @@ class Scene {
 
 		setEntities(entities)
 
-		log.debug "Created scene '{}' in {} ms", id, System.currentTimeMillis() - startTime
+		log.debug "Created scene '{}' with {} entities in {} ms", id, entities.size(), System.currentTimeMillis() - startTime
 	}
 
 	/**

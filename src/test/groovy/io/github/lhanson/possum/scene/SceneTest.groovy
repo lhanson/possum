@@ -1,7 +1,7 @@
 package io.github.lhanson.possum.scene
 
-import io.github.lhanson.possum.collision.ImpassableComponent
 import io.github.lhanson.possum.component.AreaComponent
+import io.github.lhanson.possum.component.RelativePositionComponent
 import io.github.lhanson.possum.component.TextComponent
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.PanelEntity
@@ -43,20 +43,6 @@ class SceneTest extends Specification {
 			def gaugedEntities = scene.getEntitiesMatching([TextEntity])
 		then:
 			gaugedEntities
-	}
-
-	def "When no entity is found at a location, we assume it's a wall square and create it dynamically"() {
-		given:
-			Scene scene = new Scene('testId')
-			scene.eventBroker = new EventBroker()
-			scene.init()
-		when:
-			def result = scene.findNonPanelWithin(new AreaComponent())
-		then:
-			result.size() == 1
-			result[0].name == 'wall'
-			result[0].getComponentOfType(ImpassableComponent)
-			scene.entities.size() == 1
 	}
 
 	def "setEntities clears existing entries in entitiesByComponentType "() {
@@ -189,4 +175,54 @@ class SceneTest extends Specification {
 			scene.entities.contains(hero)
 	}
 
+	def "entitiesToBeRendered is sorted in ascending z-order"() {
+		given:
+			def entities = []
+			def rand = new Random()
+			100.times {
+				int z = rand.nextInt(1000)
+				entities << new GameEntity(name: 'ceiling', components: [new AreaComponent(0, 0, z, 1, 1)])
+			}
+			Scene scene = new Scene('testId')
+			scene.eventBroker = new EventBroker()
+			scene.init()
+			scene.entitiesToBeRendered.clear() // get rid of the RerenderEntity added by init
+
+		when:
+			entities.each { scene.entityNeedsRendering(it) }
+
+		then:
+			int previousZ = Integer.MIN_VALUE
+			scene.entitiesToBeRendered.each { GameEntity entity ->
+				AreaComponent ac = entity.getComponentOfType(AreaComponent)
+				assert ac.position.z >= previousZ
+				previousZ = ac.position.z
+			}
+	}
+
+	def "entitiesToBeRendered implements equality correctly"() {
+		given:
+			def menuTitle = new TextEntity(
+					name: 'menuTitle',
+					components: [
+							new TextComponent('Main Menu'),
+							new RelativePositionComponent(50, 50)
+					])
+			def pressStart = new TextEntity(
+					name: 'pressStart',
+					components: [
+							new TextComponent('-- press [enter] to start, [esc] to quit --'),
+							new RelativePositionComponent( 50, 90)
+					])
+			Scene scene = new Scene('testId', {[menuTitle, pressStart]})
+			scene.eventBroker = new EventBroker()
+			scene.init()
+			scene.entitiesToBeRendered.clear() // get rid of the RerenderEntity added by init
+
+		when:
+			[menuTitle, pressStart].each { scene.entityNeedsRendering(it) }
+
+		then:
+			scene.entitiesToBeRendered.size() == 2
+	}
 }

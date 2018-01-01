@@ -3,7 +3,11 @@ package io.github.lhanson.possum.component
 import groovy.transform.Canonical
 
 /**
- * An area represented by x, y coordinates and its dimensions.
+ * An area represented by x, y, (z) coordinates and its dimensions.
+ *
+ * The z-dimension is currently only supported in the position value
+ * to allow the renderer determine what to draw when multiple entities
+ * are stacked on a tile.
  */
 @Canonical(includes = 'position, size')
 class AreaComponent implements GameComponent {
@@ -25,6 +29,11 @@ class AreaComponent implements GameComponent {
 		size = new VectorComponent(width, height)
 	}
 
+	AreaComponent(int x, int y, int z, int width, int height) {
+		position = new VectorComponent(x, y, z)
+		size = new VectorComponent(width, height)
+	}
+
 	int getX() {
 		position.x
 	}
@@ -39,6 +48,14 @@ class AreaComponent implements GameComponent {
 
 	void setY(int y) {
 		position.y = y
+	}
+
+	int getZ() {
+		position.z
+	}
+
+	void setZ(int z) {
+		position.z = z
 	}
 
 	int getWidth() {
@@ -222,7 +239,7 @@ class AreaComponent implements GameComponent {
 
 	@Override
 	String toString() {
-		"location [$x, $y], size [$width, $height]"
+		"location [$x, $y, $z], size [$width, $height]"
 	}
 
 }
