@@ -147,6 +147,20 @@ class QuadtreeTest extends Specification {
 			matches.size() == 2
 	}
 
+	def "Insert all"() {
+		given:
+			quadtree.insertAll([
+					new GameEntity(components: [new AreaComponent(0, 0, 1,1)]),
+					new GameEntity(components: [new AreaComponent(1, 0, 1,1)])
+			])
+
+		when:
+			def matches = quadtree.retrieve(new AreaComponent(0, 0,5, 5))
+
+		then:
+			matches.size() == 2
+	}
+
 	def "Multiple entities in the exact same location are stored as a collection"() {
 		given:
 			quadtree.maxObjects = 1 // would normally cause a split
@@ -341,6 +355,27 @@ class QuadtreeTest extends Specification {
 			moveSuccess
 			entitiesAtOldLocation == []
 			entitiesAtNewLocation == [mobileEntity]
+	}
+
+	def "Adding an entity outside the present bounds will expand the quadtree"() {
+		when:
+			AreaComponent location = new AreaComponent(quadtree.bounds.x - 100, 0, 1,1)
+			GameEntity entity = new GameEntity(components: [location])
+
+		then:
+			quadtree.insert(entity)
+			quadtree.bounds.contains location
+	}
+
+	def "Expanding the quadtree doesn't break retrieval"() {
+		when:
+			AreaComponent location = new AreaComponent(quadtree.bounds.x - 100, 0, 1,1)
+			GameEntity entity = new GameEntity(components: [location])
+			quadtree.insert(entity)
+
+		then:
+			quadtree.countEntities() == 1
+			quadtree.retrieve(location) == [entity]
 	}
 
 }
