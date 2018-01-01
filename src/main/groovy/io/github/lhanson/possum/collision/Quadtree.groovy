@@ -136,6 +136,7 @@ class Quadtree {
 			if (level == 0) {
 				log.info("Inserting entity {} which is outside present bounds {}; expanding tree", entity, bounds)
 				long startTime = System.currentTimeMillis()
+
 				// The point farthest outside the existing bounds
 				int outlierDistance = [
 						bounds.x - location.x, // left overlap
@@ -143,21 +144,19 @@ class Quadtree {
 						location.right - bounds.right, // right overlap
 						location.bottom - bounds.bottom // bottom overlap
 				].max()
-				int moreNodes = ceil(outlierDistance / min(bounds.width, bounds.height))
-				println "Max protrusion is $outlierDistance. Current bounds are ${bounds.width}x${bounds.height}, so would need $moreNodes more nodes"
-
 				// Add 10% to the current outlier distance to accommodate additional movement
 				outlierDistance += outlierDistance * 0.1
 
 				bounds = new AreaComponent(bounds.x - outlierDistance, bounds.y - outlierDistance,
 						bounds.width + (outlierDistance * 2), bounds.height + (outlierDistance * 2))
+
 				// Instead of rebalancing, generate a new tree and then transplant its nodes
 				Quadtree newRoot = new Quadtree(0, bounds, maxObjects, maxLevels)
 				def allEntities = getAll()
 				newRoot.insertAll(allEntities)
 				nodes = newRoot.nodes
 				entities = newRoot.entities
-				println "Rebalancing to $bounds completed in ${System.currentTimeMillis() - startTime} ms"
+				log.info "Rebalancing to $bounds completed in ${System.currentTimeMillis() - startTime} ms"
 			} else {
 				return false
 			}
