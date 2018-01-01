@@ -17,7 +17,6 @@ import io.github.lhanson.possum.events.Subscription
 import io.github.lhanson.possum.input.InputAdapter
 import io.github.lhanson.possum.input.InputContext
 import io.github.lhanson.possum.input.MappedInput
-import io.github.lhanson.possum.terrain.WallCarver
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -193,8 +192,13 @@ class Scene {
 
 	@Subscription
 	void entityMoved(EntityMovedEvent event) {
-		quadtree.move(event.entity, event.oldPosition, event.newPosition)
-		log.debug("Moved quadtree location of {} from {} to {}", event.entity, event.oldPosition, event.newPosition)
+		log.trace "Handling entity moved event: {}", event
+		def moved = quadtree.move(event.entity, event.oldPosition, event.newPosition)
+		if (!moved) {
+			log.error ("FAILED: Moved quadtree location of {} from {} to {} (success: $moved)", event.entity, event.oldPosition, event.newPosition)
+			throw new IllegalStateException('Move failed')
+		}
+		log.debug("Moved quadtree location of {} from {} to {} (success: $moved)", event.entity, event.oldPosition, event.newPosition)
 	}
 
 	/**
@@ -261,13 +265,7 @@ class Scene {
 		long start = System.currentTimeMillis()
 		def result = quadtree.retrieve(area).findAll { !(it instanceof PanelEntity) }
 		if (log.isTraceEnabled()) {
-			log.trace "Finding {} non-panels within {} took {} ms", result.size(), area, System.currentTimeMillis() - start
-		}
-		// We're treating floor tiles as passable entities, everything else must be a wall so create it on the fly.
-		if (result.empty) {
-			GameEntity wall = WallCarver.buildWall(area)
-			result << wall
-			addEntity(wall)
+			log.trace "Finding {} non-panels within {} took {} ms:\n{}", result.size(), area, System.currentTimeMillis() - start, result
 		}
 		return result
 	}
