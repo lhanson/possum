@@ -44,9 +44,7 @@ class CellularAutomataHarness {
 		rooms.eachWithIndex { List roomCells, int i ->
 			roomCells.each { caveGenerator.grid[it.x][it.y] = i + 1 }
 		}
-		def roomSizes = rooms.collect { it.size() }.sort().reverse()
-		println "Grid contains ${rooms.size()} distinct rooms. " +
-				"Largest rooms: ${roomSizes.take(5)} cells, smallest: ${roomSizes.takeRight(5)}"
+		caveGenerator.analyzeGrid()
 		display("ca-cavegen-flooded ($smoothingGenerations-${caveGenerator.rand.seed})", caveGenerator.grid)
 	}
 

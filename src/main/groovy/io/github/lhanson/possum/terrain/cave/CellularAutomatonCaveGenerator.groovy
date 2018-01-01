@@ -126,7 +126,6 @@ class CellularAutomatonCaveGenerator {
 	}
 
 	void analyzeGrid() {
-		log.debug "Grid size: $width x $height = ${width * height} total cells"
 
 		int emptyCells = 0
 		for (int x = 0; x < width; x++) {
@@ -136,7 +135,11 @@ class CellularAutomatonCaveGenerator {
 				}
 			}
 		}
-		log.debug "Grid is ${(emptyCells / (width * height)) * 100}% open with $emptyCells empty cells"
+		log.debug "Grid is $width * $height = ${width * height} toatal cells. " +
+				"${(emptyCells / (width * height)) * 100}% open with $emptyCells empty cells"
+		def roomSizes = rooms.collect { it.size() }.sort().reverse()
+		log.debug "Grid contains ${rooms.size()} distinct rooms. " +
+				"Largest rooms: ${roomSizes.take(5)} cells, smallest: ${roomSizes.takeRight(5)}"
 	}
 
 	/**
