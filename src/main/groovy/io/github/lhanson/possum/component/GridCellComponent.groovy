@@ -2,6 +2,8 @@ package io.github.lhanson.possum.component
 
 import groovy.transform.TailRecursive
 
+import java.util.concurrent.LinkedBlockingQueue
+
 /**
  * Represents a single cell of indeterminately-sized space
  * within a larger grid, with the potential to be spatially
@@ -53,12 +55,13 @@ class GridCellComponent implements GameComponent {
 	 *
 	 * @return all cells in the cell's "room", defined by whether it's a wall or not
 	 */
-	List<GridCellComponent> floodFill() {
-		floodFillRecursive(this, neighborhood8Way())
+	List<GridCellComponent> floodFind() {
+		floodFindBreadthFirst()
 	}
 
+	// NOTE: this appears to break deterministic random seed behavior
 	@TailRecursive
-	private List<GridCellComponent> floodFillRecursive(GridCellComponent cell, unvisited = [], results = []) {
+	private List<GridCellComponent> floodFindRecursive(GridCellComponent cell, unvisited = [], results = []) {
 		cell.visited = true
 		results << cell
 		unvisited.remove(cell)
@@ -66,8 +69,52 @@ class GridCellComponent implements GameComponent {
 		if (unvisited.empty) {
 			return results
 		} else {
-			return floodFillRecursive(unvisited.pop(), unvisited, results)
+			return floodFindRecursive(unvisited.pop(), unvisited, results)
 		}
+	}
+
+	/**
+	 * Performs a breadth-first queue-based flood find and returns
+	 * entities representing those contiguous with the starting point.
+	 *
+	 * @return a list of contiguous entities
+	 */
+	private List<GridCellComponent> floodFindBreadthFirst() {
+		def results = []
+		Queue<GridCellComponent> queue = new LinkedBlockingQueue([this])
+		while (!queue.empty) {
+			// Start a new row
+			def current = queue.remove()
+			/*
+			 * For reasons I haven't quite sorted out, we see cells coming
+			 * off the queue which have already been visited.
+			 * Skip these.
+			 */
+			while (current?.visited) {
+				current = queue.poll()
+			}
+			if (!current) break
+
+			// Move west until we find a non-match
+			while (current.west && current.west.wall == wall) {
+				current = current.west
+			}
+			// Move east until we find a non-match
+			while (current && current.wall == wall) {
+				current.visited = true
+				results << current
+				// If north is a match, add it to the queue
+				if (current.north.wall == wall && !current.north.visited) {
+					queue.add(current.north)
+				}
+				// If south is a match, add it to the queue
+				if (current.south.wall == wall && !current.south.visited) {
+					queue.add(current.south)
+				}
+				current = current.east
+			}
+		}
+		return results
 	}
 
 	@Override

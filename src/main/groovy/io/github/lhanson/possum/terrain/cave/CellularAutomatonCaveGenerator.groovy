@@ -57,7 +57,10 @@ class CellularAutomatonCaveGenerator {
 			grid = nextGrid
 		}
 
-		log.debug "Cave creation finished in {} ms", System.currentTimeMillis() - startTime
+		if (log.debugEnabled) {
+			log.debug "Cave creation finished in {} ms", System.currentTimeMillis() - startTime
+			analyzeGrid()
+		}
 		return getGridEntity()
 	}
 
@@ -125,8 +128,7 @@ class CellularAutomatonCaveGenerator {
 		return result
 	}
 
-	void analyzeGrid() {
-
+	private void analyzeGrid() {
 		int emptyCells = 0
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
@@ -151,7 +153,7 @@ class CellularAutomatonCaveGenerator {
 		def openCells = gridEntity.cellList.findAll { !it.wall }
 		while (openCells) {
 			def cell = openCells.pop()
-			def roomCells = cell.floodFill()
+			def roomCells = cell.floodFind()
 			rooms.add roomCells
 			openCells.removeAll(roomCells)
 		}

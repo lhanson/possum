@@ -143,7 +143,7 @@ class CellularAutomatonCaveGen {
 				caveGenerator.height = 100
 				caveGenerator.initialFactor = 50
 				caveGenerator.generate(10)
-				def room = caveGenerator.rooms.sort().first()
+				def room = caveGenerator.rooms.sort { it.size() }.last()
 				GridEntity grid = new GridEntity(caveGenerator.width, caveGenerator.height, room)
 				def entities = WallCarver.getFloors(grid, (char) 249) // ∙ (bullet)
 
@@ -172,7 +172,7 @@ class CellularAutomatonCaveGen {
 						name: 'finish',
 						components: [
 								new TextComponent('>'),
-								finishPos,
+								new AreaComponent(finishPos.x, finishPos.y, 1, finishPos.width, finishPos.height),
 								new CollisionHandlingComponent() {
 									@Override void handleCollision(GameEntity entity) {
 										if (entity == hero) {
