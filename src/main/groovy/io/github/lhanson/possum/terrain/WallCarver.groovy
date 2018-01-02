@@ -9,11 +9,8 @@ import io.github.lhanson.possum.terrain.maze.BinaryTreeMazeGenerator
 /**
  * Takes a logical representation of a space; e.g. a grid with linked
  * cells representing open areas and implicit walls represented by
- * the lack of neighboring cells being linked, and * generates the
- * list of entities required to represent walls.
- *
- * Takes GridEntity objects representing a logical space
- * and transforms them into a list of discrete wall entities.
+ * the lack of neighboring cells being linked, and generates the
+ * list of entities required to represent walls and floors.
  *
  * Can do literal 1:1 grid-to-wall mapping or it can expand
  * a set of linked cells where walls are implicitly represented
@@ -54,6 +51,24 @@ class WallCarver {
 			walls << buildWall(0, y)
 		}
 		walls
+	}
+
+	/**
+	 * For a list of cells marked with a 'wall' status, returns the
+	 * equivalent entities. This differs from getWalls and getFloors
+	 * in that it doesn't produce a full grid of arbitrary size, so
+	 * we can only define the edge walls and add more later if necessary
+	 * (e.g. when digging or moving outside the initial confines).
+	 *
+	 * @param cellList the list of cells comprising the environment
+	 * @param floorChar the character to render floor tiles with
+	 * @param wallChar the character to render wall tiles with
+	 * @return
+	 */
+	static List<GameEntity> getSparseTiles(List<GridCellComponent> cellList, char floorChar = (char) 249 /* ∙ */, char wallChar = (char) 176/* ░ */) {
+		cellList.findResults { GridCellComponent cell ->
+			cell.wall ? buildWall(cell.x, cell.y, wallChar) : buildFloor(cell.x, cell.y, floorChar)
+		}
 	}
 
 	/**

@@ -2,6 +2,7 @@ package io.github.lhanson.possum_demos.caves
 
 import io.github.lhanson.possum.MainLoop
 import io.github.lhanson.possum.collision.CollisionHandlingComponent
+import io.github.lhanson.possum.collision.ImpassableComponent
 import io.github.lhanson.possum.component.AnimatedComponent
 import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.CameraFocusComponent
@@ -144,17 +145,17 @@ class CellularAutomatonCaveGen {
 				caveGenerator.initialFactor = 50
 				caveGenerator.generate(10)
 				def room = caveGenerator.rooms.sort { it.size() }.last()
-				GridEntity grid = new GridEntity(caveGenerator.width, caveGenerator.height, room)
-				def entities = WallCarver.getFloors(grid, (char) 249) // ∙ (bullet)
+				def entities = WallCarver.getSparseTiles(room)
+				def floorTiles = entities.findAll { !it.getComponentOfType(ImpassableComponent) }
 
-				def startIndex = random.nextInt(entities.size())
-				def finishIndex = random.nextInt(entities.size())
+				def startIndex = random.nextInt(floorTiles.size())
+				def finishIndex = random.nextInt(floorTiles.size())
 				while (finishIndex == startIndex) {
 					log.warn "Random finish position is same as start, recalculating"
-					finishIndex = random.nextInt(entities.size())
+					finishIndex = random.nextInt(floorTiles.size())
 				}
-				AreaComponent startPos = entities[startIndex].getComponentOfType(AreaComponent)
-				AreaComponent finishPos = entities[finishIndex].getComponentOfType(AreaComponent)
+				AreaComponent startPos = floorTiles[startIndex].getComponentOfType(AreaComponent)
+				AreaComponent finishPos = floorTiles[finishIndex].getComponentOfType(AreaComponent)
 
 				def hero = new GameEntity(
 						name: 'hero',

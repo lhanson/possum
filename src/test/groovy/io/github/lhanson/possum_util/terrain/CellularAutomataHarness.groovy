@@ -16,8 +16,8 @@ import java.awt.image.BufferedImage
 class CellularAutomataHarness {
 	// Generation parameters
 	static int smoothingGenerations = 10
-	static int width = 200
-	static int height = 200
+	static int width = 100
+	static int height = 100
 	static int initialFactor = 50     // percentage of cells initially alive
 	// Rendering parameters
 	static int renderCellWidth = 16    // how wide to render each cell

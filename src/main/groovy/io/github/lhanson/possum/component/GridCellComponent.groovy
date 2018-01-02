@@ -75,13 +75,28 @@ class GridCellComponent implements GameComponent {
 
 	/**
 	 * Performs a breadth-first queue-based flood find and returns
-	 * entities representing those contiguous with the starting point.
+	 * entities representing the 'room' contiguous with the starting point,
+	 * both locations which share the target cell's 'wall' state and those
+	 * immediately surrounding.
 	 *
 	 * @return a list of contiguous entities
 	 */
 	private List<GridCellComponent> floodFindBreadthFirst() {
 		def results = []
 		Queue<GridCellComponent> queue = new LinkedBlockingQueue([this])
+
+		def examineCell = { GridCellComponent cell ->
+			if (cell.visited) return
+			// If the cell matches our target state, add it to the queue for processing
+			// Otherwise add it to the results as a boundary cell
+			if (cell.wall == this.wall) {
+				queue.add(cell)
+			} else {
+				cell.visited = true
+				results << cell
+			}
+		}
+
 		while (!queue.empty) {
 			// Start a new row
 			def current = queue.remove()
@@ -96,22 +111,26 @@ class GridCellComponent implements GameComponent {
 			if (!current) break
 
 			// Move west until we find a non-match
-			while (current.west && current.west.wall == wall) {
+			while (current?.west && current.west.wall == this.wall) {
 				current = current.west
 			}
+			// Check for a wall on the left
+			if (current?.west && !current.west.visited) {
+				current.west.visited = true
+				results << current.west
+			}
 			// Move east until we find a non-match
-			while (current && current.wall == wall) {
+			while (current && current.wall == this.wall) {
 				current.visited = true
 				results << current
-				// If north is a match, add it to the queue
-				if (current.north.wall == wall && !current.north.visited) {
-					queue.add(current.north)
-				}
-				// If south is a match, add it to the queue
-				if (current.south.wall == wall && !current.south.visited) {
-					queue.add(current.south)
-				}
+				[current.northwest, current.north, current.northeast, current.southeast, current.south, current.southwest]
+					.each { examineCell(it) }
 				current = current.east
+			}
+			// Check for a wall on the right
+			if (current?.east && !current.east.visited) {
+				current.east.visited = true
+				results << current.east
 			}
 		}
 		return results
