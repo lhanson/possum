@@ -18,6 +18,7 @@ import io.github.lhanson.possum.entity.GaugeEntity
 import io.github.lhanson.possum.entity.GridEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.TextEntity
+import io.github.lhanson.possum.input.EightWayInputContext
 import io.github.lhanson.possum.input.InputContext
 import io.github.lhanson.possum.input.MappedInput
 import io.github.lhanson.possum.terrain.maze.BinaryTreeMazeGenerator
@@ -214,44 +215,9 @@ class MazesForProgrammers {
 			])
 			entities << rightHudPanel
 
-			new Scene(
-					MAZE,
+			new Scene(MAZE,
 					{ entities },
-					[
-							new InputContext() {
-								@Override MappedInput mapInput(InputEvent rawInput) {
-									if (rawInput instanceof KeyEvent) {
-										switch (rawInput.keyCode) {
-											case rawInput.VK_UP:
-												return MappedInput.UP
-											case rawInput.VK_DOWN:
-												return MappedInput.DOWN
-											case rawInput.VK_LEFT:
-												return MappedInput.LEFT
-											case rawInput.VK_RIGHT:
-												return MappedInput.RIGHT
-											case rawInput.VK_PLUS:
-											case rawInput.VK_ADD:
-											case rawInput.VK_SHIFT | rawInput.VK_EQUALS:
-												return MappedInput.INCREASE_DEBUG_PAUSE
-											case rawInput.VK_MINUS:
-												return MappedInput.DECREASE_DEBUG_PAUSE
-											case rawInput.VK_ESCAPE:
-												transition(START)
-												break
-											case rawInput.VK_D:
-												return MappedInput.DEBUG
-												break
-											case rawInput.VK_P:
-												return MappedInput.PAUSE
-												break
-										}
-									}
-									null
-								}
-							}
-					]
-			)
+					[ new EightWayInputContext([ (KeyEvent.VK_ESCAPE): { transition(START) } ]) ])
 		}
 
 		Scene winScene() {
