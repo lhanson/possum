@@ -144,9 +144,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		}
 
 		// Store a list of the panel areas in the scene sorted by x,y coordinates for faster reference
-		scenePanelAreas = scene.entities
-				.findAll { it instanceof PanelEntity }
-				.findResults { it.getComponentOfType(AreaComponent) }
+		scenePanelAreas = scene.panels.findResults { it.getComponentOfType(AreaComponent) }
 		scenePanelAreas.sort { a, b -> a.x <=> b.y ?: a.y <=> b.y }
 
 		// Repaint entire scene

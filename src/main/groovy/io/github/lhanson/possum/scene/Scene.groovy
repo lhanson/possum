@@ -44,6 +44,7 @@ class Scene {
 	/** Whether the simulation is paused */
 	volatile boolean paused = false
 
+	List<GameEntity> panels = []
 	private Logger log = LoggerFactory.getLogger(this.class)
 	// Initialize (or reinitialize) the scene
 	private SceneInitializer sceneInitializer
@@ -138,6 +139,7 @@ class Scene {
 		}
 		log.debug "Uninitializing scene '$id'"
 		entities.clear()
+		panels.clear()
 		entitiesByComponentType.clear()
 		entitiesToBeRendered.clear()
 		eventBroker.unsubscribe(this)
@@ -146,10 +148,14 @@ class Scene {
 
 	void setEntities(List<GameEntity> entities) {
 		this.entities = entities ?: []
+		panels.clear()
 		entitiesByComponentType.clear()
 		entities.each { entity ->
 			entity.eventBroker = eventBroker
 			addEntityByComponentTypes(entity)
+			if (entity instanceof PanelEntity) {
+				panels << entity
+			}
 		}
 	}
 
