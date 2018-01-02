@@ -15,7 +15,6 @@ import io.github.lhanson.possum.component.TimerComponent
 import io.github.lhanson.possum.component.VelocityComponent
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.GaugeEntity
-import io.github.lhanson.possum.entity.GridEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.TextEntity
 import io.github.lhanson.possum.events.EventBroker
@@ -68,6 +67,7 @@ class CellularAutomatonCaveGen {
 		@Autowired MovementSystem movementSystem
 		@Autowired RenderingSystem renderingSystem
 		@Autowired CellularAutomatonCaveGenerator caveGenerator
+		@Autowired WallCarver wallCarver
 		@Autowired Random random
 
 		@PostConstruct
@@ -145,7 +145,7 @@ class CellularAutomatonCaveGen {
 				caveGenerator.initialFactor = 50
 				caveGenerator.generate(10)
 				def room = caveGenerator.rooms.sort { it.size() }.last()
-				def entities = WallCarver.getSparseTiles(room)
+				def entities = wallCarver.getTiles(room)
 				def floorTiles = entities.findAll { !it.getComponentOfType(ImpassableComponent) }
 
 				def startIndex = random.nextInt(floorTiles.size())

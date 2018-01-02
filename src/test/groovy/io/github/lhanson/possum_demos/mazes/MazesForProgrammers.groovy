@@ -2,6 +2,7 @@ package io.github.lhanson.possum_demos.mazes
 
 import io.github.lhanson.possum.MainLoop
 import io.github.lhanson.possum.collision.CollisionHandlingComponent
+import io.github.lhanson.possum.collision.ImpassableComponent
 import io.github.lhanson.possum.component.AnimatedComponent
 import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.CameraFocusComponent
@@ -65,6 +66,7 @@ class MazesForProgrammers {
 		Logger log = LoggerFactory.getLogger(this.class)
 		@Autowired MovementSystem movementSystem
 		@Autowired RenderingSystem renderingSystem
+		@Autowired WallCarver wallCarver
 
 		@PostConstruct
 		void initializeScenes() {
@@ -129,22 +131,24 @@ class MazesForProgrammers {
 
 		Scene mazeScene() {
 			GridEntity maze = BinaryTreeMazeGenerator.linkCells(new GridEntity(30, 20))
-			def entities = []
-			def walls = WallCarver.buildWalls(maze)
-			entities.addAll walls
+			def entities = wallCarver.buildGridFromMaze(maze)
+			def walls = entities.findAll { it.getComponentOfType(ImpassableComponent) }
 
-			AreaComponent startPos = movementSystem.randomPassableSpaceWithin(walls)
+			AreaComponent heroPos = movementSystem.randomPassableSpaceWithin(walls)
 			AreaComponent finishPos = movementSystem.randomPassableSpaceWithin(walls)
-			while (finishPos == startPos) {
-				log.warn "Random finish position is same as start, recalculating"
+			while (finishPos == heroPos) {
+				log.warn "Random finish position is same as hero start, recalculating"
 				finishPos = movementSystem.randomPassableSpaceWithin(walls)
 			}
+
+			heroPos.z = 1
+			finishPos.z = 1
 
 			def hero = new GameEntity(
 					name: 'hero',
 					components: [
 							new TextComponent('@'),
-							startPos,
+							heroPos,
 							new VelocityComponent(0, 0),
 							new AnimatedComponent(pulseDurationMillis: 1000, repeat: true),
 							new PlayerInputAwareComponent(),

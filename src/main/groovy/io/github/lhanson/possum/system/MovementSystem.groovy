@@ -13,7 +13,6 @@ import io.github.lhanson.possum.events.EventBroker
 import io.github.lhanson.possum.input.MappedInput
 import io.github.lhanson.possum.rendering.RenderingSystem
 import io.github.lhanson.possum.scene.Scene
-import io.github.lhanson.possum.terrain.WallCarver
 import mikera.vectorz.Vector3
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -98,13 +97,6 @@ class MovementSystem extends GameSystem {
 		movingEntities.each { entity ->
 			AreaComponent location = entity.getComponentOfType(AreaComponent)
 			List<GameEntity> colliders = scene.findNonPanelWithin(location) - entity
-			if (!colliders) {
-				// We're treating floor tiles as passable entities, everything else must be a wall so create it on the fly.
-				GameEntity wall = WallCarver.buildWall(location)
-				log.trace "No colliders found, we expect at least a passable floor tile. Creating wall {}", wall
-				scene.addEntity(wall)
-				colliders << wall
-			}
 			colliders.each {
 				if (!(it instanceof PanelEntity)) {
 					collisionSystem.collide(entity, it)
