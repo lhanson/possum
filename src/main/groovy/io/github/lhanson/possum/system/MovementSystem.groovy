@@ -47,11 +47,23 @@ class MovementSystem extends GameSystem {
 				Vector3 newVelocity = new Vector3()
 				scene.activeInput.each { input ->
 					switch (input) {
+						case (MappedInput.UP_LEFT):
+							newVelocity.add(-1, -1, 0)
+							break
 						case (MappedInput.UP):
 							newVelocity.add(0, -1, 0)
 							break
+						case (MappedInput.UP_RIGHT):
+							newVelocity.add(1, -1, 0)
+							break
+						case (MappedInput.DOWN_LEFT):
+							newVelocity.add(-1, 1, 0)
+							break
 						case (MappedInput.DOWN):
 							newVelocity.add(0, 1, 0)
+							break
+						case (MappedInput.DOWN_RIGHT):
+							newVelocity.add(1, 1, 0)
 							break
 						case (MappedInput.LEFT):
 							newVelocity.add(-1, 0, 0)
