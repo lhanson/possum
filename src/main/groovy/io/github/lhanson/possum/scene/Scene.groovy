@@ -93,9 +93,7 @@ class Scene {
 		this.sceneInitializer = sceneInitializer
 		this.loadingScene = loadingScene
 
-		setEntities(entities)
-
-		log.debug "Created scene '{}' with {} entities in {} ms", id, entities.size(), System.currentTimeMillis() - startTime
+		log.debug "Created scene '{}' with in {} ms", id, System.currentTimeMillis() - startTime
 	}
 
 	/**
@@ -147,16 +145,10 @@ class Scene {
 	}
 
 	void setEntities(List<GameEntity> entities) {
-		this.entities = entities ?: []
+		this.entities.clear()
 		panels.clear()
 		entitiesByComponentType.clear()
-		entities.each { entity ->
-			entity.eventBroker = eventBroker
-			addEntityByComponentTypes(entity)
-			if (entity instanceof PanelEntity) {
-				panels << entity
-			}
-		}
+		entities.each { addEntity(it) }
 	}
 
 	/**
@@ -168,6 +160,9 @@ class Scene {
 		entities << entity
 		entity.eventBroker = eventBroker
 		addEntityByComponentTypes(entity)
+		if (entity instanceof PanelEntity) {
+			panels << entity
+		}
 	}
 
 	void addEntityByComponentTypes(GameEntity entity) {
@@ -193,6 +188,10 @@ class Scene {
 		}
 		entitiesByComponentType[event.component.class] << event.entity
 		log.debug("Added {} to component lookup list for {}", event.entity, event.component)
+		if (event.component instanceof AreaComponent) {
+			quadtree.insert(event.entity, event.component)
+			log.debug("Added {} to quadtree", event.entity)
+		}
 	}
 
 	@Subscription

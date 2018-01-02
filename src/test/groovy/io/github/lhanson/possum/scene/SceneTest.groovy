@@ -45,17 +45,17 @@ class SceneTest extends Specification {
 			gaugedEntities
 	}
 
-	def "setEntities clears existing entries in entitiesByComponentType "() {
+	def "setEntities clears existing entries in various collections"() {
 		given:
 			GameEntity testEntity = new GameEntity(name: 'testEntity', components: [TextComponent])
-			Scene scene = new Scene('testId', {[testEntity]})
+			Scene scene = new Scene('testId', {[testEntity, new PanelEntity()]})
 			scene.eventBroker = new EventBroker()
 			scene.init()
 		when:
 			scene.setEntities([])
-			def results = scene.getEntitiesMatching([TextComponent])
 		then:
-			results.isEmpty()
+			scene.getEntitiesMatching([TextComponent]).empty
+			scene.panels.empty
 	}
 
 	def "setEntities updates entitiesByComponentType lookup table"() {
@@ -225,4 +225,21 @@ class SceneTest extends Specification {
 		then:
 			scene.entitiesToBeRendered.size() == 2
 	}
+
+	def "adding an area component triggers addition to the quadtree"() {
+		given:
+			def relativeEntity = new TextEntity( name: 'relativeText',
+					components: [new RelativePositionComponent(50, 50)])
+			Scene scene = new Scene('testId', {[relativeEntity]})
+			scene.eventBroker = new EventBroker()
+			scene.init()
+
+		when:
+			// Simulate resolution of relative positions into world coordinates
+			relativeEntity.addComponent(new AreaComponent(0, 0, 1, 1))
+
+		then:
+			scene.quadtree.getAll() == [relativeEntity]
+	}
+
 }
