@@ -120,7 +120,7 @@ class Scene {
 		}
 
 		// The whole viewport will need to be rendered initially
-		entitiesToBeRendered << new RerenderEntity(components: [])
+		entitiesToBeRendered << new RerenderEntity()
 
 		initialized = true
 		log.debug "Initialized scene '{}' in {} ms", id, System.currentTimeMillis() - startTime
@@ -290,14 +290,6 @@ class Scene {
 			def uncoveredEntities = findNonPanelWithin(previousArea)
 			if (uncoveredEntities) {
 				entitiesToBeRendered.addAll(uncoveredEntities)
-			} else {
-				// Nothing is there, use our default "background" entity
-				entitiesToBeRendered << new RerenderEntity(
-						name: 'backgroundRenderingEntity',
-						components: [
-								new AreaComponent(previousArea.x, previousArea.y, previousArea.width, previousArea.height),
-								new TextComponent(' ')
-						])
 			}
 		}
 	}

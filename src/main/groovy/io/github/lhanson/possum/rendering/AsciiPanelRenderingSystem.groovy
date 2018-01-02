@@ -82,16 +82,32 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		scenePanelAreas.sort { a, b -> a.x <=> b.y ?: a.y <=> b.y }
 
 		// Repaint entire scene
+		repaintScene(scene)
+		terminal.clear()
+		logger.debug "Renderer initialization took ${System.currentTimeMillis() - startTime} ms"
+	}
+
+	/**
+	 * When initially rendering a scene (or after we scroll the viewport),
+	 * queue all visible entities for rendering.
+	 *
+	 * @param scene the scene to do a complete rerender on
+	 */
+	def repaintScene(Scene scene) {
+		// Visible non-panel entities
 		scene.findNonPanelWithin(viewport)
 				.findAll { isVisible(it) }
 				.each { scene.entityNeedsRendering(it) }
+
+		// Panels and their contents
 		scene.panels.each {
 			scene.entityNeedsRendering(it)
 			InventoryComponent ic = it.getComponentOfType(InventoryComponent)
 			ic.inventory.each { item -> scene.entityNeedsRendering(item) }
 		}
-		terminal.clear()
-		logger.debug "Renderer initialization took ${System.currentTimeMillis() - startTime} ms"
+
+		// Hint to the render method that we can use one large dirty rectangle
+		scene.entityNeedsRendering(new RerenderEntity(name: 'scrollRenderer'))
 	}
 
 	/**
@@ -170,7 +186,6 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	@Override
 	void render(Scene scene) {
 		StopWatch stopwatch = new StopWatch('rendering')
-		logger.trace "Rendering"
 
 		stopwatch.start('checkScrollBoundaries')
 		checkScrollBoundaries(scene)
@@ -185,15 +200,8 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 			if (entity instanceof PanelEntity) {
 				dirtyRectangles << renderPanelBorders(entity)
 			} else if (entity instanceof RerenderEntity) {
-				AreaComponent ac = entity.getComponentOfType(AreaComponent)
-				AreaComponent area
-				if (ac) {
-					area = translateWorldToAsciiPanel(ac, viewport)
-				} else {
-					// Empty RerenderEntity means do the whole screen
-					fullScreenRefresh = true
-					area = new AreaComponent(0, 0, viewportWidth, viewportHeight)
-				}
+				fullScreenRefresh = true
+				AreaComponent area = new AreaComponent(0, 0, viewportWidth, viewportHeight)
 				dirtyRectangles << area
 				terminal.clear(' ' as char, area.x, area.y, area.width, area.height)
 			} else if (entity.parent) {
@@ -355,20 +363,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 					scrollTo.y = scrollToY ?: viewport.y + viewport.height / 2
 					centerViewport(scrollTo)
 					logger.debug "Scroll boundaries shifted, need rendering"
-					scene.entityNeedsRendering(new RerenderEntity(
-							name: 'scrollRenderer',
-							components: [viewport]
-					))
-					// Finds non-panel entities for rendering
-					scene.findNonPanelWithin(viewport).each { scene.entityNeedsRendering(it) }
-					// Since we're currently adding a RerenderEntity for the entire viewport,
-					// we need to re-render the panels. Better would be to not clear the
-					// panels in the first place.
-					scene.panels.each {
-						scene.entityNeedsRendering(it)
-						InventoryComponent ic = it.getComponentOfType(InventoryComponent)
-						ic.inventory.each { item -> scene.entityNeedsRendering(item) }
-					}
+					repaintScene(scene)
 				}
 			}
 		}
