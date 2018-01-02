@@ -45,10 +45,12 @@ class Quadtree {
 
 	int level = 0
 	QuadtreeNodeEntities entities
-	AreaComponent bounds = new AreaComponent()
+	AreaComponent bounds
 	Quadtree[] nodes = new Quadtree[4]
 
-	Quadtree() { }
+	Quadtree() {
+		this(new AreaComponent())
+	}
 
 	Quadtree(AreaComponent bounds) {
 		this(0, bounds)
