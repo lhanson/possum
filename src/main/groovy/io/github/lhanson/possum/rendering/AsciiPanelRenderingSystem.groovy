@@ -74,8 +74,35 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	void initScene(Scene scene) {
 		logger.debug "Initializing scene {}", scene
 		long startTime = System.currentTimeMillis()
+
+		resolveRelativePositions(scene)
+
+		// Store a list of the panel areas in the scene sorted by x,y coordinates for faster reference
+		scenePanelAreas = scene.panels.findResults { it.getComponentOfType(AreaComponent) }
+		scenePanelAreas.sort { a, b -> a.x <=> b.y ?: a.y <=> b.y }
+
+		// Repaint entire scene
+		scene.findNonPanelWithin(viewport)
+				.findAll { isVisible(it) }
+				.each { scene.entityNeedsRendering(it) }
+		scene.panels.each {
+			scene.entityNeedsRendering(it)
+			InventoryComponent ic = it.getComponentOfType(InventoryComponent)
+			ic.inventory.each { item -> scene.entityNeedsRendering(item) }
+		}
+		terminal.clear()
+		logger.debug "Renderer initialization took ${System.currentTimeMillis() - startTime} ms"
+	}
+
+	/**
+	 * Finds relatively-positioned entities within the scene and assigns them concrete
+	 * AreaComponents based on the viewport.
+	 *
+	 * @param scene the scene we're initializing
+	 */
+	void resolveRelativePositions(Scene scene) {
 		scene.getEntitiesMatching([RelativePositionComponent]).each { GameEntity entity ->
-			logger.trace "Initializing entity ${entity.name}"
+			logger.trace "Initializing relatively positioned entity ${entity.name}"
 			// Center viewport on focused entity, important that this happens
 			// before resolving relatively positioned entities
 			GameEntity focusedEntity = scene.entities.find { it.getComponentOfType(CameraFocusComponent) }
@@ -137,20 +164,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 				ac.y = (rpc.y / 100.0f) * viewportHeight
 			}
 			logger.debug "Calculated position of {} for {}", ac, entity.name
-
-			// The scene wouldn't have added entities without AreaComponents to the quadtree,
-			// so notify it that we've calculated actual positions
-			scene.addEntity(entity)
 		}
-
-		// Store a list of the panel areas in the scene sorted by x,y coordinates for faster reference
-		scenePanelAreas = scene.panels.findResults { it.getComponentOfType(AreaComponent) }
-		scenePanelAreas.sort { a, b -> a.x <=> b.y ?: a.y <=> b.y }
-
-		// Repaint entire scene
-		scene.entities.each { scene.entityNeedsRendering(it) }
-		terminal.clear()
-		logger.debug "Renderer initialization took ${System.currentTimeMillis() - startTime} ms"
 	}
 
 	@Override
@@ -350,13 +364,11 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 					// Since we're currently adding a RerenderEntity for the entire viewport,
 					// we need to re-render the panels. Better would be to not clear the
 					// panels in the first place.
-					scene.entities
-							.findAll { it instanceof PanelEntity }
-							.each {
-								scene.entityNeedsRendering(it)
-								InventoryComponent ic = it.getComponentOfType(InventoryComponent)
-								ic.inventory.each { item -> scene.entityNeedsRendering(item) }
-							}
+					scene.panels.each {
+						scene.entityNeedsRendering(it)
+						InventoryComponent ic = it.getComponentOfType(InventoryComponent)
+						ic.inventory.each { item -> scene.entityNeedsRendering(item) }
+					}
 				}
 			}
 		}
