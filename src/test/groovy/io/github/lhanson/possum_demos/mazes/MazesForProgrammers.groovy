@@ -133,14 +133,13 @@ class MazesForProgrammers {
 			GridEntity maze = BinaryTreeMazeGenerator.linkCells(new GridEntity(30, 20))
 			def entities = wallCarver.buildGridFromMaze(maze)
 			def walls = entities.findAll { it.getComponentOfType(ImpassableComponent) }
+			def floors = entities - walls
 
-			AreaComponent heroPos = movementSystem.randomPassableSpaceWithin(walls)
-			AreaComponent finishPos = movementSystem.randomPassableSpaceWithin(walls)
-			while (finishPos == heroPos) {
-				log.warn "Random finish position is same as hero start, recalculating"
-				finishPos = movementSystem.randomPassableSpaceWithin(walls)
-			}
-
+			int startIndex = rand.nextInt(floors.size())
+			AreaComponent heroPos = new AreaComponent(floors[startIndex].getComponentOfType(AreaComponent))
+			floors.remove(startIndex)
+			int finishIndex = rand.nextInt(floors.size())
+			AreaComponent finishPos = new AreaComponent(floors[finishIndex].getComponentOfType(AreaComponent))
 			heroPos.z = 1
 			finishPos.z = 1
 

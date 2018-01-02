@@ -18,6 +18,7 @@ class PossumSceneBuilder {
 	@Autowired List<RenderingSystem> renderers
 	@Autowired(required = false) List<GameSystem> systems
 	@Autowired EventBroker eventBroker
+	@Autowired Random rand
 
 	@Autowired
 	InputAdapter inputAdapter
