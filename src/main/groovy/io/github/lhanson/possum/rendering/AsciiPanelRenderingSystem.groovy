@@ -61,13 +61,13 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 			}
 		}
 
+		setBackground(Color.BLACK)
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
 		// We're doing active rendering, so we don't need to be told when to repaint
 		setIgnoreRepaint(true)
 		setResizable(false)
 		add(terminal)
 		pack()
-		setVisible(true)
 	}
 
 	@Override
@@ -84,6 +84,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		// Repaint entire scene
 		repaintScene(scene)
 		terminal.clear()
+		setVisible(true)
 		logger.debug "Renderer initialization took ${System.currentTimeMillis() - startTime} ms"
 	}
 
