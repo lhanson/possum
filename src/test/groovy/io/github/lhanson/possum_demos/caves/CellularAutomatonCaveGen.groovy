@@ -237,7 +237,7 @@ class CellularAutomatonCaveGen {
 		Scene caveScene = new Scene(
 				CAVE,
 				caveInitializer,
-				[ new EightWayInputContext([(KeyEvent.VK_ESCAPE) : transition(START)]) ],
+				[ new EightWayInputContext([(KeyEvent.VK_ESCAPE) : { transition(START) } ]) ],
 				loadingScene
 		)
 
