@@ -129,54 +129,6 @@ class MovementSystem extends GameSystem {
 	}
 
 	/**
-	 * Computes the center of the collection of provided {@code entities} and
-	 * performs the appropriate transformation on each of them to relatively
-	 * position them at the given coordinates.
-	 *
-	 * @param xPercent percentage of width away from origin
-	 * @param yPercent percentage of height away from origin
-	 * @param entities the list of entities to recenter
-	 */
-	void centerAround(int xPercent, yPercent, List<GameEntity> entities) {
-		List<PositionComponent> positions = entities.findResults {
-			it.getComponentsOfType(PositionComponent)
-		}.flatten()
-		def xs = positions.collect { it.x }
-		def ys = positions.collect { it.y }
-		int centerX = Math.ceil(xs.sum() / xs.size())
-		int centerY = Math.ceil(ys.sum() / ys.size())
-		int relX = (xPercent / 100.0f) * renderingSystem.viewportWidth
-		int relY = (yPercent / 100.0f) * renderingSystem.viewportHeight
-		int translateX = relX - centerX
-		int translateY = relY - centerY
-		positions.each { it.x += translateX; it.y += translateY }
-	}
-
-	/**
-	 * Calculates a random open (non-Impassable) space within the rectangular
-	 * bounds of the provided entities.
-	 *
-	 * @param entities the entities defining the rectangular bounds of the
-	 *        selection as well as disqualifying impassable entities
-	 * @return an area among the entities, not occupied by an Impassable entity
-	 */
-	AreaComponent randomPassableSpaceWithin(List<GameEntity> entities) {
-		AreaComponent boundingBox = boundingBox(entities.collect { it.getComponentsOfType(AreaComponent)} )
-		AreaComponent randomPosition
-		while (!randomPosition) {
-			int rx = random.nextInt(boundingBox.width + 1 - boundingBox.x) + boundingBox.x
-			int ry = random.nextInt(boundingBox.height + 1 - boundingBox.y) + boundingBox.y
-			AreaComponent tentativePosition = new AreaComponent(rx, ry, 1, 1)
-			if (!findImpassableAt(entities, tentativePosition)) {
-				randomPosition = tentativePosition
-			} else {
-				log.warn "Collision calculating random passable space, recomputing"
-			}
-		}
-		return randomPosition
-	}
-
-	/**
 	 * @param areas the list of areas to calculate a bounding box for
 	 * @return an area representing the bounding box encompassing the areas
 	 */
