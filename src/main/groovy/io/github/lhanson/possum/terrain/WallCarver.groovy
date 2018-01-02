@@ -5,7 +5,10 @@ import io.github.lhanson.possum.component.*
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.GridEntity
 import io.github.lhanson.possum.terrain.maze.BinaryTreeMazeGenerator
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
+
+import javax.annotation.PostConstruct
 
 /**
  * Takes a logical representation of a space; e.g. a grid with linked
@@ -20,6 +23,16 @@ import org.springframework.stereotype.Component
  */
 @Component
 class WallCarver {
+	@Value('${graphics.ascii.wallChar}') Integer wallCharInt
+	@Value('${graphics.ascii.floorChar}') Integer floorCharInt
+	char wallChar
+	char floorChar
+
+	@PostConstruct
+	void init() {
+		floorChar = floorCharInt ? (char) floorCharInt : 32  // ' ' (space)
+		wallChar = wallCharInt ? (char) wallCharInt : 176    // ░ (dark shade)
+	}
 
 	/**
 	 * Takes a sparse representation of a maze where every cell represents a floor
@@ -69,9 +82,9 @@ class WallCarver {
 	 * @param cellList a list of cells having a boolean 'wall' status
 	 * @return a set of 2D entities representing the floors and walls
 	 */
-	List<GameEntity> getTiles(List<GridCellComponent> cellList, char floorChar = (char) 249 /* ∙ */, char wallChar = (char) 176/* ░ */) {
+	List<GameEntity> getTiles(List<GridCellComponent> cellList) {
 		cellList.findResults { GridCellComponent cell ->
-			cell.wall ? buildWall(cell.x, cell.y, wallChar) : buildFloor(cell.x, cell.y, floorChar)
+			cell.wall ? buildWall(cell.x, cell.y) : buildFloor(cell.x, cell.y)
 		}
 	}
 
@@ -79,9 +92,9 @@ class WallCarver {
 	 * @param grid a list of cells having a boolean 'wall' status
 	 * @return a set of 2D entities representing the grid walls
 	 */
-	List<GameEntity> getWalls(GridEntity grid, char wallChar = (char) 176/* ░ */) {
+	List<GameEntity> getWalls(GridEntity grid) {
 		grid.cellList.findResults { GridCellComponent cell ->
-			cell.wall ? buildWall(cell.x, cell.y, wallChar) : null
+			cell.wall ? buildWall(cell.x, cell.y) : null
 		}
 	}
 
@@ -89,17 +102,17 @@ class WallCarver {
 	 * @param grid a list of cells having a boolean 'wall' status
 	 * @return a set of 2D entities representing the grid floors
 	 */
-	List<GameEntity> getFloors(GridEntity grid, char floorChar = (char) 249 /* ∙ */) {
+	List<GameEntity> getFloors(GridEntity grid) {
 		grid.cellList.findResults { GridCellComponent cell ->
-			!cell.wall ? buildFloor(cell.x, cell.y, floorChar) : null
+			!cell.wall ? buildFloor(cell.x, cell.y) : null
 		}
 	}
 
-	GameEntity buildWall(AreaComponent location, char wallChar = (char) 176/* ░ */) {
-		buildWall(location.x, location.y, wallChar)
+	GameEntity buildWall(AreaComponent location) {
+		buildWall(location.x, location.y)
 	}
 
-	GameEntity buildWall(int x, int y, char wallChar = (char) 176/* ░ */) {
+	GameEntity buildWall(int x, int y) {
 		new GameEntity(
 				name: 'wall',
 				components: [
@@ -109,7 +122,7 @@ class WallCarver {
 				])
 	}
 
-	GameEntity buildFloor(int x, int y, char floorChar = (char) 249/* ∙ */) {
+	GameEntity buildFloor(int x, int y) {
 		new GameEntity(
 				name: 'floor',
 				components: [
