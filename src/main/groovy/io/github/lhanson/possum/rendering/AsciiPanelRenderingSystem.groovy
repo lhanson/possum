@@ -28,7 +28,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	AsciiPanel terminal
 	@Autowired(required = false)
 	VectorComponent initialViewportSize
-	// the entire visible area being rendered
+	// the entire visible area being rendered (in world coordinates, not screen pixels)
 	AreaComponent viewport
 	// Panel areas in the scene, sorted by x, y coordinates
 	List<AreaComponent> scenePanelAreas
@@ -37,9 +37,9 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	void init() {
 		logger.trace "Initializing"
 		if (initialViewportSize) {
-			viewport = new AreaComponent(0, 0, initialViewportSize.x, initialViewportSize.y)
+			viewport = new AreaComponent(0, 0, Integer.MIN_VALUE, initialViewportSize.x, initialViewportSize.y)
 		} else {
-			viewport = new AreaComponent(0, 0, 100, 40)
+			viewport = new AreaComponent(0, 0, Integer.MIN_VALUE,100, 40)
 		}
 		terminal = new AsciiPanel(viewport.width, viewport.height)
 		logger.debug "Created terminal with viewport {}", viewport
@@ -137,6 +137,10 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 				ac.y = (rpc.y / 100.0f) * viewportHeight
 			}
 			logger.debug "Calculated position of {} for {}", ac, entity.name
+
+			// The scene wouldn't have added entities without AreaComponents to the quadtree,
+			// so notify it that we've calculated actual positions
+			scene.addEntity(entity)
 		}
 
 		// Store a list of the panel areas in the scene sorted by x,y coordinates for faster reference
@@ -164,6 +168,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 
 		stopwatch.start('processing each entity')
 		def dirtyRectangles = []
+		boolean fullScreenRefresh = false
 		scene.entitiesToBeRendered.each { entity ->
 			if (entity instanceof PanelEntity) {
 				dirtyRectangles << renderPanelBorders(entity)
@@ -171,9 +176,10 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 				AreaComponent ac = entity.getComponentOfType(AreaComponent)
 				AreaComponent area
 				if (ac) {
-					area = translateWorldToScreen(ac, viewport)
+					area = translateWorldToAsciiPanel(ac, viewport)
 				} else {
 					// Empty RerenderEntity means do the whole screen
+					fullScreenRefresh = true
 					area = new AreaComponent(0, 0, viewportWidth, viewportHeight)
 				}
 				dirtyRectangles << area
@@ -182,7 +188,8 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 				TextComponent tc = entity.getComponentOfType(TextComponent)
 				AreaComponent pc = entity.parent.getComponentOfType(AreaComponent)
 				AreaComponent ac = translateChildToParent(entity.getComponentOfType(AreaComponent), pc)
-				dirtyRectangles << ac
+				AreaComponent dirtyRect = translatePanelToPixels(ac)
+				dirtyRectangles << dirtyRect
 				if (entity.parent instanceof PanelEntity) {
 					ac.x += entity.parent.padding
 					ac.y += entity.parent.padding
@@ -193,9 +200,10 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 				if (isVisible(entity)) {
 					Color color = entity.getComponentOfType(ColorComponent)?.color ?: AsciiPanel.white
 					TextComponent tc = entity.getComponentOfType(TextComponent)
-					AreaComponent ac = translateWorldToScreen(entity.getComponentOfType(AreaComponent), viewport)
-					dirtyRectangles << ac
-					write(tc.text, ac.x, ac.y, color)
+					AreaComponent panelArea = translateWorldToAsciiPanel(entity.getComponentOfType(AreaComponent), viewport)
+					write(tc.text, panelArea.x, panelArea.y, color)
+					AreaComponent pixelArea = translatePanelToPixels(panelArea)
+					dirtyRectangles << pixelArea
 				}
 			}
 		}
@@ -204,11 +212,15 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		stopwatch.start('terminal render')
 		int entitiesRerendered = scene.entitiesToBeRendered.size()
 		scene.entitiesToBeRendered.clear()
+		if (fullScreenRefresh) {
+			dirtyRectangles.clear()
+			dirtyRectangles << new AreaComponent(0, 0, viewport.width * terminal.charWidth, viewport.height * terminal.charHeight)
+		}
 		dirtyRectangles.each { AreaComponent area ->
-			terminal.paintImmediately(area.x * terminal.charWidth, area.y * terminal.charHeight, area.width * terminal.charWidth, area.height * terminal.charHeight)
+			terminal.paintImmediately(area.x, area.y, area.width * terminal.charWidth, area.height * terminal.charHeight)
 		}
 		stopwatch.stop()
-		if (entitiesRerendered > 0 || dirtyRectangles.size() > 0) {
+		if (entitiesRerendered > 2 || dirtyRectangles.size() > 0) {
 			logger.trace "Render complete, {} entities with {} dirty rectangles. {}", entitiesRerendered, dirtyRectangles.size(), stopwatch
 		}
 	}
@@ -221,7 +233,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 					.findAll { !(it instanceof GaugeEntity) }
 					.each { entity ->
 				if (entity instanceof RerenderEntity) {
-					AreaComponent area = translateWorldToScreen(entity.getComponentOfType(AreaComponent), viewport)
+					AreaComponent area = translateWorldToAsciiPanel(entity.getComponentOfType(AreaComponent), viewport)
 					logger.debug "Hinting clearing {}", area
 					// Draw a red block where we're clearing (▓)
 					def red = new Color(255, 0, 0, 100)
@@ -242,7 +254,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	}
 
 	void drawQuadtreeOutline(Quadtree quadtree, Color color) {
-		AreaComponent bounds = translateWorldToScreen(quadtree.bounds, viewport)
+		AreaComponent bounds = translateWorldToAsciiPanel(quadtree.bounds, viewport)
 		Graphics g = terminal.offscreenGraphics
 		g.drawRect(bounds.x * terminal.charWidth, bounds.y * terminal.charHeight, bounds.width * terminal.charWidth, bounds.height * terminal.charHeight)
 		if (quadtree.nodes[0]) {
@@ -258,23 +270,39 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		if (area) {
 			// When detecting overlap with panels, we translate the entity's coordinates to
 			// be viewport-based rather than world-based.
-			AreaComponent viewportArea = translateWorldToScreen(area, viewport)
+			AreaComponent viewportArea = translateWorldToAsciiPanel(area, viewport)
 			visible = area.overlaps(viewport) && !scenePanelAreas.any { viewportArea.overlaps(it) }
 		}
 		return visible
 	}
 
 	/**
-	 * Entities with world coordinates need their coordinates translated relative
-	 * to the viewport in order to get screen rendering coordinates.
+	 * Entities with abstract world coordinates need these translated relative
+	 * to the viewport in order to get AsciiPanel rendering coordinates.
 	 *
-	 * @param ac the coordinate's entities
+	 * @param ac abstract world coordinates
 	 * @param viewport the position of the viewport in world coordinates
-	 * @return an area describing the entity's screen coordinates for rendering
+	 * @return an area describing the entity's screen coordinates for AsciiPanel rendering
 	 */
-	AreaComponent translateWorldToScreen(AreaComponent ac, AreaComponent viewport) {
+	AreaComponent translateWorldToAsciiPanel(AreaComponent ac, AreaComponent viewport) {
 		// world - viewport
 		new AreaComponent(ac.x - viewport.x, ac.y - viewport.y, ac.width, ac.height)
+	}
+
+	/**
+	 * Takes a cell-based area suitable for having AsciiPanel write characters
+	 * and returns the pixel-based dirty rectangle required for the underlying
+	 * Java2D surface to update.
+	 *
+	 * @param ac AsciiPanel writing coordinate
+	 * @return an area describing the screen area for a Java2D render update
+	 */
+	AreaComponent translatePanelToPixels(AreaComponent ac) {
+		new AreaComponent(
+				ac.x * terminal.charWidth,
+				ac.y * terminal.charHeight,
+				ac.width * terminal.charWidth,
+				ac.height * terminal.charHeight)
 	}
 
 	/**
@@ -421,7 +449,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		// Bottom border
 		terminal.write(ll + ("$h" * (ac.width - 2)) + lr, ac.x, ac.y + (ac.height - 1))
 
-		return ac
+		return translatePanelToPixels(ac)
 	}
 
 	int relativeX(RelativePositionComponent rpc) {
