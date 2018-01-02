@@ -91,18 +91,6 @@ class MovementSystemTest extends Specification {
 			movementSystem.movingEntities.empty
 	}
 
-	def "When no entity is found at a location, we assume it's a wall square and create it dynamically"() {
-		given:
-			GameEntity hero = heroAt(0, 0)
-			scene.addEntity(hero)
-			scene.activeInput.addAll([MappedInput.RIGHT])
-		when:
-			movementSystem.update(scene, 0)
-		then:
-			scene.entities.size() == 2
-			scene.entities.any { it.name == 'wall' }
-	}
-
 	GameEntity heroAt(int x, int y) {
 		new GameEntity(
 				name: 'hero',
