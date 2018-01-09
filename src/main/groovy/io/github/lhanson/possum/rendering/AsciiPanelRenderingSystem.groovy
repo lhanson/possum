@@ -229,7 +229,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 				TextComponent tc = entity.getComponentOfType(TextComponent)
 				AreaComponent pc = entity.parent.getComponentOfType(AreaComponent)
 				AreaComponent ac = translateChildToParent(entity.getComponentOfType(AreaComponent), pc)
-				AreaComponent dirtyRect = translatePanelToPixels(ac)
+				AreaComponent dirtyRect = translateTerminalToPixels(ac)
 				dirtyRectangles << dirtyRect
 				write(tc.text, ac.x, ac.y)
 			} else {
@@ -239,7 +239,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 					TextComponent tc = entity.getComponentOfType(TextComponent)
 					AreaComponent panelArea = translateWorldToAsciiPanel(entity.getComponentOfType(AreaComponent), viewport)
 					write(tc.text, panelArea.x, panelArea.y, color)
-					AreaComponent pixelArea = translatePanelToPixels(panelArea)
+					AreaComponent pixelArea = translateTerminalToPixels(panelArea)
 					dirtyRectangles << pixelArea
 				}
 			}
@@ -334,7 +334,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	 * @param ac AsciiPanel writing coordinate
 	 * @return an area describing the screen area for a Java2D render update
 	 */
-	AreaComponent translatePanelToPixels(AreaComponent ac) {
+	AreaComponent translateTerminalToPixels(AreaComponent ac) {
 		new AreaComponent(
 				ac.x * terminal.charWidth,
 				ac.y * terminal.charHeight,
@@ -471,7 +471,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		// Bottom border
 		terminal.write(ll + ("$h" * (ac.width - 2)) + lr, ac.x, ac.y + (ac.height - 1))
 
-		return translatePanelToPixels(ac)
+		return translateTerminalToPixels(ac)
 	}
 
 	int relativeX(RelativePositionComponent rpc) {
