@@ -1,5 +1,6 @@
 package io.github.lhanson.possum.entity
 
+import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.CameraFocusComponent
 import io.github.lhanson.possum.collision.ImpassableComponent
 import io.github.lhanson.possum.component.TextComponent
@@ -7,7 +8,7 @@ import spock.lang.Specification
 
 class GameEntityTest extends Specification {
 
-	def "setComponents replaces existing list"() {
+	def "setComponents replaces existing list contents"() {
 		given:
 			def entity = new GameEntity(components: [new TextComponent()])
 			def newComponents = [
@@ -21,7 +22,8 @@ class GameEntityTest extends Specification {
 			entity.setComponents(newComponents)
 
 		then:
-			entity.getComponents() == newComponents
+			entity.getComponents().size() == newComponents.size()
+			entity.getComponents().containsAll(newComponents)
 	}
 
 	def "test getComponentsOfType"() {
@@ -42,7 +44,7 @@ class GameEntityTest extends Specification {
 			results.size() == 2
 	}
 
-	def "addComponent updates map of components by type"() {
+	def "Adding a component updates map of components by type"() {
 		given:
 			def entity = new GameEntity(
 					name: 'testEntity',
@@ -50,11 +52,21 @@ class GameEntityTest extends Specification {
 			TextComponent textComponent = new TextComponent()
 
 		when:
-			entity.addComponent(textComponent)
+			entity.components << textComponent
 			def results = entity.getComponentsOfType(TextComponent)
 
 		then:
 			results == [textComponent]
+	}
+
+	def "Directly adding to component collection is intercepted to update componentsByType"() {
+		given:
+			def entity = new GameEntity()
+			def area = new AreaComponent()
+		when:
+			entity.components << area
+		then:
+			entity.componentsByType[AreaComponent] == [area]
 	}
 
 	def "removeComponent updates map of components by type"() {
@@ -82,6 +94,17 @@ class GameEntityTest extends Specification {
 
 		then:
 			results == []
+	}
+
+	def "Setting the components collection doesn't wipe out our add() interceptor"() {
+		given:
+			GameEntity entity = new PanelEntity(components: [new TextComponent('test text')])
+		when:
+			// Initialization should create a default AreaComponent, inserted with our
+			// overridden components.add() method which sets the componentsByType lookup.
+			entity.init()
+		then:
+			entity.getComponentOfType(AreaComponent)
 	}
 
 }

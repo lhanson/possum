@@ -63,6 +63,7 @@ class CellularAutomatonCaveGen {
 	class SceneBuilder extends PossumSceneBuilder {
 		final String CAVE = 'cave'
 		final String QUITTING = 'quitting'
+		final String MENU = 'menu'
 		final String WIN = 'win'
 		Logger log = LoggerFactory.getLogger(this.class)
 		@Autowired MovementSystem movementSystem
@@ -73,7 +74,7 @@ class CellularAutomatonCaveGen {
 
 		@PostConstruct
 		void addScenes() {
-			[startScene, caveScene, quittingScene, winScene].each {
+			[startScene, caveScene, menuScene, quittingScene, winScene].each {
 				addScene(it)
 			}
 		}
@@ -94,25 +95,13 @@ class CellularAutomatonCaveGen {
 										new RelativePositionComponent( 50, 90)
 								])
 				]},
-				[
-						// Main menu context
-						new InputContext() {
-							@Override MappedInput mapInput(InputEvent rawInput) {
-								if (rawInput instanceof KeyEvent) {
-									switch (rawInput.keyCode) {
-										case rawInput.VK_ESCAPE:
-											transition(QUITTING)
-											break
-										case rawInput.VK_ENTER:
-											transition(CAVE)
-											break
-									}
-								}
-								// Menu contexts gobble all input, none pass through
-								null
-							}
-						}
-				]
+				[ new EightWayInputContext(
+						// keyCode handlers
+						[ (KeyEvent.VK_ESCAPE) : { transition(QUITTING) },
+						  (KeyEvent.VK_ENTER) : { transition(CAVE) }],
+						// keyChar handlers
+						[ ((char) '?') : { transition(MENU, true) } ])
+				],
 		)
 
 		Scene loadingScene = new Scene(
@@ -136,6 +125,42 @@ class CellularAutomatonCaveGen {
 								new TimerComponent(ticksRemaining: 1000, alarm: { transition(null) })
 						])
 				]},
+		)
+
+
+		Scene menuScene = new Scene(
+				MENU,
+				{
+					def menuOverlayPanel = new PanelEntity(
+							name: 'menuOverlay',
+							padding: 0,
+							components: [new RelativePositionComponent(50, 50),
+							             new RelativeWidthComponent(50)]
+					)
+					def menuText = new TextEntity(
+							name: 'menuText',
+							parent: menuOverlayPanel,
+							components: [new TextComponent('MAIN MENU'),
+							             new RelativePositionComponent(50, 50)])
+					menuOverlayPanel.components.add(new InventoryComponent([menuText]))
+					[menuOverlayPanel]
+				},
+				[new InputContext() {
+					@Override MappedInput mapInput(InputEvent rawInput) {
+						if (rawInput instanceof KeyEvent) {
+							switch (rawInput.keyCode) {
+								case rawInput.VK_ESCAPE:
+									transition(PREVIOUS)
+									break
+								case rawInput.VK_ENTER:
+									transition(CAVE)
+									break
+							}
+						}
+						// Menu contexts gobble all input, none pass through
+						null
+					}
+				}]
 		)
 
 		SceneInitializer caveInitializer = new SceneInitializer() {
@@ -237,7 +262,12 @@ class CellularAutomatonCaveGen {
 		Scene caveScene = new Scene(
 				CAVE,
 				caveInitializer,
-				[ new EightWayInputContext([(KeyEvent.VK_ESCAPE) : { transition(START) } ]) ],
+				[ new EightWayInputContext(
+						// keyCode handlers
+						[ (KeyEvent.VK_ESCAPE) : { transition(START) }, ],
+						// keyChar handlers
+						[ ((char) '?') : { transition(MENU, true) } ])
+				],
 				loadingScene
 		)
 

@@ -81,11 +81,19 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		scenePanelAreas = scene.panels.findResults { it.getComponentOfType(AreaComponent) }
 		scenePanelAreas.sort { a, b -> a.x <=> b.y ?: a.y <=> b.y }
 
+		viewport.x = 0
+		viewport.y = 0
+
 		// Repaint entire scene
 		repaintScene(scene)
 		terminal.clear()
 		setVisible(true)
 		logger.debug "Renderer initialization took ${System.currentTimeMillis() - startTime} ms"
+	}
+
+	@Override
+	void uninitScene(Scene scene) {
+		scenePanelAreas = null
 	}
 
 	/**
@@ -118,49 +126,55 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	 * @param scene the scene we're initializing
 	 */
 	void resolveRelativePositions(Scene scene) {
+		// Center viewport on focused entity, important that this happens
+		// before resolving relatively positioned entities
+		GameEntity focusedEntity = scene.entities.find { it.getComponentOfType(CameraFocusComponent) }
+		if (focusedEntity) {
+			AreaComponent area = focusedEntity.getComponentOfType(AreaComponent)
+			if (area) {
+				centerViewport(area.position)
+			}
+		}
+
 		scene.getEntitiesMatching([RelativePositionComponent]).each { GameEntity entity ->
 			logger.trace "Initializing relatively positioned entity ${entity.name}"
-			// Center viewport on focused entity, important that this happens
-			// before resolving relatively positioned entities
-			GameEntity focusedEntity = scene.entities.find { it.getComponentOfType(CameraFocusComponent) }
-			if (focusedEntity) {
-				AreaComponent area = focusedEntity.getComponentOfType(AreaComponent)
-				if (area) {
-					centerViewport(area.position)
-				}
+
+			AreaComponent parentReference
+			if (entity.parent) {
+				parentReference = new AreaComponent(entity.parent.getComponentOfType(AreaComponent))
 			} else {
-				// No focused entity, restore default viewport state
-				viewport.x = 0
-				viewport.y = 0
+				parentReference = new AreaComponent(viewport)
 			}
 
 			AreaComponent ac = entity.getComponentOfType(AreaComponent)
 			RelativePositionComponent rpc = entity.getComponentOfType(RelativePositionComponent)
 			RelativeWidthComponent rwc = entity.getComponentOfType(RelativeWidthComponent)
 
+			boolean newArea = false
 			if (!ac) {
 				ac = new AreaComponent()
-				entity.addComponent(ac)
-				logger.debug "Added area component for {}", entity.name
+				newArea = true
 			}
 
 			if (rwc) {
 				// Compute relative width
-				ac.width = (rwc.width / 100.0f) * viewportWidth
+				ac.width = (rwc.width / 100.0f) * parentReference.width
 			}
 
 			if (entity instanceof PanelEntity) {
 				// Compute relative height
 				InventoryComponent ic = entity.getComponentOfType(InventoryComponent)
 				int textHeight = 0
-				ic.inventory.each { GameEntity inv ->
+				ic?.inventory.each { GameEntity inv ->
 					if (inv instanceof TextEntity) {
-						textHeight += inv.calculateArea().height
+						AreaComponent area = inv.getComponentOfType(AreaComponent)
+						textHeight += area.height
+						area.x = entity.padding
 					}
 				}
 				ac.height = textHeight + 2 // text entries plus borders
 				// Compute position
-				ac.x = constrainInt((int) (relativeX(rpc) - (ac.width / 2)), 0, viewportWidth - ac.width)
+				ac.x = constrainInt((int) (relativeX(rpc) - (ac.width / 2)), 0, parentReference.width - ac.width)
 				ac.y = relativeY(rpc)
 				// If the calculated position goes outside the viewport because of the panel's height, adjust it up
 				if (ac.y + ac.height >= viewportHeight) {
@@ -172,14 +186,20 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 				int xOffset = 0
 				if (text?.get(0)) {
 					// This is assuming we want to center this text around its position
-					xOffset = text[0].text.length() / 2
+					xOffset = Math.floor(text[0].text.length() / 2)
 					ac.width = text.collect { it.text.size() }.max() // Longest string
 					// Assumes each text component is on its own line
 					ac.height = text.size()
 				}
-				ac.x = (rpc.x / 100.0f) * viewportWidth - xOffset
-				ac.y = (rpc.y / 100.0f) * viewportHeight
+				ac.x = (rpc.x / 100.0f) * parentReference.width - xOffset
+				ac.y = (rpc.y / 100.0f) * parentReference.height
 			}
+
+			if (newArea) {
+				entity.components << ac
+				logger.debug "Added area component for {}", entity.name
+			}
+
 			logger.debug "Calculated position of {} for {}", ac, entity.name
 		}
 	}
@@ -211,10 +231,6 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 				AreaComponent ac = translateChildToParent(entity.getComponentOfType(AreaComponent), pc)
 				AreaComponent dirtyRect = translatePanelToPixels(ac)
 				dirtyRectangles << dirtyRect
-				if (entity.parent instanceof PanelEntity) {
-					ac.x += entity.parent.padding
-					ac.y += entity.parent.padding
-				}
 				write(tc.text, ac.x, ac.y)
 			} else {
 				// Generic renderer

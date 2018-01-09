@@ -1,6 +1,7 @@
 package io.github.lhanson.possum.scene
 
 import io.github.lhanson.possum.component.AreaComponent
+import io.github.lhanson.possum.component.InventoryComponent
 import io.github.lhanson.possum.component.RelativePositionComponent
 import io.github.lhanson.possum.component.TextComponent
 import io.github.lhanson.possum.entity.GameEntity
@@ -30,24 +31,19 @@ class SceneTest extends Specification {
 
 	def "Find by component when entity has multiple components of the same type"() {
 		given:
-			def textPanel = new PanelEntity(
-					name: 'textPanel',
-					components: [new TextEntity(), new TextEntity()])
+			def textPanel = new PanelEntity(components: [new TextComponent(), new TextComponent()])
 			Scene scene = new Scene('testScene', {[textPanel]})
 			scene.eventBroker = new EventBroker()
 			scene.init()
 		when:
-			// This is slightly odd in that TextEntity is not technically a GameComponent,
-			// but it's still useful to find and there doesn't appear to be a reason to
-			// restrict entity matching to GameComponent only.
-			def gaugedEntities = scene.getEntitiesMatching([TextEntity])
+			def gaugedEntities = scene.getEntitiesMatching([TextComponent])
 		then:
 			gaugedEntities
 	}
 
 	def "setEntities clears existing entries in various collections"() {
 		given:
-			GameEntity testEntity = new GameEntity(name: 'testEntity', components: [TextComponent])
+			GameEntity testEntity = new GameEntity(name: 'testEntity', components: [new TextComponent()])
 			Scene scene = new Scene('testId', {[testEntity, new PanelEntity()]})
 			scene.eventBroker = new EventBroker()
 			scene.init()
@@ -126,6 +122,21 @@ class SceneTest extends Specification {
 			!scene.eventBroker.subscriptionsByEventClass.empty
 	}
 
+	def "The scene initializes its entities"() {
+		given:
+			GameEntity e1 = new GameEntity()
+			GameEntity e2 = new GameEntity()
+			Scene scene = new Scene('testId', {[e1, e2]})
+			scene.eventBroker = new EventBroker()
+
+		when:
+			scene.init()
+
+		then:
+			e1.initialized
+			e2.initialized
+	}
+
 	def "Uninitialize"() {
 		given:
 			Scene scene = new Scene('testId', {
@@ -142,6 +153,7 @@ class SceneTest extends Specification {
 			scene.entities.empty
 			scene.getEntitiesMatching([AreaComponent]).empty
 			scene.eventBroker.subscriptionsByEventClass.findAll { it.value } == [:]
+			scene.quadtree.countEntities() == 0
 	}
 
 	def "Loading scene is uninitialized with parent scene"() {
@@ -216,7 +228,7 @@ class SceneTest extends Specification {
 					])
 			Scene scene = new Scene('testId', {[menuTitle, pressStart]})
 			scene.eventBroker = new EventBroker()
-			scene.init()
+			[scene, menuTitle, pressStart].each { it.init() }
 			scene.entitiesToBeRendered.clear() // get rid of the RerenderEntity added by init
 
 		when:
@@ -228,18 +240,52 @@ class SceneTest extends Specification {
 
 	def "adding an area component triggers addition to the quadtree"() {
 		given:
-			def relativeEntity = new TextEntity( name: 'relativeText',
-					components: [new RelativePositionComponent(50, 50)])
-			Scene scene = new Scene('testId', {[relativeEntity]})
+			def entity = new GameEntity()
+			Scene scene = new Scene('testId', {[entity]})
 			scene.eventBroker = new EventBroker()
-			scene.init()
+			[scene, entity].each { it.init() }
 
 		when:
 			// Simulate resolution of relative positions into world coordinates
-			relativeEntity.addComponent(new AreaComponent(0, 0, 1, 1))
+			entity.components << new AreaComponent(0, 0, 1, 1)
 
 		then:
-			scene.quadtree.getAll() == [relativeEntity]
+			scene.quadtree.getAll() == [entity]
+	}
+
+	def "UI panels are not included in the quadtree"() {
+		given:
+			def panel = new PanelEntity()
+			Scene scene = new Scene('testId', {[panel]})
+			scene.eventBroker = new EventBroker()
+			[panel, scene].each { it.init() }
+
+		when:
+			// Simulate resolution of relative positions into world coordinates
+			panel.components.add(new AreaComponent(0, 0, 1, 1))
+
+		then:
+			scene.quadtree.getAll() == []
+	}
+
+	def "getEntitiesMatching resolves entities contained in others' inventories"() {
+		given:
+			Scene menuScene = new Scene('menu', {
+				def menuPanel = new PanelEntity(name: 'menu')
+				def menuText = new TextEntity(name: 'menuText', parent: menuPanel,
+						components: [new TextComponent('MAIN MENU'),
+						             new RelativePositionComponent(50, 50)])
+				menuPanel.components.add(new InventoryComponent([menuText]))
+				[menuPanel]
+			})
+			menuScene.eventBroker = new EventBroker()
+			menuScene.init()
+
+		when:
+			def relativeEntities = menuScene.getEntitiesMatching([RelativePositionComponent])
+
+		then:
+			relativeEntities.size() == 1
 	}
 
 }

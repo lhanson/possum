@@ -9,12 +9,15 @@ import java.awt.event.KeyEvent
  */
 class EightWayInputContext implements InputContext {
 	Map<Integer, Runnable> keyCodeHandlers
+	Map<Character, Runnable> keyCharHandlers
 
 	/**
 	 * @param keyCodeHandlers a map of Runnable handlers by keyCode to override defaults
+	 * @param keyCharHandlers a map of Runnable handlers by keyChar to override defaults
 	 */
-	EightWayInputContext(Map<Integer, Runnable> keyCodeHandlers) {
+	EightWayInputContext(Map<Integer, Runnable> keyCodeHandlers, Map<Character, Runnable> keyCharHandlers = [:]) {
 		this.keyCodeHandlers = keyCodeHandlers
+		this.keyCharHandlers = keyCharHandlers
 	}
 
 	@Override
@@ -22,6 +25,8 @@ class EightWayInputContext implements InputContext {
 		if (rawInput instanceof KeyEvent) {
 			if (keyCodeHandlers[rawInput.keyCode]) {
 				keyCodeHandlers[rawInput.keyCode].run()
+			} else if (keyCharHandlers[rawInput.keyChar]) {
+				keyCharHandlers[rawInput.keyChar].run()
 			} else {
 				switch (rawInput.keyCode) {
 					case rawInput.VK_Y:

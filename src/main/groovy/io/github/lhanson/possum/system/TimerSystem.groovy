@@ -26,6 +26,12 @@ class TimerSystem extends GameSystem {
 	}
 
 	@Override
+	void doUninitScene(Scene scene) {
+		timers = null
+		eventBroker.unsubscribe(this)
+	}
+
+	@Override
 	void doUpdate(Scene scene, double ticks) {
 		timers.each { entity ->
 			def expiredTimers = []

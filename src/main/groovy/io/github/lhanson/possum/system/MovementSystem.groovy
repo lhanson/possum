@@ -27,7 +27,7 @@ class MovementSystem extends GameSystem {
 	@Autowired EventBroker eventBroker
 	Logger log = LoggerFactory.getLogger(this.class)
 	String name = 'MovementSystem'
-	VelocityComponent still = new VelocityComponent(0, 0, 0)
+	final VelocityComponent still = new VelocityComponent(0, 0, 0)
 	Set<GameEntity> movingEntities
 
 	@Override
@@ -35,6 +35,11 @@ class MovementSystem extends GameSystem {
 		movingEntities = scene
 				.getEntitiesMatching([VelocityComponent])
 				.findAll { it.getComponentOfType(VelocityComponent) != still }
+	}
+
+	@Override
+	void doUninitScene(Scene scene) {
+		movingEntities = null
 	}
 
 	@Override

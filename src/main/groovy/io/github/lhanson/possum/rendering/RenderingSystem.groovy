@@ -40,4 +40,11 @@ interface RenderingSystem {
 	 */
 	void initScene(Scene scene)
 
+	/**
+	 * Allows renderers to do scene-specific cleanup during
+	 * a scene transition.
+	 *
+	 * @param scene the scene being transitioned from
+	 */
+	void uninitScene(Scene scene)
 }

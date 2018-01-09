@@ -4,7 +4,7 @@ import groovy.transform.ToString
 import io.github.lhanson.possum.collision.Quadtree
 import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.GameComponent
-import io.github.lhanson.possum.component.TextComponent
+import io.github.lhanson.possum.component.InventoryComponent
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.RerenderEntity
@@ -112,10 +112,12 @@ class Scene {
 		// Initialize quadtree
 		quadtree = new Quadtree(new AreaComponent(minX, minY, maxX, maxY))
 		if (entitiesByComponentType[AreaComponent]) {
-			def areaEntities = entitiesByComponentType[AreaComponent].size()
-			log.debug "Initializing quadtree with $areaEntities area entities with bounds [$minX, $minY] to [$maxX, $maxY], total grid space of ${(maxX - minX) * (maxY - minY)} locations"
+			def worldEntities = entitiesByComponentType[AreaComponent].grep {
+				!(it instanceof PanelEntity) && !it.parent
+			}
+			log.debug "Initializing quadtree with ${worldEntities.size()} area entities with bounds [$minX, $minY] to [$maxX, $maxY], total grid space of ${(maxX - minX) * (maxY - minY)} locations"
 			long start = System.currentTimeMillis()
-			entitiesByComponentType[AreaComponent].each { quadtree.insert it }
+			worldEntities.each { quadtree.insert it }
 			log.debug("Initialized quadtree in {} ms", System.currentTimeMillis() - start)
 		}
 
@@ -140,6 +142,7 @@ class Scene {
 		panels.clear()
 		entitiesByComponentType.clear()
 		entitiesToBeRendered.clear()
+		quadtree.clear()
 		eventBroker.unsubscribe(this)
 		initialized = false
 	}
@@ -157,6 +160,9 @@ class Scene {
 	 * @param entity the entity to add to this scene
 	 */
 	void addEntity(GameEntity entity) {
+		if (!entity.initialized) {
+			entity.init()
+		}
 		entities << entity
 		entity.eventBroker = eventBroker
 		addEntityByComponentTypes(entity)
@@ -179,6 +185,10 @@ class Scene {
 				if (component.x + component.width > maxX) maxX = component.x + component.width
 				if (component.y + component.height > maxY) maxY = component.y + component.height
 			}
+
+			if (component instanceof InventoryComponent) {
+				component.inventory.each { addEntity(it) }
+			}
 		}
 	}
 	@Subscription
@@ -188,7 +198,7 @@ class Scene {
 		}
 		entitiesByComponentType[event.component.class] << event.entity
 		log.debug("Added {} to component lookup list for {}", event.entity, event.component)
-		if (event.component instanceof AreaComponent) {
+		if (event.component instanceof AreaComponent && !(event.entity instanceof PanelEntity)) {
 			quadtree.insert(event.entity, event.component)
 			log.debug("Added {} to quadtree", event.entity)
 		}
@@ -205,6 +215,9 @@ class Scene {
 		log.trace "Handling entity moved event: {}", event
 		def moved = quadtree.move(event.entity, event.oldPosition, event.newPosition)
 		if (!moved) {
+			if (!quadtree.getAll().contains(event.entity)) {
+				log.error ("Quadtree does not contain this entity (${event.entity})")
+			}
 			log.error ("FAILED: Moved quadtree location of {} from {} to {} (success: $moved)", event.entity, event.oldPosition, event.newPosition)
 			throw new IllegalStateException('Move failed')
 		}
@@ -229,6 +242,7 @@ class Scene {
 
 	/**
 	 * Returns all entities in this scene with components of the given type.
+	 * Will recursively search Inventory components as well.
 	 * NOTE: This can be a big performance bottleneck if used indiscriminately
 	 *       on large collections of entities.
 	 *

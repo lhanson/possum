@@ -1,7 +1,5 @@
 package io.github.lhanson.possum.entity
 
-import io.github.lhanson.possum.component.AreaComponent
-import io.github.lhanson.possum.component.GameComponent
 import io.github.lhanson.possum.component.TextComponent
 
 /**
@@ -13,16 +11,6 @@ class GaugeEntity extends TextEntity {
 
 	GaugeEntity() {
 		components << new TextComponent()
-	}
-
-	@Override
-	GameComponent getComponentOfType(Class requiredType) {
-		if (requiredType == AreaComponent) {
-			// Gauges have changing text, so we should recalculate its current area
-			return calculateArea()
-		} else {
-			return super.getComponentOfType(requiredType)
-		}
 	}
 
 }

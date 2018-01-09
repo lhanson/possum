@@ -34,6 +34,17 @@ abstract class GameSystem {
 	}
 
 	/**
+	 * Allows systems to do scene-specific cleanup during
+	 * a scene transition.
+	 *
+	 * @param scene the scene being transitioned from
+	 */
+	final void uninitScene(Scene scene) {
+		log.debug("Unitializing {} for {}", name, scene.id)
+		doUninitScene(scene)
+	}
+
+	/**
 	 * For each main loop iteration, each system has the opportunity to
 	 * perform some work, including processing scene entities it knows
 	 * how to deal with.
@@ -62,12 +73,19 @@ abstract class GameSystem {
 	abstract void doUpdate(Scene scene, double elapsed)
 
 	/**
-	 *
 	 * Implementation-specific method called before a scene transition
 	 * enabling systems to do scene-specific initialization.
 	 *
 	 * @param scene the scene being transitioned to
 	 */
 	void doInitScene(Scene scene) { }
+
+	/**
+	 * Implementation-specific method called during a scene transition
+	 * enabling systems to do scene-specific cleanup.
+	 *
+	 * @param scene the scene being transitioned from
+	 */
+	void doUninitScene(Scene scene) { }
 
 }

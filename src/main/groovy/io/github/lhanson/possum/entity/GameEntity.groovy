@@ -17,28 +17,38 @@ import org.slf4j.LoggerFactory
 @Sortable(includes = ['name', 'id'])
 class GameEntity {
 	static int nextId = 0
-
 	Logger logger = LoggerFactory.getLogger(this.class)
 
 	/** Used to easily differentiate object equality */
 	int id
-
 	/** The name of the entity */
 	String name
-
+	static boolean addInternal = true
 	/** The {@link GameComponent}s describing this entity's properties */
-	List<GameComponent> components = []
+	List<GameComponent> components = new ArrayList() {
+		@Override boolean add(Object gc) {
+			// Intercept attempts to add to the raw collection
+			if (GameEntity.addInternal) {
+				addComponentInternal(gc, true)
+			}
+			super.add(gc)
+		}
+	}
 	/** Map used for internal lookups of components by type without iterating each time */
 	Map<Class, List<GameComponent>> componentsByType = [:]
-
 	/** The entity this belongs to, if any. A panel, for example. **/
 	GameEntity parent = null
-
 	/** Broker for publishing events */
 	EventBroker eventBroker
+	/** Whether this entity has been completely initialized */
+	boolean initialized = false
 
 	GameEntity() {
 		id = nextId++
+	}
+
+	void init() {
+		initialized = true
 	}
 
 	/**
@@ -49,28 +59,39 @@ class GameEntity {
 	}
 
 	void setComponents(List<GameComponent> components) {
-		this.components = components
+		this.components.clear()
 		componentsByType.clear()
-		components.each {
-			if (componentsByType[it.class] == null) {
-				componentsByType[it.class] = []
+		try {
+			// Disable the intercepted call to addComponentInternal
+			// since we're explicitly calling it here
+			addInternal = false
+			for (GameComponent component : components) {
+				this.components << component
+				addComponentInternal(component, false)
 			}
-			componentsByType[it.class] << it
+		} finally {
+			addInternal = true
 		}
 	}
 
-	/**
-	 * Adds the component to the entity and inserts it into the
-	 * componentsByType lookup map as well.
-	 * @param component the component to add to this entity
+	/*
+	 * Used internally by our overridden components.add()
+	 *
+	 * The ArrayList superclass will handle adding the component
+	 * to the collection, here we handle doing the additional
+	 * lookup table housekeeping and event notification
+	 * @param component the component being added to this entity
+	 * @param publishEvent whether to publish a ComponentAddedEvent; generally true unless
+	 *        we're being called from setComponents which happens before initialization is complete
 	 */
-	void addComponent(GameComponent component) {
-		components << component
+	private void addComponentInternal(GameComponent component, boolean publishEvent) {
 		if (componentsByType[component.class] == null) {
 			componentsByType[component.class] = []
 		}
 		componentsByType[component.class] << component
-		eventBroker?.publish(new ComponentAddedEvent(this, component))
+		if (publishEvent) {
+			eventBroker?.publish(new ComponentAddedEvent(this, component))
+		}
 	}
 
 	/**

@@ -34,6 +34,12 @@ class GaugeSystem extends GameSystem {
 	}
 
 	@Override
+	void doUninitScene(Scene scene) {
+		gauges = null
+		eventBroker.unsubscribe(this)
+	}
+
+	@Override
 	void doUpdate(Scene scene, double elapsed) {
 		gauges.each { GaugeEntity gauge ->
 			def before = gauge.text

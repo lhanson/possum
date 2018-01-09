@@ -28,6 +28,12 @@ class AnimationSystem extends GameSystem {
 	}
 
 	@Override
+	void doUninitScene(Scene scene) {
+		animatedEntities = null
+		eventBroker.unsubscribe(this)
+	}
+
+	@Override
 	void doUpdate(Scene scene, double elapsed) {
 		animatedEntities.each { entity ->
 			AnimatedComponent ac = entity.getComponentOfType(AnimatedComponent)
@@ -37,7 +43,7 @@ class AnimationSystem extends GameSystem {
 
 			boolean needsUpdate = false
 			if (cc == null) {
-				entity.addComponent(new ColorComponent(color: new Color(255, 255, 255, 0)))
+				entity.components << new ColorComponent(color: new Color(255, 255, 255, 0))
 			} else {
 				int newAlpha = getPulsedAlpha(ac)
 				if (newAlpha != cc.color.alpha) {

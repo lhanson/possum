@@ -218,7 +218,7 @@ class QuadtreeTest extends Specification {
 		when:
 			AreaComponent newPos = new AreaComponent(1, 0, 1,1)
 			hero.removeComponent(oldPos)
-			hero.addComponent(newPos)
+			hero.components << newPos
 			boolean moved = quadtree.move(hero, oldPos, newPos)
 			def oldLocation = quadtree.retrieve(new AreaComponent(0, 0,1, 1))
 			def results = quadtree.retrieve(new AreaComponent(1, 0,1, 1))
@@ -344,7 +344,7 @@ class QuadtreeTest extends Specification {
 		and: "Mutate the entity's position"
 			def newLocation = new AreaComponent(9, 0, 1,1)
 			mobileEntity.removeComponent(oldLocation)
-			mobileEntity.addComponent(newLocation)
+			mobileEntity.components << newLocation
 
 		when:
 			def moveSuccess = quadtree.move(mobileEntity, oldLocation, newLocation)
