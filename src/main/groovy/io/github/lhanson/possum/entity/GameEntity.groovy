@@ -3,6 +3,7 @@ package io.github.lhanson.possum.entity
 import groovy.transform.Sortable
 import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.GameComponent
+import io.github.lhanson.possum.component.InventoryComponent
 import io.github.lhanson.possum.events.ComponentAddedEvent
 import io.github.lhanson.possum.events.ComponentRemovedEvent
 import io.github.lhanson.possum.events.EventBroker
@@ -32,6 +33,9 @@ class GameEntity {
 				addComponentInternal(gc, true)
 			}
 			super.add(gc)
+		}
+		@Override boolean addAll(Collection c) {
+			c.each { add(it) }
 		}
 	}
 	/** Map used for internal lookups of components by type without iterating each time */
@@ -74,17 +78,25 @@ class GameEntity {
 		}
 	}
 
-	/*
+	/**
 	 * Used internally by our overridden components.add()
 	 *
 	 * The ArrayList superclass will handle adding the component
 	 * to the collection, here we handle doing the additional
-	 * lookup table housekeeping and event notification
+	 * lookup table housekeeping, and event notification
+	 *
 	 * @param component the component being added to this entity
 	 * @param publishEvent whether to publish a ComponentAddedEvent; generally true unless
 	 *        we're being called from setComponents which happens before initialization is complete
 	 */
 	private void addComponentInternal(GameComponent component, boolean publishEvent) {
+		if (component instanceof InventoryComponent) {
+			// Create link to the inventory items' parent
+			component.inventory.each {
+				it.parent = this
+			}
+		}
+
 		if (componentsByType[component.class] == null) {
 			componentsByType[component.class] = []
 		}

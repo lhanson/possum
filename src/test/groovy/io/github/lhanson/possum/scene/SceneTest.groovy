@@ -272,7 +272,7 @@ class SceneTest extends Specification {
 		given:
 			Scene menuScene = new Scene('menu', {
 				def menuPanel = new PanelEntity(name: 'menu')
-				def menuText = new TextEntity(name: 'menuText', parent: menuPanel,
+				def menuText = new TextEntity(name: 'menuText',
 						components: [new TextComponent('MAIN MENU'),
 						             new RelativePositionComponent(50, 50)])
 				menuPanel.components.add(new InventoryComponent([menuText]))

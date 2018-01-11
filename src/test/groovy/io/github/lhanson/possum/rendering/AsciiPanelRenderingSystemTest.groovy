@@ -62,7 +62,6 @@ class AsciiPanelRenderingSystemTest extends Specification {
 					new AreaComponent(100, 100, 0, 40, 40),
 					new InventoryComponent([menuItem])
 			])
-			menuItem.parent = panel
 			scene.addEntity(panel)
 			AreaComponent panelArea = panel.getComponentOfType(AreaComponent)
 		when:
@@ -80,7 +79,6 @@ class AsciiPanelRenderingSystemTest extends Specification {
 			def panel = new PanelEntity(
 					padding: 10,
 					components: [ new InventoryComponent([menuItem]) ])
-			menuItem.parent = panel
 			scene.addEntity(panel)
 		when:
 			renderer.resolveRelativePositions(scene)
@@ -93,8 +91,7 @@ class AsciiPanelRenderingSystemTest extends Specification {
 	def "Renderer resolves relative widths"() {
 		given:
 			def panelEntity = new PanelEntity(components: [new RelativeWidthComponent(50)])
-			def textEntity = new TextEntity(parent: panelEntity,
-					components: [new TextComponent('test text')])
+			def textEntity = new TextEntity(components: [new TextComponent('test text')])
 			panelEntity.components.add(new InventoryComponent([textEntity]))
 			[panelEntity, textEntity].each { it.init() }
 			scene.addEntity(panelEntity)

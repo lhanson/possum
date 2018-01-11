@@ -171,10 +171,7 @@ class MazesForProgrammers {
 					])
 
 			def leftHudPanel = new PanelEntity(name: 'leftHudPanel', padding: 1)
-			def playerPositionGauge = new GaugeEntity(
-					name: 'playerPositionGauge',
-					parent: leftHudPanel
-			)
+			def playerPositionGauge = new GaugeEntity(name: 'playerPositionGauge')
 			playerPositionGauge.update = { ticks ->
 				AreaComponent ac = hero.getComponentOfType(AreaComponent)
 				playerPositionGauge.text = "${ac.position}"
@@ -187,19 +184,13 @@ class MazesForProgrammers {
 			entities << leftHudPanel
 
 			def rightHudPanel = new PanelEntity(name: 'rightHudPanel', padding: 1)
-			def simulationHzGauge = new GaugeEntity(
-					name: 'simulationHzGauge',
-					parent: rightHudPanel
-			)
+			def simulationHzGauge = new GaugeEntity(name: 'simulationHzGauge')
 			simulationHzGauge.update = { ticks ->
 				def simHz = (1 / ticks) * 1000
 				def formatted = new DecimalFormat("#0").format(simHz)
 				simulationHzGauge.text = "$formatted Hz"
 			}
-			def fpsGauge = new GaugeEntity(
-					name: 'fpsGauge',
-					parent: rightHudPanel
-			)
+			def fpsGauge = new GaugeEntity(name: 'fpsGauge')
 			fpsGauge.components << new AreaComponent(0, 1, 0, 1)
 			fpsGauge.update = {
 				// The number of ticks being simulated doesn't reflect rendering
