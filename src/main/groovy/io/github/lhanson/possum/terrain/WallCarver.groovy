@@ -23,15 +23,16 @@ import javax.annotation.PostConstruct
  */
 @Component
 class WallCarver {
-	@Value('${graphics.ascii.wallChar}') Integer wallCharInt
-	@Value('${graphics.ascii.floorChar}') Integer floorCharInt
+	@Value('${graphics.ascii.wallChar:#{null}}') Integer wallCharInt
+	@Value('${graphics.ascii.floorChar:#{null}}') Integer floorCharInt
 	char wallChar
 	char floorChar
 
 	@PostConstruct
 	void init() {
-		floorChar = floorCharInt ? (char) floorCharInt : 32  // ' ' (space)
-		wallChar = wallCharInt ? (char) wallCharInt : 176    // ░ (dark shade)
+		wallChar:
+		floorChar = floorCharInt ? (char) floorCharInt : 250 // · (interpunct)
+		wallChar = wallCharInt   ? (char) wallCharInt  : 249 // ∙ (bullet)
 	}
 
 	/**
