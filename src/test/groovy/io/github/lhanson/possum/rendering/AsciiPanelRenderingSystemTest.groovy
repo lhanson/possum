@@ -6,22 +6,22 @@ import io.github.lhanson.possum.component.InventoryComponent
 import io.github.lhanson.possum.component.RelativePositionComponent
 import io.github.lhanson.possum.component.RelativeWidthComponent
 import io.github.lhanson.possum.component.TextComponent
+import io.github.lhanson.possum.component.VectorComponent
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.TextEntity
 import io.github.lhanson.possum.events.EventBroker
 import io.github.lhanson.possum.scene.Scene
-import io.github.lhanson.spring.TestApplicationContextLoader
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.test.context.ContextConfiguration
 import spock.lang.Specification
 
 
-@ContextConfiguration(classes = AsciiPanelRenderingSystem, loader = TestApplicationContextLoader)
 class AsciiPanelRenderingSystemTest extends Specification {
-	@Autowired AsciiPanelRenderingSystem renderer
+	AsciiPanelRenderingSystem renderer
 	Scene scene
 
 	def setup() {
+		renderer = new AsciiPanelRenderingSystem()
+		renderer.makeVisible = false // don't flash a blank JPanel during tests
+		renderer.init()
 		scene = new Scene('testScene')
 		scene.eventBroker = new EventBroker()
 		scene.init()
@@ -103,6 +103,56 @@ class AsciiPanelRenderingSystemTest extends Specification {
 			AreaComponent panelArea = panelEntity.getComponentOfType(AreaComponent)
 		then:
 			panelArea.width == renderer.viewportWidth / 2
+	}
+
+	def "Track initialized scenes"() {
+		given:
+			Scene scene1 = new Scene('scene1')
+			Scene scene2 = new Scene('scene2')
+		when:
+			renderer.initScene(scene1)
+			renderer.initScene(scene2)
+			renderer.uninitScene(scene1)
+		then:
+			renderer.runningScenes == [scene2]
+	}
+
+	def "Don't reinitialize scenes we never uninitialized"() {
+		given:
+			Scene scene = new Scene('scene')
+		when:
+			renderer.initScene(scene)
+			renderer.initScene(scene)
+		then:
+			renderer.runningScenes == [scene]
+	}
+
+	def "Center viewport"() {
+		given:
+			Scene scene = new Scene('scene')
+			renderer.initScene(scene)
+			AreaComponent viewport = renderer.viewport
+		when:
+			renderer.centerViewport(new VectorComponent(100, 100))
+		then:
+			viewport.x == 100 - (viewport.width / 2)
+			viewport.y == 100 - (viewport.height / 2)
+	}
+
+	def "Unique viewport coordinates are maintained for each scene"() {
+		given:
+			Scene scene1 = new Scene('scene1')
+			Scene scene2 = new Scene('scene2')
+
+		when:
+			renderer.initScene(scene1)
+			renderer.centerViewport(new VectorComponent(100, 100))
+		and:
+			renderer.initScene(scene2)
+
+		then:
+			renderer.viewport.x == 0
+			renderer.viewport.y == 0
 	}
 
 }

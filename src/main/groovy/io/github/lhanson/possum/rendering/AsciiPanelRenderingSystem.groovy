@@ -29,20 +29,28 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	@Autowired(required = false)
 	VectorComponent initialViewportSize
 	// the entire visible area being rendered (in world coordinates, not screen pixels)
+	AreaComponent initialViewport
 	AreaComponent viewport
+	Map<Scene, AreaComponent> viewportByScene = [:]
 	// Panel areas in the scene, sorted by x, y coordinates
 	List<AreaComponent> scenePanelAreas
+	// Scenes currently initialized and running
+	List<Scene> runningScenes = []
+	// Can be disabled for unit tests to avoid flashing an empty JFrame to the screen
+	boolean makeVisible = true
 
 	@PostConstruct
 	void init() {
 		logger.trace "Initializing"
 		if (initialViewportSize) {
-			viewport = new AreaComponent(0, 0, Integer.MIN_VALUE, initialViewportSize.x, initialViewportSize.y)
+			initialViewport = new AreaComponent(0, 0, Integer.MIN_VALUE, initialViewportSize.x, initialViewportSize.y)
 		} else {
-			viewport = new AreaComponent(0, 0, Integer.MIN_VALUE,100, 40)
+			initialViewport = new AreaComponent(0, 0, Integer.MIN_VALUE,100, 40)
 		}
-		terminal = new AsciiPanel(viewport.width, viewport.height)
-		logger.debug "Created terminal with viewport {}", viewport
+		terminal = new AsciiPanel(initialViewport.width, initialViewport.height)
+		logger.debug "Created terminal with viewport {}", initialViewport
+
+		viewport = initialViewport
 
 		boolean isOSX = false
 		try {
@@ -72,28 +80,38 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 
 	@Override
 	void initScene(Scene scene) {
-		logger.debug "Initializing scene {}", scene
-		long startTime = System.currentTimeMillis()
+		if (runningScenes.contains(scene)) {
+			logger.debug "Scene was not uninitialized, skipping initialization {}", scene
+			viewport = viewportByScene[scene]
+		} else {
+			logger.debug "Initializing scene {}", scene
+			long startTime = System.currentTimeMillis()
 
-		resolveRelativePositions(scene)
+			runningScenes << scene
 
-		// Store a list of the panel areas in the scene sorted by x,y coordinates for faster reference
-		scenePanelAreas = scene.panels.findResults { it.getComponentOfType(AreaComponent) }
-		scenePanelAreas.sort { a, b -> a.x <=> b.y ?: a.y <=> b.y }
+			viewport = new AreaComponent(initialViewport)
+			viewportByScene[scene] = viewport
 
-		viewport.x = 0
-		viewport.y = 0
+			resolveRelativePositions(scene)
 
-		// Repaint entire scene
+			// Store a list of the panel areas in the scene sorted by x,y coordinates for faster reference
+			scenePanelAreas = scene.panels.findResults { it.getComponentOfType(AreaComponent) }
+			scenePanelAreas.sort { a, b -> a.x <=> b.y ?: a.y <=> b.y }
+
+			setVisible(makeVisible)
+			logger.debug "Renderer initialization took ${System.currentTimeMillis() - startTime} ms"
+		}
+
+		// Repaint scene
 		repaintScene(scene)
 		terminal.clear()
-		setVisible(true)
-		logger.debug "Renderer initialization took ${System.currentTimeMillis() - startTime} ms"
 	}
 
 	@Override
 	void uninitScene(Scene scene) {
 		scenePanelAreas = null
+		runningScenes.remove(scene)
+		viewportByScene.remove(scene)
 	}
 
 	/**
