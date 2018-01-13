@@ -7,7 +7,6 @@ import io.github.lhanson.possum.component.GameComponent
 import io.github.lhanson.possum.component.InventoryComponent
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.PanelEntity
-import io.github.lhanson.possum.entity.RerenderEntity
 import io.github.lhanson.possum.events.ComponentAddedEvent
 import io.github.lhanson.possum.events.ComponentRemovedEvent
 import io.github.lhanson.possum.events.EntityMovedEvent
@@ -120,9 +119,6 @@ class Scene {
 			worldEntities.each { quadtree.insert it }
 			log.debug("Initialized quadtree in {} ms", System.currentTimeMillis() - start)
 		}
-
-		// The whole viewport will need to be rendered initially
-		entitiesToBeRendered << new RerenderEntity()
 
 		initialized = true
 		log.debug "Initialized scene '{}' in {} ms", id, System.currentTimeMillis() - startTime
