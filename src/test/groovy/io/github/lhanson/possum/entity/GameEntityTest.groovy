@@ -93,7 +93,7 @@ class GameEntityTest extends Specification {
 			def results = entity.getComponentsOfType(TextComponent)
 
 		then:
-			results == []
+			results == null
 	}
 
 	def "Setting the components collection doesn't wipe out our add() interceptor"() {

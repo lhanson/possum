@@ -123,14 +123,7 @@ class GameEntity {
 	 * @return all components belonging to the entity which are instances of {@code requiredType}
 	 */
 	List<GameComponent> getComponentsOfType(Class requiredType) {
-		// Check our cached lookup map before searching all components
-		def result = componentsByType[requiredType]
-		if (result == null) {
-			result = components.findAll { requiredType.isInstance(it) }
-			componentsByType[requiredType] = result
-			logger.trace("getComponentsOfType cache miss. Item was present: {}", !result.isEmpty())
-		}
-		result
+		componentsByType[requiredType]
 	}
 
 	/**
@@ -139,7 +132,7 @@ class GameEntity {
 	 * @return the first component belonging to the entity which is an instance of {@code requiredType}
 	 */
 	GameComponent getComponentOfType(Class requiredType) {
-		getComponentsOfType(requiredType)[0]
+		getComponentsOfType(requiredType)?.get(0)
 	}
 
 	@Override
