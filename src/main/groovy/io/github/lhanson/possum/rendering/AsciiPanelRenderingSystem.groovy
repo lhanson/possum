@@ -32,6 +32,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	AreaComponent initialViewport
 	AreaComponent viewport
 	Map<Scene, AreaComponent> viewportByScene = [:]
+	Map<Scene, List<AreaComponent>> panelAreasByScene = [:]
 	// Panel areas in the scene, sorted by x, y coordinates
 	List<AreaComponent> scenePanelAreas
 	// Scenes currently initialized and running
@@ -83,6 +84,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		if (runningScenes.contains(scene)) {
 			logger.debug "Scene was not uninitialized, skipping initialization {}", scene
 			viewport = viewportByScene[scene]
+			scenePanelAreas = panelAreasByScene[scene]
 		} else {
 			logger.debug "Initializing scene {}", scene
 			long startTime = System.currentTimeMillis()
@@ -97,6 +99,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 			// Store a list of the panel areas in the scene sorted by x,y coordinates for faster reference
 			scenePanelAreas = scene.panels.findResults { it.getComponentOfType(AreaComponent) }
 			scenePanelAreas.sort { a, b -> a.x <=> b.y ?: a.y <=> b.y }
+			panelAreasByScene[scene] = scenePanelAreas
 
 			setVisible(makeVisible)
 			logger.debug "Renderer initialization took ${System.currentTimeMillis() - startTime} ms"
@@ -110,6 +113,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	@Override
 	void uninitScene(Scene scene) {
 		scenePanelAreas = null
+		panelAreasByScene.remove(scene)
 		runningScenes.remove(scene)
 		viewportByScene.remove(scene)
 	}
@@ -240,9 +244,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 				dirtyRectangles << renderPanelBorders(entity)
 			} else if (entity instanceof RerenderEntity) {
 				fullScreenRefresh = true
-				AreaComponent area = new AreaComponent(0, 0, viewportWidth, viewportHeight)
-				dirtyRectangles << area
-				terminal.clear(' ' as char, area.x, area.y, area.width, area.height)
+				terminal.clear(' ' as char, 0, 0, viewportWidth, viewportHeight)
 			} else if (entity.parent) {
 				TextComponent tc = entity.getComponentOfType(TextComponent)
 				AreaComponent pc = entity.parent.getComponentOfType(AreaComponent)

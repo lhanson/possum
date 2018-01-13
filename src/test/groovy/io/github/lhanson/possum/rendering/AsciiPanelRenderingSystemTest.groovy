@@ -7,6 +7,7 @@ import io.github.lhanson.possum.component.RelativePositionComponent
 import io.github.lhanson.possum.component.RelativeWidthComponent
 import io.github.lhanson.possum.component.TextComponent
 import io.github.lhanson.possum.component.VectorComponent
+import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.TextEntity
 import io.github.lhanson.possum.events.EventBroker
@@ -150,6 +151,57 @@ class AsciiPanelRenderingSystemTest extends Specification {
 		then:
 			renderer.viewport.x == 0
 			renderer.viewport.y == 0
+	}
+
+	def "Panel areas are stored and loaded by scene"() {
+		given:
+			PanelEntity panel = new PanelEntity(components: [new AreaComponent(0, 0, 10, 10)])
+			Scene scene1 = new Scene('scene1', {[panel]})
+			Scene scene2 = new Scene('scene2')
+			scene1.eventBroker = new EventBroker()
+			scene1.init()
+			scene2.eventBroker = new EventBroker()
+			scene2.init()
+		and:
+			renderer.initScene(scene1)
+		when:
+			// This updates the renderer's scenePanelAreas for the new, empty scene
+			renderer.initScene(scene2)
+		then:
+			renderer.scenePanelAreas == []
+	}
+
+	def "Panel areas are reloaded with their scene"() {
+		given:
+			PanelEntity panel = new PanelEntity(components: [new AreaComponent(0, 0, 10, 10)])
+			Scene scene1 = new Scene('scene1', {[panel]})
+			Scene scene2 = new Scene('scene2')
+			scene1.eventBroker = new EventBroker()
+			scene1.init()
+			scene2.eventBroker = new EventBroker()
+			scene2.init()
+			renderer.initScene(scene1)
+		and:
+			// This updates the renderer's scenePanelAreas for the new, empty scene
+			renderer.initScene(scene2)
+		when:
+			renderer.initScene(scene1)
+		then:
+			renderer.scenePanelAreas == [panel.getComponentOfType(AreaComponent)]
+	}
+
+	def "Entity isn't visible if covered by a panel"() {
+		given:
+			GameEntity entity = new GameEntity(components: [new AreaComponent(0, 0, 1, 1)])
+			PanelEntity panel = new PanelEntity(components: [new AreaComponent(0, 0, 10, 10)])
+			Scene scene = new Scene('testScene', {[entity, panel]})
+			scene.eventBroker = new EventBroker()
+			scene.init()
+		when:
+			renderer.initScene(scene)
+		then:
+			// Entity overlaps the panel and should be invisible
+			!renderer.isVisible(entity)
 	}
 
 }
