@@ -94,7 +94,6 @@ class AsciiPanelRenderingSystemTest extends Specification {
 			def panelEntity = new PanelEntity(components: [new RelativeWidthComponent(50)])
 			def textEntity = new TextEntity('test text')
 			panelEntity.components.add(new InventoryComponent([textEntity]))
-			[panelEntity, textEntity].each { it.init() }
 			scene.addEntity(panelEntity)
 		when:
 			renderer.resolveRelativePositions(scene)

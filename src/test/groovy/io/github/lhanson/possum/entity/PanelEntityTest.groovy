@@ -4,7 +4,7 @@ import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.InventoryComponent
 import io.github.lhanson.possum.component.RelativePositionComponent
 import io.github.lhanson.possum.component.RelativeWidthComponent
-import io.github.lhanson.possum.component.TextComponent
+import io.github.lhanson.possum.events.EventBroker
 import spock.lang.Specification
 
 class PanelEntityTest extends Specification {
@@ -13,18 +13,23 @@ class PanelEntityTest extends Specification {
 	def "UI Panels need an area and an inventory to make much sense, so defaults are created"() {
 		when:
 			def panel = new PanelEntity(name: 'panel')
-			panel.init()
 		then:
 			panel.getComponentOfType(AreaComponent)
 			panel.getComponentOfType(InventoryComponent)
 	}
 
+	def "Shorthand constructor automatically creates an InventoryComponent"() {
+		when:
+			TextEntity textEntity = new TextEntity('text')
+			PanelEntity panel = new PanelEntity(textEntity)
+		then:
+			panel.getComponentOfType(InventoryComponent).inventory.contains(textEntity)
+	}
+
 	def "Panel without a specified area should shrink-wrap around a nested entity"() {
 		given:
-			def panel = new PanelEntity(name: 'panel')
 			def panelText = new TextEntity(text)
-			panel.components.add(new InventoryComponent([panelText]))
-			panel.init()
+			def panel = new PanelEntity(panelText)
 		when:
 			AreaComponent panelArea = panel.getComponentOfType(AreaComponent)
 			AreaComponent textArea = panelText.getComponentOfType(AreaComponent)
@@ -37,11 +42,10 @@ class PanelEntityTest extends Specification {
 
 	def "Panel without a specified area should shrink-wrap around a nested entity with padding"() {
 		given:
-			def panel = new PanelEntity(name: 'panel', padding: 10)
+			def panel = new PanelEntity(name: 'panel', padding: 10, eventBroker: new EventBroker())
 			def panelText1 = new TextEntity(text)
 			def panelText2 = new TextEntity(text)
 			panel.components.add(new InventoryComponent([panelText1, panelText2]))
-			panel.init()
 		when:
 			AreaComponent textArea1 = panelText1.getComponentOfType(AreaComponent)
 			AreaComponent textArea2 = panelText2.getComponentOfType(AreaComponent)
@@ -58,7 +62,6 @@ class PanelEntityTest extends Specification {
 			def child1 = new TextEntity(text)
 			def child2 = new TextEntity(text * 2)
 			panel.components.add(new InventoryComponent([child1, child2]))
-			panel.init()
 		when:
 			AreaComponent panelArea = panel.getComponentOfType(AreaComponent)
 		then:
@@ -72,7 +75,6 @@ class PanelEntityTest extends Specification {
 			def child1 = new TextEntity(text)
 			def child2 = new TextEntity(text * 2)
 			panel.components.add(new InventoryComponent([child1, child2]))
-			panel.init()
 		when:
 			AreaComponent panelArea = panel.getComponentOfType(AreaComponent)
 		then:
@@ -82,10 +84,8 @@ class PanelEntityTest extends Specification {
 	}
 
 	def "Panels with a relative width specified but no area should have a default relative area added"() {
-		given:
-			def panel = new PanelEntity( components: [new RelativeWidthComponent(50)])
 		when:
-			panel.init()
+			def panel = new PanelEntity(components: [new RelativeWidthComponent(50)])
 		then:
 			panel.getComponentOfType(RelativePositionComponent)
 			panel.getComponentOfType(AreaComponent)
