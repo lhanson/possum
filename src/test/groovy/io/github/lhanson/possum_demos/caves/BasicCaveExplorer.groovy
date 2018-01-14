@@ -17,7 +17,6 @@ import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.GaugeEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.TextEntity
-import io.github.lhanson.possum.events.EventBroker
 import io.github.lhanson.possum.input.EightWayInputContext
 import io.github.lhanson.possum.input.InputContext
 import io.github.lhanson.possum.input.MappedInput
@@ -46,12 +45,11 @@ import java.text.DecimalFormat
 @SpringBootApplication(scanBasePackages = [
 		'io.github.lhanson.possum'
 ])
-class CellularAutomatonCaveGen {
+class BasicCaveExplorer {
 	@Autowired MainLoop mainLoop
-	@Autowired EventBroker eventBroker
 
 	static void main(String[] args) {
-		def context = new SpringApplicationBuilder(CellularAutomatonCaveGen)
+		def context = new SpringApplicationBuilder(BasicCaveExplorer)
 				.headless(false)
 				.web(false)
 				.run(args)
@@ -82,18 +80,10 @@ class CellularAutomatonCaveGen {
 		Scene startScene = new Scene(
 				START,
 				{[
-						new TextEntity(
-								name: 'menuTitle',
-								components: [
-										new TextComponent('Main Menu'),
-										new RelativePositionComponent(50, 50)
-								]),
-						new TextEntity(
-								name: 'pressStart',
-								components: [
-										new TextComponent('-- press [enter] to start, [esc] to quit --'),
-										new RelativePositionComponent( 50, 90)
-								])
+						new TextEntity('Main Menu',
+								new RelativePositionComponent(50, 50)),
+						new TextEntity('-- press [enter] to start, [esc] to quit --',
+								new RelativePositionComponent( 50, 90))
 				]},
 				[ new EightWayInputContext(
 						// keyCode handlers
@@ -137,10 +127,8 @@ class CellularAutomatonCaveGen {
 							components: [new RelativePositionComponent(50, 50),
 							             new RelativeWidthComponent(50)]
 					)
-					def menuText = new TextEntity(
-							name: 'menuText',
-							components: [new TextComponent('MAIN MENU'),
-							             new RelativePositionComponent(50, 50)])
+					def menuText = new TextEntity('MAIN MENU',
+							new RelativePositionComponent(50, 50))
 					menuOverlayPanel.components.add(new InventoryComponent([menuText]))
 					[menuOverlayPanel]
 				},
