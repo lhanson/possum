@@ -4,6 +4,9 @@ import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.CameraFocusComponent
 import io.github.lhanson.possum.collision.ImpassableComponent
 import io.github.lhanson.possum.component.TextComponent
+import io.github.lhanson.possum.events.ComponentAddedEvent
+import io.github.lhanson.possum.events.EventBroker
+import io.github.lhanson.possum.events.Subscription
 import spock.lang.Specification
 
 class GameEntityTest extends Specification {
@@ -105,6 +108,17 @@ class GameEntityTest extends Specification {
 			entity.init()
 		then:
 			entity.getComponentOfType(AreaComponent)
+	}
+
+	class SubscribedEntity extends GameEntity {
+		@Subscription void subscription(ComponentAddedEvent e) {}
+	}
+	def "Game entities are scanned for subscription annotations by default"() {
+		when:
+			GameEntity entity = new SubscribedEntity()
+			entity.eventBroker = new EventBroker()
+		then:
+			entity.eventBroker.subscriptionsByEventClass[ComponentAddedEvent]
 	}
 
 }

@@ -55,6 +55,12 @@ class GameEntity {
 		initialized = true
 	}
 
+	void setEventBroker(EventBroker eventBroker) {
+		this.eventBroker = eventBroker
+		// All entities are scanned for subscription annotations
+		eventBroker?.subscribe(this)
+	}
+
 	/**
 	 * @return the components associated with this entity
 	 */
