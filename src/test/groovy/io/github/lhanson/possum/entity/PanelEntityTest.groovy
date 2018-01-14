@@ -22,7 +22,7 @@ class PanelEntityTest extends Specification {
 	def "Panel without a specified area should shrink-wrap around a nested entity"() {
 		given:
 			def panel = new PanelEntity(name: 'panel')
-			def panelText = new TextEntity(name: 'text', components: [new TextComponent(text)])
+			def panelText = new TextEntity(text)
 			panel.components.add(new InventoryComponent([panelText]))
 			panel.init()
 		when:
@@ -38,8 +38,8 @@ class PanelEntityTest extends Specification {
 	def "Panel without a specified area should shrink-wrap around a nested entity with padding"() {
 		given:
 			def panel = new PanelEntity(name: 'panel', padding: 10)
-			def panelText1 = new TextEntity(name: 'text', components: [new TextComponent(text)])
-			def panelText2 = new TextEntity(name: 'text', components: [new TextComponent(text)])
+			def panelText1 = new TextEntity(text)
+			def panelText2 = new TextEntity(text)
 			panel.components.add(new InventoryComponent([panelText1, panelText2]))
 			panel.init()
 		when:
@@ -55,8 +55,8 @@ class PanelEntityTest extends Specification {
 	def "Panel without a specified area should shrink-wrap around multiple nested entities"() {
 		given:
 			def panel = new PanelEntity(name: 'panel')
-			def child1 = new TextEntity(components: [new TextComponent(text)])
-			def child2 = new TextEntity(components: [new TextComponent(text * 2)])
+			def child1 = new TextEntity(text)
+			def child2 = new TextEntity(text * 2)
 			panel.components.add(new InventoryComponent([child1, child2]))
 			panel.init()
 		when:
@@ -69,8 +69,8 @@ class PanelEntityTest extends Specification {
 	def "Panel without a specified area should shrink-wrap around multiple nested entities and respect padding"() {
 		given:
 			def panel = new PanelEntity(name: 'panel', padding: 1)
-			def child1 = new TextEntity(components: [new TextComponent(text)])
-			def child2 = new TextEntity(components: [new TextComponent(text * 2)])
+			def child1 = new TextEntity(text)
+			def child2 = new TextEntity(text * 2)
 			panel.components.add(new InventoryComponent([child1, child2]))
 			panel.init()
 		when:

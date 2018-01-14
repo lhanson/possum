@@ -76,7 +76,7 @@ class AsciiPanelRenderingSystemTest extends Specification {
 
 	def "Resolve panels' inventory elements with padding taken into account"() {
 		given:
-			def menuItem = new TextEntity(components: [new TextComponent('Menu text')])
+			def menuItem = new TextEntity('Menu text')
 			def panel = new PanelEntity(
 					padding: 10,
 					components: [ new InventoryComponent([menuItem]) ])
@@ -92,7 +92,7 @@ class AsciiPanelRenderingSystemTest extends Specification {
 	def "Renderer resolves relative widths"() {
 		given:
 			def panelEntity = new PanelEntity(components: [new RelativeWidthComponent(50)])
-			def textEntity = new TextEntity(components: [new TextComponent('test text')])
+			def textEntity = new TextEntity('test text')
 			panelEntity.components.add(new InventoryComponent([textEntity]))
 			[panelEntity, textEntity].each { it.init() }
 			scene.addEntity(panelEntity)

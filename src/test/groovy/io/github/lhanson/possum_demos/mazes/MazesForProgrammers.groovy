@@ -80,18 +80,10 @@ class MazesForProgrammers {
 			new Scene(
 					START,
 					{[
-							new TextEntity(
-									name: 'menuTitle',
-									components: [
-											new TextComponent('Main Menu'),
-											new RelativePositionComponent(50, 50)
-									]),
-							new TextEntity(
-									name: 'pressStart',
-									components: [
-											new TextComponent('-- press [enter] to start, [esc] to quit --'),
-											new RelativePositionComponent(50, 90)
-									])
+							new TextEntity('Main Menu',
+									new RelativePositionComponent(50, 50)),
+							new TextEntity('-- press [enter] to start, [esc] to quit --',
+									new RelativePositionComponent(50, 90))
 					]},
 					[
 							// Main menu context
