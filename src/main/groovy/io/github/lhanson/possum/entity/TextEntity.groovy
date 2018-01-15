@@ -97,4 +97,8 @@ class TextEntity extends GameEntity {
 		return areaComponent
 	}
 
+	@Override
+	String toString() {
+		super.toString() + ", text: '$text'"
+	}
 }

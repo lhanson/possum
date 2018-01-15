@@ -19,7 +19,7 @@ class PanelEntity extends GameEntity {
 	Logger log = LoggerFactory.getLogger(this.class)
 	// Local references to components we need easy access to
 	private AreaComponent areaComponent
-	private InventoryComponent inventoryComponent
+	InventoryComponent inventoryComponent
 
 	/**
 	 * The padding allowance for borders. 0 means content prints right
@@ -27,14 +27,17 @@ class PanelEntity extends GameEntity {
 	 */
 	int padding = 1
 
-	PanelEntity() { }
+	PanelEntity() {
+		this(null)
+	}
 
 	PanelEntity(GameEntity gameEntity) {
 		this([gameEntity])
 	}
 
 	PanelEntity(List<GameEntity> panelEntities) {
-		InventoryComponent inventoryComponent = new InventoryComponent(panelEntities)
+		super()
+		this.inventoryComponent = new InventoryComponent(panelEntities)
 		components.add(inventoryComponent)
 	}
 
@@ -88,13 +91,11 @@ class PanelEntity extends GameEntity {
 
 	// We guarantee an InventoryComponent is present, create one if needed
 	private InventoryComponent ensureInventoryComponent() {
-		InventoryComponent ic = super.getComponentOfType(InventoryComponent)
-		if (!ic) {
-			log.debug "No InventoryComponent found for text entity $name on initialization, adding one"
-			ic = new InventoryComponent()
-			components << ic
+		if (!inventoryComponent) {
+			log.debug "No InventoryComponent found for panel entity $name on initialization, adding one"
+			inventoryComponent = new InventoryComponent()
+			components << inventoryComponent
 		}
-		inventoryComponent = ic
 		if (!areaComponent) {
 			ensureAreaComponent()
 			computeArea()
@@ -113,8 +114,8 @@ class PanelEntity extends GameEntity {
 		areaComponent = ac
 		if (!inventoryComponent) {
 			ensureInventoryComponent()
-			computeArea()
 		}
+		computeArea()
 		return areaComponent
 	}
 

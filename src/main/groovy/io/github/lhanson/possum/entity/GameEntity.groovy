@@ -28,11 +28,14 @@ class GameEntity {
 	/** The {@link GameComponent}s describing this entity's properties */
 	List<GameComponent> components = new ArrayList() {
 		@Override boolean add(Object gc) {
+			boolean added = true
 			// Intercept attempts to add to the raw collection
 			if (GameEntity.addInternal) {
-				addComponentInternal(gc, true)
+				added = addComponentInternal(gc, true)
 			}
-			super.add(gc)
+			if (added) {
+				super.add(gc)
+			}
 		}
 		@Override boolean addAll(Collection c) {
 			c.each { add(it) }
@@ -94,22 +97,33 @@ class GameEntity {
 	 * @param component the component being added to this entity
 	 * @param publishEvent whether to publish a ComponentAddedEvent; generally true unless
 	 *        we're being called from setComponents which happens before initialization is complete
+	 * @return whether the component was added to our components collection
 	 */
-	private void addComponentInternal(GameComponent component, boolean publishEvent) {
+	private boolean addComponentInternal(GameComponent component, boolean publishEvent) {
+		boolean added = true
 		if (component instanceof InventoryComponent) {
+			if (!component.is(this?.inventoryComponent)) {
+				// An inventory component is automatically created in the constructor, don't add another one
+				logger.debug "Entity {} already has an inventory, copying new entities to existing one", name
+				this?.inventoryComponent.inventory.addAll(component.inventory)
+				added = false
+			}
 			// Create link to the inventory items' parent
 			component.inventory.each {
 				it.parent = this
 			}
 		}
 
-		if (componentsByType[component.class] == null) {
-			componentsByType[component.class] = []
+		if (added) {
+			if (componentsByType[component.class] == null) {
+				componentsByType[component.class] = []
+			}
+			componentsByType[component.class] << component
+			if (publishEvent) {
+				eventBroker?.publish(new ComponentAddedEvent(this, component))
+			}
 		}
-		componentsByType[component.class] << component
-		if (publishEvent) {
-			eventBroker?.publish(new ComponentAddedEvent(this, component))
-		}
+		return added
 	}
 
 	/**

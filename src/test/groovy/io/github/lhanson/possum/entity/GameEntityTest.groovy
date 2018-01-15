@@ -3,6 +3,7 @@ package io.github.lhanson.possum.entity
 import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.CameraFocusComponent
 import io.github.lhanson.possum.collision.ImpassableComponent
+import io.github.lhanson.possum.component.InventoryComponent
 import io.github.lhanson.possum.component.TextComponent
 import io.github.lhanson.possum.events.ComponentAddedEvent
 import io.github.lhanson.possum.events.EventBroker
@@ -100,12 +101,8 @@ class GameEntityTest extends Specification {
 	}
 
 	def "Setting the components collection doesn't wipe out our add() interceptor"() {
-		given:
-			GameEntity entity = new PanelEntity(components: [new TextComponent('test text')])
 		when:
-			// Initialization should create a default AreaComponent, inserted with our
-			// overridden components.add() method which sets the componentsByType lookup.
-			entity.init()
+			GameEntity entity = new PanelEntity(components: [new TextComponent('test text')])
 		then:
 			entity.getComponentOfType(AreaComponent)
 	}
@@ -119,6 +116,18 @@ class GameEntityTest extends Specification {
 			entity.eventBroker = new EventBroker()
 		then:
 			entity.eventBroker.subscriptionsByEventClass[ComponentAddedEvent]
+	}
+
+	def "Adding inventory component multiple times aggregates contents in a single instance"() {
+		given:
+			def panel = new PanelEntity(name: 'panel', padding: 10, eventBroker: new EventBroker())
+			def panelText = new TextEntity('text')
+		when:
+			panel.components.add(new InventoryComponent([panelText]))
+		then:
+			panel.getComponentsOfType(AreaComponent).size() == 1
+			panel.getComponentsOfType(InventoryComponent).size() == 1
+			panel.getComponentOfType(InventoryComponent).inventory == [panelText]
 	}
 
 }

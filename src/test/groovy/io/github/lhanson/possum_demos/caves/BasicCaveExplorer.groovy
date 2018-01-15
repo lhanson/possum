@@ -121,15 +121,16 @@ class BasicCaveExplorer {
 		Scene menuScene = new Scene(
 				MENU,
 				{
+					def menuText = new TextEntity('MAIN MENU',
+							new RelativePositionComponent(50, 50))
 					def menuOverlayPanel = new PanelEntity(
 							name: 'menuOverlay',
 							padding: 0,
 							components: [new RelativePositionComponent(50, 50),
-							             new RelativeWidthComponent(50)]
+							             new RelativeWidthComponent(50),
+							             new InventoryComponent([menuText])
+							]
 					)
-					def menuText = new TextEntity('MAIN MENU',
-							new RelativePositionComponent(50, 50))
-					menuOverlayPanel.components.add(new InventoryComponent([menuText]))
 					[menuOverlayPanel]
 				},
 				[new InputContext() {
