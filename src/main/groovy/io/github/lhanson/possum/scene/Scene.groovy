@@ -194,7 +194,9 @@ class Scene {
 		}
 		entitiesByComponentType[event.component.class] << event.entity
 		log.debug("Added {} to component lookup list for {}", event.entity, event.component)
-		if (event.component instanceof AreaComponent && !(event.entity instanceof PanelEntity)) {
+		if (event.component instanceof AreaComponent &&
+				!(event.entity instanceof PanelEntity) &&
+				(!event.entity.parent || !(event.entity.parent instanceof PanelEntity))) {
 			quadtree.insert(event.entity, event.component)
 			log.debug("Added {} to quadtree", event.entity)
 		}

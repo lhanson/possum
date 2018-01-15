@@ -220,7 +220,7 @@ class SceneTest extends Specification {
 					new RelativePositionComponent( 50, 90))
 			Scene scene = new Scene('testId', {[menuTitle, pressStart]})
 			scene.eventBroker = new EventBroker()
-			[scene, menuTitle, pressStart].each { it.init() }
+			scene.init()
 			scene.entitiesToBeRendered.clear() // get rid of the RerenderEntity added by init
 
 		when:
@@ -235,7 +235,7 @@ class SceneTest extends Specification {
 			def entity = new GameEntity()
 			Scene scene = new Scene('testId', {[entity]})
 			scene.eventBroker = new EventBroker()
-			[scene, entity].each { it.init() }
+			scene.init()
 
 		when:
 			// Simulate resolution of relative positions into world coordinates
@@ -250,12 +250,26 @@ class SceneTest extends Specification {
 			def panel = new PanelEntity()
 			Scene scene = new Scene('testId', {[panel]})
 			scene.eventBroker = new EventBroker()
-			[panel, scene].each { it.init() }
+			scene.init()
 
 		when:
 			// Simulate resolution of relative positions into world coordinates
 			panel.components.add(new AreaComponent(0, 0, 1, 1))
 
+		then:
+			scene.quadtree.getAll() == []
+	}
+
+	def "UI panel contents do not get added to quadtree via component added events"() {
+		given:
+			TextEntity text = new TextEntity('MAIN MENU')
+			PanelEntity panel = new PanelEntity(text)
+			Scene scene = new Scene('id', {[panel]})
+			scene.eventBroker = new EventBroker()
+		when:
+			scene.init()
+			// Adding an area to a component causes quadtree addition in most cases
+			text.components.add(new AreaComponent(10, 1, 1, 1))
 		then:
 			scene.quadtree.getAll() == []
 	}
