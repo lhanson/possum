@@ -43,7 +43,7 @@ class PanelEntityTest extends Specification {
 	def "Panel without a specified area should shrink-wrap around a nested entity with padding"() {
 		given:
 			def panelText1 = new TextEntity(text)
-			def panelText2 = new TextEntity(text)
+			def panelText2 = new TextEntity(text + ' 2')
 			def panel = new PanelEntity(name: 'panel', padding: 10, eventBroker: new EventBroker(),
 					components: [new InventoryComponent([panelText1, panelText2])])
 		when:

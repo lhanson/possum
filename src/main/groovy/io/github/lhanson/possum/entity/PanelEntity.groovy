@@ -5,7 +5,7 @@ import io.github.lhanson.possum.component.GameComponent
 import io.github.lhanson.possum.component.InventoryComponent
 import io.github.lhanson.possum.component.RelativePositionComponent
 import io.github.lhanson.possum.component.RelativeWidthComponent
-import io.github.lhanson.possum.events.ComponentAddedEvent
+import io.github.lhanson.possum.events.SceneInitializedEvent
 import io.github.lhanson.possum.events.Subscription
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -52,13 +52,8 @@ class PanelEntity extends GameEntity {
 	}
 
 	@Subscription
-	void componentAdded(ComponentAddedEvent event) {
-		if (event.component instanceof InventoryComponent) {
-			inventoryComponent = event.component
-			computeInventoryPositions()
-		} else if (event.component instanceof RelativeWidthComponent) {
-			ensureRelativePosition()
-		}
+	void sceneInitialized(SceneInitializedEvent event) {
+		computeInventoryPositions()
 	}
 
 	@Override
@@ -129,7 +124,6 @@ class PanelEntity extends GameEntity {
 
 	private void computeInventoryPositions() {
 		inventoryComponent.inventory.eachWithIndex { entity, i ->
-			entity.init()
 			entity.getComponentOfType(AreaComponent)?.x = padding
 			entity.getComponentOfType(AreaComponent)?.y = padding + i
 		}
