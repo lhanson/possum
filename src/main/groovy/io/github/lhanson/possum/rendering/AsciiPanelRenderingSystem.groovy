@@ -138,7 +138,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		}
 
 		// Hint to the render method that we can use one large dirty rectangle
-		scene.entityNeedsRendering(new RerenderEntity(name: 'scrollRenderer'))
+		scene.entityNeedsRendering(new RerenderEntity(name: 'fullSceneRepaintRenderer'))
 	}
 
 	/**
@@ -251,14 +251,14 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 				AreaComponent ac = translateChildToParent(entity.getComponentOfType(AreaComponent), pc)
 				AreaComponent dirtyRect = translateTerminalToPixels(ac)
 				dirtyRectangles << dirtyRect
-				write(tc.text, ac.x, ac.y)
+				write(tc, ac.x, ac.y)
 			} else {
 				// Generic renderer
 				if (isVisible(entity)) {
 					Color color = entity.getComponentOfType(ColorComponent)?.color ?: AsciiPanel.white
 					TextComponent tc = entity.getComponentOfType(TextComponent)
 					AreaComponent panelArea = translateWorldToAsciiPanel(entity.getComponentOfType(AreaComponent), viewport)
-					write(tc.text, panelArea.x, panelArea.y, color)
+					write(tc, panelArea.x, panelArea.y, color)
 					AreaComponent pixelArea = translateTerminalToPixels(panelArea)
 					dirtyRectangles << pixelArea
 				}
@@ -406,6 +406,13 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		}
 	}
 
+	void write(io.github.lhanson.possum.component.TextComponent tc, int x, int y, Color color = null) {
+		if (tc.modifiers?.contains(io.github.lhanson.possum.component.TextComponent.Modifier.BOLD)) {
+			color = color.brighter().brighter()
+		}
+		write(tc.text, x, y, color)
+	}
+
 	/**
 	 * Writes the given string to the AsciiPanel terminal, omitting any
 	 * characters which don't fit.
@@ -415,7 +422,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	 * @param y the terminal column to begin writing
 	 */
 	void write(String s, int x, int y) {
-		write(s, x, y, AsciiPanel.white)
+		write(s, x, y, null)
 	}
 
 	/**
@@ -428,6 +435,9 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	 * @param color the foreground color to write with
 	 */
 	void write(String s, int x, int y, Color color) {
+		if (!color) {
+			color = AsciiPanel.white
+		}
 		for (int i = 0; i < s.size(); i++) {
 			if (x + i >= 0 && x + i < viewport.width &&
 					y >= 0 && y < viewport.height) {
@@ -468,7 +478,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	 * That's currently handled by the main render() logic.
 	 *
 	 * @param panel the panel to render borders for
-	 * @return the area which is being rendered
+	 * @return the area (in pixel coordinates) which is being rendered
 	 */
 	AreaComponent renderPanelBorders(PanelEntity panel) {
 		AreaComponent ac = panel.getComponentOfType(AreaComponent)
