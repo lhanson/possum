@@ -102,7 +102,7 @@ class PanelEntity extends GameEntity {
 	private AreaComponent ensureAreaComponent() {
 		AreaComponent ac = super.getComponentOfType(AreaComponent)
 		if (!ac) {
-			log.debug "No AreaComponent found for text entity $name on initialization, adding one"
+			log.debug "No AreaComponent found for panel entity $name on initialization, adding one"
 			ac = new AreaComponent()
 			components << ac
 		}
