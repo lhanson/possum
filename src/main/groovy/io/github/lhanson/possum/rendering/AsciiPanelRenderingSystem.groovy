@@ -184,17 +184,6 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 			}
 
 			if (entity instanceof PanelEntity) {
-				// Compute relative height
-				InventoryComponent ic = entity.getComponentOfType(InventoryComponent)
-				int textHeight = 0
-				ic?.inventory.each { GameEntity inv ->
-					if (inv instanceof TextEntity) {
-						AreaComponent area = inv.getComponentOfType(AreaComponent)
-						textHeight += area.height
-						area.x = entity.padding
-					}
-				}
-				ac.height = textHeight + 2 // text entries plus borders
 				// Compute position
 				ac.x = constrainInt((int) (relativeX(rpc) - (ac.width / 2)), 0, parentReference.width - ac.width)
 				ac.y = relativeY(rpc)
@@ -491,12 +480,9 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		// Top border
 		terminal.write(ul + ("$h" * (ac.width - 2)) + ur, ac.x, ac.y)
 		// Middle
-		panel.getComponentOfType(io.github.lhanson.possum.component.InventoryComponent)
-				.inventory
-				.findAll { it instanceof TextEntity }
-				.eachWithIndex { io.github.lhanson.possum.entity.TextEntity entity, int idx ->
-			terminal.write(v, ac.x, ac.y + 1 + idx)                // Left border
-			terminal.write(v, ac.x + ac.width - 1, ac.y + 1 + idx) // Right border
+		for (int i = 1; i < ac.height; i++) {
+			terminal.write(v, ac.x, ac.y + i)                // Left border
+			terminal.write(v, ac.x + ac.width - 1, ac.y + i) // Right border
 		}
 		// Bottom border
 		terminal.write(ll + ("$h" * (ac.width - 2)) + lr, ac.x, ac.y + (ac.height - 1))
