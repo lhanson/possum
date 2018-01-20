@@ -19,7 +19,7 @@ class TextEntity extends GameEntity {
 	private TextComponent textComponent
 
 	TextEntity() {
-		this(null, null)
+		this('', null)
 	}
 
 	/**
