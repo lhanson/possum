@@ -35,6 +35,8 @@ class AsciiPanelRenderingSystemTest extends Specification {
 			renderer.write('s', -1, -1)
 			renderer.write('s', renderer.viewport.width, renderer.viewport.height)
 		then:
+			// The only other interaction should be getting default foreground color
+			_ * renderer.terminal.getDefaultForegroundColor()
 			0 * _
 	}
 
