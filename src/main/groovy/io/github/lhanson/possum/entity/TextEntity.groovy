@@ -18,7 +18,9 @@ class TextEntity extends GameEntity {
 	private AreaComponent areaComponent
 	private TextComponent textComponent
 
-	TextEntity() { }
+	TextEntity() {
+		this(null, null)
+	}
 
 	/**
 	 * Shorthand constructor which handles the creation of the appropriate TextComponent
