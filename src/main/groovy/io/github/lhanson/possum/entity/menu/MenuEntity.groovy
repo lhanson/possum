@@ -1,0 +1,83 @@
+package io.github.lhanson.possum.entity.menu
+
+import io.github.lhanson.possum.component.PlayerInputAwareComponent
+import io.github.lhanson.possum.component.RelativePositionComponent
+import io.github.lhanson.possum.component.TextComponent
+import io.github.lhanson.possum.entity.PanelEntity
+
+import static io.github.lhanson.possum.component.TextComponent.Modifier.*
+
+/**
+ * An extension of a UI panel, a Menu contains selectable items.
+ */
+class MenuEntity extends PanelEntity {
+	List<MenuEntity> items
+	int selectedItemIndex = 0
+
+	MenuEntity() {
+		this(null, [])
+	}
+
+	MenuEntity(List<MenuItemEntity> menuItems) {
+		this(null, menuItems)
+	}
+
+	MenuEntity(RelativePositionComponent rpc, List<MenuItemEntity> menuItems) {
+		this(rpc, null, menuItems)
+	}
+
+	MenuEntity(RelativePositionComponent rpc, Integer padding, List<MenuItemEntity> menuItems) {
+		super(menuItems)
+		if (padding != null) {
+			this.padding = padding
+		}
+		if (rpc) {
+			components.add(rpc)
+		}
+		components.add(new PlayerInputAwareComponent())
+		items = new ArrayList(menuItems)
+		selectedItemIndex = items.findIndexOf { it.selected }
+		if (selectedItemIndex == -1 && items) {
+			// Select first item if not otherwise specified
+			selectedItemIndex = 0
+		}
+		if (items) {
+			addBold(items[selectedItemIndex])
+		}
+	}
+
+	MenuItemEntity getSelectedItem() {
+		items[selectedItemIndex]
+	}
+
+	void incrementSelection() {
+		removeBold(items[selectedItemIndex])
+		selectedItemIndex++
+		if (selectedItemIndex >= items.size()) {
+			selectedItemIndex = 0
+		}
+		addBold(items[selectedItemIndex])
+		log.trace "Incremented selection for menu $name to $selectedItemIndex"
+	}
+
+	void decrementSelection() {
+		removeBold(items[selectedItemIndex])
+		selectedItemIndex--
+		if (selectedItemIndex < 0) {
+			selectedItemIndex = items.size() - 1
+		}
+		addBold(items[selectedItemIndex])
+		log.trace "Decremented selection for menu $name to $selectedItemIndex"
+	}
+
+	private void removeBold(MenuItemEntity menuItem) {
+		TextComponent menuText = menuItem.getComponentOfType(TextComponent)
+		menuText.modifiers.remove(BOLD)
+	}
+
+	private void addBold(MenuItemEntity menuItem) {
+		TextComponent menuText = menuItem.getComponentOfType(TextComponent)
+		menuText.modifiers.add(BOLD)
+	}
+
+}
