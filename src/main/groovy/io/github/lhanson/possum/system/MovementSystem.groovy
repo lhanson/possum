@@ -46,7 +46,7 @@ class MovementSystem extends GameSystem {
 	void doUpdate(Scene scene, double ticks) {
 		if (scene.activeInput) {
 			log.trace("Updating movements for {} active inputs", scene.activeInput.size())
-			scene.getEntitiesMatching([PlayerInputAwareComponent]).each { entity ->
+			scene.getEntitiesMatching([PlayerInputAwareComponent, VelocityComponent]).each { entity ->
 				log.trace "Applying {} to {}", scene.activeInput, entity.name
 				Vector3 newVelocity = new Vector3()
 				scene.activeInput.each { input ->
