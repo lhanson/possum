@@ -244,7 +244,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 			} else {
 				// Generic renderer
 				if (isVisible(entity)) {
-					Color color = entity.getComponentOfType(ColorComponent)?.color ?: AsciiPanel.white
+					Color color = entity.getComponentOfType(ColorComponent)?.color ?: terminal.defaultForegroundColor
 					TextComponent tc = entity.getComponentOfType(TextComponent)
 					AreaComponent panelArea = translateWorldToAsciiPanel(entity.getComponentOfType(AreaComponent), viewport)
 					write(tc, panelArea.x, panelArea.y, color)
@@ -397,6 +397,9 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 
 	void write(io.github.lhanson.possum.component.TextComponent tc, int x, int y, Color color = null) {
 		if (tc.modifiers?.contains(io.github.lhanson.possum.component.TextComponent.Modifier.BOLD)) {
+			if (!color) {
+				color = terminal.defaultForegroundColor
+			}
 			color = color.brighter().brighter()
 		}
 		write(tc.text, x, y, color)
@@ -425,7 +428,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	 */
 	void write(String s, int x, int y, Color color) {
 		if (!color) {
-			color = AsciiPanel.white
+			color = terminal.defaultForegroundColor
 		}
 		for (int i = 0; i < s.size(); i++) {
 			if (x + i >= 0 && x + i < viewport.width &&
