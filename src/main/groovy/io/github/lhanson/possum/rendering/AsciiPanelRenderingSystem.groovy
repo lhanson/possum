@@ -7,7 +7,6 @@ import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.GaugeEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.RerenderEntity
-import io.github.lhanson.possum.entity.TextEntity
 import io.github.lhanson.possum.scene.Scene
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
