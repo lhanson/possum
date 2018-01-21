@@ -5,6 +5,7 @@ import io.github.lhanson.possum.component.InventoryComponent
 import io.github.lhanson.possum.component.PlayerInputAwareComponent
 import io.github.lhanson.possum.component.RelativePositionComponent
 import io.github.lhanson.possum.component.TextComponent
+import io.github.lhanson.possum.entity.menu.IntegerItemEntity
 import io.github.lhanson.possum.entity.menu.MenuEntity
 import io.github.lhanson.possum.entity.menu.MenuItemEntity
 import spock.lang.Specification
@@ -131,6 +132,20 @@ class MenuEntityTest extends Specification {
 		then:
 			!menuText1.modifiers.contains(TextComponent.Modifier.BOLD)
 			menuText2.modifiers.contains(TextComponent.Modifier.BOLD)
+	}
+
+	def "Menu item values are right-justified according to panel size"() {
+		given:
+			MenuEntity menu = new MenuEntity([new IntegerItemEntity('Label', 100)])
+			menu.padding = 2
+			AreaComponent area = menu.getComponentOfType(AreaComponent)
+		when:
+			area.width = 100
+			TextComponent tc = menu.items[0].getComponentOfType(TextComponent)
+		then:
+			tc.text.length() == (area.width - (menu.padding * 2))
+			tc.text.startsWith('Label')
+			tc.text.endsWith('100')
 	}
 
 }
