@@ -3,7 +3,9 @@ package io.github.lhanson.possum.entity.menu
 import io.github.lhanson.possum.component.PlayerInputAwareComponent
 import io.github.lhanson.possum.component.RelativePositionComponent
 import io.github.lhanson.possum.component.TextComponent
+import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.PanelEntity
+import io.github.lhanson.possum.input.MappedInput
 
 import static io.github.lhanson.possum.component.TextComponent.Modifier.*
 
@@ -11,7 +13,7 @@ import static io.github.lhanson.possum.component.TextComponent.Modifier.*
  * An extension of a UI panel, a Menu contains selectable items.
  */
 class MenuEntity extends PanelEntity {
-	List<MenuEntity> items
+	List<MenuItemEntity> items
 	int selectedItemIndex = 0
 
 	MenuEntity() {
@@ -68,6 +70,14 @@ class MenuEntity extends PanelEntity {
 		}
 		addBold(items[selectedItemIndex])
 		log.trace "Decremented selection for menu $name to $selectedItemIndex"
+	}
+
+	/**
+	 * @param input the mapped input received
+	 * @return the list of entities which have been updated
+	 */
+	List<GameEntity> handleInput(MappedInput input) {
+		return selectedItem.handleInput(input)
 	}
 
 	private void removeBold(MenuItemEntity menuItem) {

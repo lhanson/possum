@@ -53,6 +53,8 @@ class EightWayInputContext implements InputContext {
 					case rawInput.VK_ADD:
 					case rawInput.VK_SHIFT | rawInput.VK_EQUALS:
 						return MappedInput.INCREASE_DEBUG_PAUSE
+					case rawInput.VK_ENTER:
+						return MappedInput.ENTER
 					case rawInput.VK_MINUS:
 						return MappedInput.DECREASE_DEBUG_PAUSE
 					case rawInput.VK_D:

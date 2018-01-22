@@ -1,6 +1,7 @@
 package io.github.lhanson.possum.system
 
 import io.github.lhanson.possum.component.PlayerInputAwareComponent
+import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.menu.MenuEntity
 import io.github.lhanson.possum.input.MappedInput
 import io.github.lhanson.possum.scene.Scene
@@ -38,6 +39,9 @@ class MenuSystem extends GameSystem {
 							menu.incrementSelection()
 							scene.entityNeedsRendering(menu.selectedItem)
 							break
+						default:
+							List<GameEntity> updatedEntities = menu.handleInput(input)
+							updatedEntities.each { scene.entityNeedsRendering(it) }
 					}
 				}
 			}

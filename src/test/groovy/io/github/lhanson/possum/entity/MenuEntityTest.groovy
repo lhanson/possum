@@ -148,4 +148,25 @@ class MenuEntityTest extends Specification {
 			tc.text.endsWith('100')
 	}
 
+	def "Menu item right-justification adjusts with changing values"() {
+		given:
+			IntegerItemEntity item = new IntegerItemEntity('Label', 10)
+			MenuEntity menu = new MenuEntity([item])
+			menu.padding = 2
+			AreaComponent area = menu.getComponentOfType(AreaComponent)
+		when:
+			area.width = 100
+			TextComponent tc = item.getComponentOfType(TextComponent)
+			int length = tc.text.length()
+		then:
+			length == (area.width - (menu.padding * 2))
+			tc.text.startsWith('Label')
+			tc.text.endsWith('10')
+
+		when: 'Length of the value is decreased'
+			item.value = 9
+		then: 'Overall padded length should remain the same'
+			tc.text.length() == length
+	}
+
 }

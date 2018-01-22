@@ -14,6 +14,8 @@ import io.github.lhanson.possum.component.TimerComponent
 import io.github.lhanson.possum.component.VelocityComponent
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.GaugeEntity
+import io.github.lhanson.possum.entity.menu.ButtonItemEntity
+import io.github.lhanson.possum.entity.menu.IntegerItemEntity
 import io.github.lhanson.possum.entity.menu.MenuEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.TextEntity
@@ -85,19 +87,19 @@ class CellularAutomataStudio {
 								new RelativePositionComponent(50, 40)),
 						// Menu consists of interactive elements
 						new MenuEntity(new RelativePositionComponent(50, 50), 3, [
-								new MenuItemEntity(text: 'Width'),
-								new MenuItemEntity(text: 'Height'),
-								new MenuItemEntity(text: 'Smoothing Generations'),
-								new MenuItemEntity(text: 'Initial Density'),
-								new MenuItemEntity(text: 'Birth Factor'),
-								new MenuItemEntity(text: 'Death Factor'),
-								new MenuItemEntity(text: 'Generate', selected: true),
+								new IntegerItemEntity('Width', caveGenerator.width),
+								new IntegerItemEntity('Height', caveGenerator.height),
+								new IntegerItemEntity('Smoothing Generations', 10),
+								new IntegerItemEntity('Initial Density', caveGenerator.initialFactor),
+								// TODO: these two aren't exposed yet
+								//new MenuItemEntity(text: 'Birth Factor', caveGenerator.birthFactor),
+								//new MenuItemEntity(text: 'Death Factor', caveGenerator.deathFactor),
+								new ButtonItemEntity('Generate', { transition(CAVE) }),
 						])
 				]},
 				[ new EightWayInputContext(
 						// keyCode handlers
-						[ (KeyEvent.VK_ESCAPE) : { transition(QUITTING) },
-						  (KeyEvent.VK_ENTER) : { transition(CAVE) }]
+						[ (KeyEvent.VK_ESCAPE) : { transition(QUITTING) }, ]
 				) ],
 		)
 
