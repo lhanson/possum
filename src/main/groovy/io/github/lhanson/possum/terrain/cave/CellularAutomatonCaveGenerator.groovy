@@ -160,4 +160,14 @@ class CellularAutomatonCaveGenerator {
 		return rooms
 	}
 
+	void setWidth(int width) {
+		this.width = width
+		initialized = false
+	}
+
+	void setHeight(int height) {
+		this.height = height
+		initialized = false
+	}
+
 }

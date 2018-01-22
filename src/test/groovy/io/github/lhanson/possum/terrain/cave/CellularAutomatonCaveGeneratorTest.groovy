@@ -50,4 +50,22 @@ class CellularAutomatonCaveGeneratorTest extends Specification {
 			generator.livingNeighbors(1, 0) == 1
 	}
 
+	def "Reinitialize after changing options"() {
+		when:
+			generator.init()
+		then:
+			generator.initialized
+
+		when: 'width is changed after initialization'
+			generator.width = 100
+		then: 'generator needs to be initialized again'
+			!generator.initialized
+
+		when: 'height is changed after initialization'
+			generator.height = 100
+		then: 'generator needs to be initialized again'
+			!generator.initialized
+	}
+
+
 }
