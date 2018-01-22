@@ -54,6 +54,7 @@ class EventBroker {
 	/** Remove any subscriptions registered by the provided subscriber */
 	void unsubscribe(Object subscriber) {
 		subscriptionsByEventClass.values().each { List<Subscription> subscriptions ->
+			log.debug "Unsubscribing {} from {}", subscriber, subscriptions
 			subscriptions.removeAll { it.subscriber == subscriber }
 		}
 	}
@@ -67,13 +68,19 @@ class EventBroker {
 	 */
 	int publish(Object event) {
 		log.debug("Publishing {}", event)
+		int published = 0
 		def key = (event instanceof Class) ? event : event.class
-		List<Subscription> subscriptions = subscriptionsByEventClass[key] ?: []
-		subscriptions.each {
-			log.debug("Notifying {} of event {}", it.subscriber, event)
-			it.notify(event)
+		List<Subscription> subscriptions = subscriptionsByEventClass[key]
+		if (subscriptions) {
+			// Use collect() to work on a copy of the list to avoid ConcurrentModificationExceptions
+			// when unsubscriptions while we're iterating.
+			subscriptions.collect().each {
+				log.debug("Notifying {} of event {}", it.subscriber, event)
+				it.notify(event)
+				published++
+			}
 		}
-		return subscriptions.size()
+		return published
 	}
 
 	/**
@@ -97,6 +104,9 @@ class EventBroker {
 				throw new IllegalStateException("Unknown event handler type (${handler.class}) for subscriber $subscriber")
 			}
 		}
+
+		@Override
+		String toString() { "subscriber is a ${subscriber.class}"}
 	}
 
 }
