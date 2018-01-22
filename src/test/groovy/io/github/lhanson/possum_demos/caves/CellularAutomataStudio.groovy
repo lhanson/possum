@@ -19,7 +19,6 @@ import io.github.lhanson.possum.entity.menu.IntegerItemEntity
 import io.github.lhanson.possum.entity.menu.MenuEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.TextEntity
-import io.github.lhanson.possum.entity.menu.MenuItemEntity
 import io.github.lhanson.possum.input.EightWayInputContext
 import io.github.lhanson.possum.rendering.RenderingSystem
 import io.github.lhanson.possum.scene.PossumSceneBuilder
@@ -71,11 +70,26 @@ class CellularAutomataStudio {
 		@Autowired CellularAutomatonCaveGenerator caveGenerator
 		@Autowired WallCarver wallCarver
 		@Autowired Random random
+		MenuEntity menu
 
 		@PostConstruct
 		void addScenes() {
+			menu = new MenuEntity(new RelativePositionComponent(50, 50), 3, [
+					new IntegerItemEntity('Width', caveGenerator.width, 0),
+					new IntegerItemEntity('Height', caveGenerator.height, 0),
+					new IntegerItemEntity('Smoothing Generations', 10, 0),
+					new IntegerItemEntity('Initial Density', caveGenerator.initialFactor, 0),
+					// TODO: these two aren't exposed yet
+					//new MenuItemEntity(text: 'Birth Factor', caveGenerator.birthFactor),
+					//new MenuItemEntity(text: 'Death Factor', caveGenerator.deathFactor),
+					new ButtonItemEntity('Generate', {
+						currentScene.uninit()
+						transition(CAVE)
+					}),
+			])
 			[menuScene, caveScene, quittingScene].each { addScene(it) }
 		}
+
 
 		Scene menuScene = new Scene(
 				MENU,
@@ -85,17 +99,7 @@ class CellularAutomataStudio {
 								new RelativePositionComponent(50, 33) ]),
 						new TextEntity('Options',
 								new RelativePositionComponent(50, 40)),
-						// Menu consists of interactive elements
-						new MenuEntity(new RelativePositionComponent(50, 50), 3, [
-								new IntegerItemEntity('Width', caveGenerator.width),
-								new IntegerItemEntity('Height', caveGenerator.height),
-								new IntegerItemEntity('Smoothing Generations', 10),
-								new IntegerItemEntity('Initial Density', caveGenerator.initialFactor),
-								// TODO: these two aren't exposed yet
-								//new MenuItemEntity(text: 'Birth Factor', caveGenerator.birthFactor),
-								//new MenuItemEntity(text: 'Death Factor', caveGenerator.deathFactor),
-								new ButtonItemEntity('Generate', { transition(CAVE) }),
-						])
+						menu
 				]},
 				[ new EightWayInputContext(
 						// keyCode handlers
@@ -117,22 +121,15 @@ class CellularAutomataStudio {
 		SceneInitializer caveInitializer = new SceneInitializer() {
 			@Override
 			List<GameEntity> initScene() {
-				caveGenerator.width = 100
-				caveGenerator.height = 100
-				caveGenerator.initialFactor = 50
-				caveGenerator.generate(10)
+				caveGenerator.width = menu.valueOf 'Width'
+				caveGenerator.height = menu.valueOf 'Height'
+				caveGenerator.initialFactor = menu.valueOf 'Initial Density'
+				caveGenerator.generate(menu.valueOf('Smoothing Generations'))
 				def room = caveGenerator.rooms.sort { it.size() }.last()
 				def entities = wallCarver.getTiles(room)
 				def floorTiles = entities.findAll { !it.getComponentOfType(ImpassableComponent) }
 
-				def startIndex = random.nextInt(floorTiles.size())
-				def finishIndex = random.nextInt(floorTiles.size())
-				while (finishIndex == startIndex) {
-					log.warn "Random finish position is same as start, recalculating"
-					finishIndex = random.nextInt(floorTiles.size())
-				}
-				AreaComponent startPos = floorTiles[startIndex].getComponentOfType(AreaComponent)
-				AreaComponent finishPos = floorTiles[finishIndex].getComponentOfType(AreaComponent)
+				AreaComponent startPos = floorTiles[(int)(floorTiles.size() / 2)].getComponentOfType(AreaComponent)
 
 				def hero = new GameEntity(
 						name: 'hero',

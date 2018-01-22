@@ -41,7 +41,7 @@ class MenuSystem extends GameSystem {
 							break
 						default:
 							List<GameEntity> updatedEntities = menu.handleInput(input)
-							updatedEntities.each { scene.entityNeedsRendering(it) }
+							updatedEntities?.each { scene.entityNeedsRendering(it) }
 					}
 				}
 			}

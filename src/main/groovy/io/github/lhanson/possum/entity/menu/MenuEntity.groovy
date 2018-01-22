@@ -80,6 +80,14 @@ class MenuEntity extends PanelEntity {
 		return selectedItem.handleInput(input)
 	}
 
+	/**
+	 * @param label the text label of the item we want the value of
+	 * @return the value associated with the specified item, or null if no such item is found
+	 */
+	Object valueOf(String label) {
+		items.find { it.label == label }?.value
+	}
+
 	private void removeBold(MenuItemEntity menuItem) {
 		TextComponent menuText = menuItem.getComponentOfType(TextComponent)
 		menuText.modifiers.remove(BOLD)

@@ -169,4 +169,12 @@ class MenuEntityTest extends Specification {
 			tc.text.length() == length
 	}
 
+	def "Values can be looked up directly by their labels"() {
+		when:
+			MenuEntity menu = new MenuEntity([new IntegerItemEntity('Width', 10)])
+		then:
+			menu.valueOf('Width') == 10
+			menu.valueOf('Nonexistent') == null
+	}
+
 }
