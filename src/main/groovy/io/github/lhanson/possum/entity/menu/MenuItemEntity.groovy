@@ -2,6 +2,7 @@ package io.github.lhanson.possum.entity.menu
 
 import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.GameComponent
+import io.github.lhanson.possum.component.RelativePositionComponent
 import io.github.lhanson.possum.component.TextComponent
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.TextEntity
@@ -16,7 +17,11 @@ class MenuItemEntity extends TextEntity {
 	MenuItemEntity() { }
 
 	MenuItemEntity(String text) {
-		super(text)
+		this(text, null)
+	}
+
+	MenuItemEntity(String text, RelativePositionComponent rpc) {
+		super(text, rpc)
 		this.label = text
 	}
 

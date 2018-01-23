@@ -73,20 +73,24 @@ class CellularAutomataStudio {
 		MenuEntity menu
 
 		@PostConstruct
-		void addScenes() {
+		void init() {
 			menu = new MenuEntity(new RelativePositionComponent(50, 50), 3, [
-					new IntegerItemEntity('Width', caveGenerator.width, 0),
-					new IntegerItemEntity('Height', caveGenerator.height, 0),
-					new IntegerItemEntity('Smoothing Generations', 10, 0),
+					new IntegerItemEntity('Width', 40, 0),
+					new IntegerItemEntity('Height', 40, 0),
+					new IntegerItemEntity('Smoothing Generations', 2, 0),
 					new IntegerItemEntity('Initial Density', caveGenerator.initialFactor, 0),
 					// TODO: these two aren't exposed yet
 					//new MenuItemEntity(text: 'Birth Factor', caveGenerator.birthFactor),
 					//new MenuItemEntity(text: 'Death Factor', caveGenerator.deathFactor),
-					new ButtonItemEntity('Generate', {
-						currentScene.uninit()
-						transition(CAVE)
-					}),
+					new ButtonItemEntity('Generate Cave',
+							{
+								currentScene.uninit()
+								transition(CAVE)
+							},
+							new RelativePositionComponent(50, 80)
+					),
 			])
+
 			[menuScene, caveScene, quittingScene].each { addScene(it) }
 		}
 
