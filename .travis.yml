@@ -1,18 +1,9 @@
 language: groovy
 jdk: oraclejdk8
-sudo: false
-install: true
-
-addons:
-  sonarcloud:
-    organization: lhanson-github
-    token:
-      secure: "rTVyB9xwjROcR+2+twhFNGvkn9B9Yr/7QP3U6cS9o2z9xugRz1lQjy4oSQmYGGGyy0I95vls+gxmpc3AnOBjsijlvB4lFBUuezJy3+i+SxawTqmU++Qa3aZD+4XU2THFmtYXf1Sfpj3OWa2xon6lyaaLId8Eu9vQa+eI8/tVuhO6TR2DxWnDzkKtJKPRF6CMtN9wKof7ASOTZM6P/1wfaamCwkjn28B6BAk4IlrMY6u6K767hxG8jNrpW/9TChaItMgA88/ntBHncSQMBgDhMv0MOA98YrBcqdhEOVHLczpGkYjDVS72gPYIeQOO27mMYJMrAbJCP116/DZxt9pBWjcVa+jvDs0zxCmqvsUxjV252ZztodPHvBioEiqmHRQ+Xwly9kNO7fSXw+pB8jRQryRt4HRd22X4bgYN1zQhiXsjWPlp9EBdqFmFF+GH8Eb4YgKVIdQsr1x8u3zYbfRMpolAhgShT28O6FyBQO1OOuw+kOv7PY27V6m1OBXwTlotw6Cl/lV14m1Xh2DmcvlqzD37P3YoDJ0YBxh2dOyTrahww54hzhIw4qcybK0RMmp4j0i+i3/Kk8X4PgxdpFA/QN0LmLQsddd2mJAcWWewE9icpLcVT6thOQyveE2SIMRVS4TzXLHFVVnAn5Eb6DudK/eIAOHg8IFrOv+fKcepDSI="
 
 cache:
   directories:
     - '$HOME/.m2/repository'
-    - '$HOME/.sonar/cache'
 
 before_script:
   - "export DISPLAY=:99.0"
@@ -20,7 +11,7 @@ before_script:
   - sleep 3 # give xvfb some time to start
 
 script:
-  - mvn clean test org.jacoco:jacoco-maven-plugin:prepare-agent package sonar:sonar
+  - mvn clean test
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
