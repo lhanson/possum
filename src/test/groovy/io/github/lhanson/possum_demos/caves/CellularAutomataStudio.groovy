@@ -74,7 +74,7 @@ class CellularAutomataStudio {
 
 		@PostConstruct
 		void init() {
-			menu = new MenuEntity(new RelativePositionComponent(50, 50), 3, [
+			menu = new MenuEntity(new RelativePositionComponent(50, 60), 3, [
 					new IntegerItemEntity('Width', 40, 0),
 					new IntegerItemEntity('Height', 40, 0),
 					new IntegerItemEntity('Smoothing Generations', 2, 0),
