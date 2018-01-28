@@ -55,7 +55,13 @@ class EventBroker {
 	void unsubscribe(Object subscriber) {
 		subscriptionsByEventClass.values().each { List<Subscription> subscriptions ->
 			log.debug "Unsubscribing {} from {}", subscriber, subscriptions
-			subscriptions.removeAll { it.subscriber == subscriber }
+			// Use iterator to safely remove items; others may be iterating the list concurrently
+			Iterator<Subscription> iterator = subscriptions.iterator()
+			while (iterator.hasNext()) {
+				if (iterator.next().subscriber == subscriber) {
+					iterator.remove()
+				}
+			}
 		}
 	}
 
@@ -67,7 +73,7 @@ class EventBroker {
 	 * @return the number of notifications sent
 	 */
 	int publish(Object event) {
-		log.debug("Publishing {}", event)
+		log.debug("Publishing '{}'", event)
 		int published = 0
 		def key = (event instanceof Class) ? event : event.class
 		List<Subscription> subscriptions = subscriptionsByEventClass[key]
