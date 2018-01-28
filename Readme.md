@@ -79,6 +79,7 @@ I'll quote an explanation from Robert Nystrom's
 Writing a game with Possum will shield you from these gory details, but it may be of general interest
 if you're going deeper down the rabbit hole.
 
+
 ## Input
 
 Raw input is collected via the `InputAdapter` interface and passed to any `InputContext`s that the game
@@ -89,6 +90,31 @@ These are then set as the `Scene#activeInput` for each frame, and any `GameSyste
 have a chance to react to them.
 
 The provided `InputAdapter` implementation uses AWT's `KeyListener`.
+
+
+## Component Entity System
+
+It's important to understand how some of the various systems operate and how they
+interact with the various entity types.
+
+### Text Entities
+
+Text entities are a general category of entity representing text to be displayed.
+They provide a shorthand constructor for setting their `TextComponent` at creation.
+
+### Panel Entities
+
+Panel entities are designed around the concept of a visual UI panel which contains
+other entities such as text. These will always have an `AreaComponent` and an
+`InventoryComponent` and will compute their size based on their inventory contents
+and internal padding. They provide a shorthand constructor for setting inventory
+items at creation.
+
+### Menu Entities
+
+Menus are a subclass of Panels; as such, they will always have an Area and an Inventory,
+and will compute boundaries in exactly the same way.
+
 
 ## Rendering Process (AsciiPanelRenderingSystem)
 
@@ -119,6 +145,7 @@ When an action occurs which requires an entity to be re-rendered (the user moved
 scrolled the screen, etc.), the `GameSystem` which determined this will call `Scene#entityNeedsRendering()`.
 The `Scene` maintains a list of 'dirty' entities to render for the next iteration. It doesn't
 do the rendering itself, it merely tracks this list for any interested `RenderingSystem` to act on.
+
 
 ## Random number generation
 
