@@ -10,7 +10,6 @@ import io.github.lhanson.possum.entity.RerenderEntity
 import io.github.lhanson.possum.scene.Scene
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.springframework.util.StopWatch
 
@@ -25,32 +24,21 @@ import java.util.List
 class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	Logger logger = LoggerFactory.getLogger(this.class)
 	AsciiPanel terminal
-	@Autowired(required = false)
-	VectorComponent initialViewportSize
-	// the entire visible area being rendered (in world coordinates, not screen pixels)
-	AreaComponent initialViewport
-	AreaComponent viewport
-	Map<Scene, AreaComponent> viewportByScene = [:]
 	Map<Scene, List<AreaComponent>> panelAreasByScene = [:]
 	// Panel areas in the scene, sorted by x, y coordinates
 	List<AreaComponent> scenePanelAreas
 	// Scenes currently initialized and running
 	List<Scene> runningScenes = []
+	// Scene currently rendering
+	Scene scene
 	// Can be disabled for unit tests to avoid flashing an empty JFrame to the screen
 	boolean makeVisible = true
 
 	@PostConstruct
 	void init() {
 		logger.trace "Initializing"
-		if (initialViewportSize) {
-			initialViewport = new AreaComponent(0, 0, Integer.MIN_VALUE, initialViewportSize.x, initialViewportSize.y)
-		} else {
-			initialViewport = new AreaComponent(0, 0, Integer.MIN_VALUE,100, 40)
-		}
-		terminal = new AsciiPanel(initialViewport.width, initialViewport.height)
-		logger.debug "Created terminal with viewport {}", initialViewport
-
-		viewport = initialViewport
+		terminal = new AsciiPanel(100, 40)
+		logger.debug "Created terminal with fairly arbitrary 100x40 dimensions and should probably parameterize that"
 
 		boolean isOSX = false
 		try {
@@ -80,20 +68,15 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 
 	@Override
 	void initScene(Scene scene) {
+		this.scene = scene
 		if (runningScenes.contains(scene)) {
 			logger.debug "Scene was not uninitialized, skipping initialization {}", scene
-			viewport = viewportByScene[scene]
 			scenePanelAreas = panelAreasByScene[scene]
 		} else {
 			logger.debug "Initializing scene {}", scene
 			long startTime = System.currentTimeMillis()
 
 			runningScenes << scene
-
-			viewport = new AreaComponent(initialViewport)
-			viewportByScene[scene] = viewport
-
-			resolveRelativePositions(scene)
 
 			// Store a list of the panel areas in the scene sorted by x,y coordinates for faster reference
 			scenePanelAreas = scene.panels.findResults { it.getComponentOfType(AreaComponent) }
@@ -114,7 +97,6 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		scenePanelAreas = null
 		panelAreasByScene.remove(scene)
 		runningScenes.remove(scene)
-		viewportByScene.remove(scene)
 	}
 
 	/**
@@ -125,7 +107,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	 */
 	def repaintScene(Scene scene) {
 		// Visible non-panel entities
-		scene.findNonPanelWithin(viewport)
+		scene.findNonPanelWithin(scene.viewport)
 				.findAll { isVisible(it) }
 				.each { scene.entityNeedsRendering(it) }
 
@@ -138,80 +120,6 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 
 		// Hint to the render method that we can use one large dirty rectangle
 		scene.entityNeedsRendering(new RerenderEntity(name: 'fullSceneRepaintRenderer'))
-	}
-
-	/**
-	 * Finds relatively-positioned entities within the scene and assigns them concrete
-	 * AreaComponents based on the viewport.
-	 *
-	 * @param scene the scene we're initializing
-	 */
-	void resolveRelativePositions(Scene scene) {
-		// Center viewport on focused entity, important that this happens
-		// before resolving relatively positioned entities
-		GameEntity focusedEntity = scene.entities.find { it.getComponentOfType(CameraFocusComponent) }
-		if (focusedEntity) {
-			AreaComponent area = focusedEntity.getComponentOfType(AreaComponent)
-			if (area) {
-				centerViewport(area.position)
-			}
-		}
-
-		scene.getEntitiesMatching([RelativePositionComponent]).each { GameEntity entity ->
-			logger.trace "Initializing relatively positioned entity ${entity.name}"
-
-			AreaComponent parentReference
-			if (entity.parent) {
-				parentReference = new AreaComponent(entity.parent.getComponentOfType(AreaComponent))
-			} else {
-				parentReference = new AreaComponent(viewport)
-			}
-
-			AreaComponent ac = entity.getComponentOfType(AreaComponent)
-			RelativePositionComponent rpc = entity.getComponentOfType(RelativePositionComponent)
-			RelativeWidthComponent rwc = entity.getComponentOfType(RelativeWidthComponent)
-
-			boolean newArea = false
-			if (!ac) {
-				ac = new AreaComponent()
-				newArea = true
-			}
-
-			if (rwc) {
-				// Compute relative width
-				ac.width = (rwc.width / 100.0f) * parentReference.width
-			}
-
-			if (entity instanceof PanelEntity) {
-				// Compute position
-				ac.x = constrainInt((int) (relativeX(rpc) - (ac.width / 2)), 0, parentReference.width - ac.width)
-				ac.y = relativeY(rpc)
-				// If the calculated position goes outside the viewport because of the panel's height, adjust it up
-				if (ac.y + ac.height >= viewportHeight) {
-					ac.y -= ((ac.y + ac.height) - viewportHeight)
-				}
-			} else {
-				List<io.github.lhanson.possum.component.TextComponent> text =
-						entity.getComponentsOfType(io.github.lhanson.possum.component.TextComponent)
-				int xOffset = 0
-				if (text?.get(0)) {
-					// This is assuming we want to center this text around its position
-					xOffset = Math.floor(text[0].text.length() / 2)
-					ac.width = text.collect { it.text.size() }.max() // Longest string
-					// Assumes each text component is on its own line
-					ac.height = text.size()
-				}
-				ac.x = (rpc.x / 100.0f) * parentReference.width - xOffset
-				ac.y = (rpc.y / 100.0f) * parentReference.height
-			}
-
-			if (newArea) {
-				entity.components << ac
-				logger.debug "Added area component for {}", entity.name
-			}
-
-			logger.debug "Calculated position of {} for {}", ac, entity.name
-		}
 	}
 
 	@Override
@@ -232,7 +140,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 				dirtyRectangles << renderPanelBorders(entity)
 			} else if (entity instanceof RerenderEntity) {
 				fullScreenRefresh = true
-				terminal.clear(' ' as char, 0, 0, viewportWidth, viewportHeight)
+				terminal.clear(' ' as char, 0, 0, scene.viewport.width, scene.viewport.height)
 			} else if (entity.parent) {
 				TextComponent tc = entity.getComponentOfType(TextComponent)
 				AreaComponent pc = entity.parent.getComponentOfType(AreaComponent)
@@ -245,7 +153,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 				if (isVisible(entity)) {
 					Color color = entity.getComponentOfType(ColorComponent)?.color ?: terminal.defaultForegroundColor
 					TextComponent tc = entity.getComponentOfType(TextComponent)
-					AreaComponent panelArea = translateWorldToAsciiPanel(entity.getComponentOfType(AreaComponent), viewport)
+					AreaComponent panelArea = translateWorldToAsciiPanel(entity.getComponentOfType(AreaComponent), scene.viewport)
 					write(tc, panelArea.x, panelArea.y, color)
 					AreaComponent pixelArea = translateTerminalToPixels(panelArea)
 					dirtyRectangles << pixelArea
@@ -259,7 +167,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		scene.entitiesToBeRendered.clear()
 		if (fullScreenRefresh) {
 			dirtyRectangles.clear()
-			dirtyRectangles << new AreaComponent(0, 0, viewport.width * terminal.charWidth, viewport.height * terminal.charHeight)
+			dirtyRectangles << new AreaComponent(0, 0, scene.viewport.width * terminal.charWidth, scene.viewport.height * terminal.charHeight)
 		}
 		dirtyRectangles.each { AreaComponent area ->
 			terminal.paintImmediately(area.x, area.y, area.width * terminal.charWidth, area.height * terminal.charHeight)
@@ -278,7 +186,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 					.findAll { !(it instanceof GaugeEntity) }
 					.each { entity ->
 				if (entity instanceof RerenderEntity) {
-					AreaComponent area = translateWorldToAsciiPanel(entity.getComponentOfType(AreaComponent), viewport)
+					AreaComponent area = translateWorldToAsciiPanel(entity.getComponentOfType(AreaComponent), scene.viewport)
 					logger.debug "Hinting clearing {}", area
 					// Draw a red block where we're clearing (▓)
 					def red = new Color(255, 0, 0, 100)
@@ -299,7 +207,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	}
 
 	void drawQuadtreeOutline(Quadtree quadtree, Color color) {
-		AreaComponent bounds = translateWorldToAsciiPanel(quadtree.bounds, viewport)
+		AreaComponent bounds = translateWorldToAsciiPanel(quadtree.bounds, scene.viewport)
 		Graphics g = terminal.offscreenGraphics
 		g.drawRect(bounds.x * terminal.charWidth, bounds.y * terminal.charHeight, bounds.width * terminal.charWidth, bounds.height * terminal.charHeight)
 		if (quadtree.nodes[0]) {
@@ -315,8 +223,8 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		if (area) {
 			// When detecting overlap with panels, we translate the entity's coordinates to
 			// be viewport-based rather than world-based.
-			AreaComponent viewportArea = translateWorldToAsciiPanel(area, viewport)
-			visible = area.overlaps(viewport) && !scenePanelAreas.any { viewportArea.overlaps(it) }
+			AreaComponent viewportArea = translateWorldToAsciiPanel(area, scene.viewport)
+			visible = area.overlaps(scene.viewport) && !scenePanelAreas.any { viewportArea.overlaps(it) }
 		}
 		return visible
 	}
@@ -372,9 +280,10 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		if (focusedEntity) {
 			AreaComponent ac = focusedEntity.getComponentOfType(AreaComponent)
 			if (ac) {
+				Viewport viewport = scene.viewport
 				def scrollToX
 				def scrollToY
-				def threshX = viewport.width * 0.2
+				def threshX = scene.viewport.width * 0.2
 				def threshY = viewport.height * 0.2
 				if (ac.x < viewport.x + threshX || ac.x > viewport.x + viewport.width - threshX) {
 					scrollToX = ac.x
@@ -386,7 +295,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 					def scrollTo = new VectorComponent()
 					scrollTo.x = scrollToX ?: viewport.x + viewport.width / 2
 					scrollTo.y = scrollToY ?: viewport.y + viewport.height / 2
-					centerViewport(scrollTo)
+					viewport.centerOn(scrollTo)
 					logger.debug "Scroll boundaries shifted, need rendering"
 					repaintScene(scene)
 				}
@@ -430,8 +339,8 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 			color = terminal.defaultForegroundColor
 		}
 		for (int i = 0; i < s.size(); i++) {
-			if (x + i >= 0 && x + i < viewport.width &&
-					y >= 0 && y < viewport.height) {
+			if (x + i >= 0 && x + i < scene.viewport.width &&
+					y >= 0 && y < scene.viewport.height) {
 				if (color.alpha != 255) {
 					// If there are alpha effects happening, let's just
 					// assume that we need a freshly-cleared background
@@ -441,23 +350,6 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 				terminal.write(s.charAt(i), x + i, y, color)
 			}
 		}
-	}
-
-	@Override
-	int getViewportWidth() {
-		viewport.width
-	}
-
-	@Override
-	int getViewportHeight() {
-		viewport.height
-	}
-
-	@Override
-	void centerViewport(VectorComponent pos) {
-		viewport.x = pos.x - (viewport.width / 2)
-		viewport.y = pos.y - (viewport.height / 2)
-		logger.debug "Centered viewport at $pos; viewport $viewport"
 	}
 
 	/**
@@ -490,18 +382,6 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		terminal.write(ll + ("$h" * (ac.width - 2)) + lr, ac.x, ac.y + (ac.height - 1))
 
 		return translateTerminalToPixels(ac)
-	}
-
-	int relativeX(RelativePositionComponent rpc) {
-		return (int) ((rpc.x / 100.0f) * viewportWidth)
-	}
-
-	int relativeY(RelativePositionComponent rpc) {
-		return (int) ((rpc.y / 100.0f) * viewportHeight) - 1
-	}
-
-	int constrainInt(int value, int min, int max) {
-		Math.min(Math.max(value, min), max)
 	}
 
 }

@@ -3,25 +3,27 @@ package io.github.lhanson.possum.scene
 import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.InventoryComponent
 import io.github.lhanson.possum.component.RelativePositionComponent
+import io.github.lhanson.possum.component.RelativeWidthComponent
 import io.github.lhanson.possum.component.TextComponent
 import io.github.lhanson.possum.entity.GameEntity
+import io.github.lhanson.possum.entity.GaugeEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.TextEntity
 import io.github.lhanson.possum.events.ComponentAddedEvent
 import io.github.lhanson.possum.events.ComponentRemovedEvent
 import io.github.lhanson.possum.events.EventBroker
+import io.github.lhanson.possum.rendering.Viewport
 import spock.lang.Specification
 
 class SceneTest extends Specification {
+	int sceneId = 1
 
 	def "Find entity by component"() {
 		given:
 			def entity = new GameEntity(
 					name: 'testEntity',
 					components: [new AreaComponent()])
-			Scene scene = new Scene('testScene', {[entity]})
-			scene.eventBroker = new EventBroker()
-			scene.init()
+			Scene scene = createScene({[entity]})
 		when:
 			def entities = scene.getEntitiesMatching([AreaComponent])
 		then:
@@ -139,20 +141,14 @@ class SceneTest extends Specification {
 
 	def "Uninitialize"() {
 		given:
-			Scene scene = new Scene('testId', {
-				[new GameEntity(components: [new AreaComponent()])]
-			})
-			scene.eventBroker = new EventBroker()
-
+			Scene scene = createScene({[new GameEntity(components: [new AreaComponent()])]})
 		when:
-			scene.init()
 			scene.uninit()
-
 		then:
 			!scene.initialized
 			scene.entities.empty
 			scene.getEntitiesMatching([AreaComponent]).empty
-			scene.eventBroker.subscriptionsByEventClass.findAll { it.value } == [:]
+			scene.eventBroker.subscriptionsByEventClass.findAll { it.value }.empty
 			scene.quadtree.countEntities() == 0
 	}
 
@@ -238,7 +234,6 @@ class SceneTest extends Specification {
 			scene.init()
 
 		when:
-			// Simulate resolution of relative positions into world coordinates
 			entity.components << new AreaComponent(0, 0, 1, 1)
 
 		then:
@@ -253,7 +248,6 @@ class SceneTest extends Specification {
 			scene.init()
 
 		when:
-			// Simulate resolution of relative positions into world coordinates
 			panel.components.add(new AreaComponent(0, 0, 1, 1))
 
 		then:
@@ -291,6 +285,97 @@ class SceneTest extends Specification {
 
 		then:
 			relativeEntities.size() == 1
+	}
+
+	def "Resolve relative positioning by adding a concrete AreaComponent"() {
+		given:
+			def panel = new PanelEntity(components: [new RelativePositionComponent(50, 50)])
+			Scene scene = createScene({[panel]})
+		when:
+			scene.resolveRelativePositions()
+			AreaComponent panelArea = panel.getComponentOfType(AreaComponent)
+		then:
+			panelArea.height == 2 // At minimum it's a top border and a bottom border
+			panelArea.width == panel.padding * 2
+			panelArea.x == (scene.viewport.width * 0.5) - (panelArea.width / 2)
+			panelArea.y == (scene.viewport.height * 0.5) - (panelArea.height / 2)
+	}
+
+	def "Resolve relative position of inventory elements within parent panel"() {
+		given:
+			def menuItem = new TextEntity(components: [
+					new TextComponent('Menu text'),
+					new RelativePositionComponent(50, 50),
+			])
+			def panel = new PanelEntity(components: [
+					new AreaComponent(100, 100, 0, 40, 40),
+					new InventoryComponent([menuItem])
+			])
+		when: 'Scene initializer resolves relative positions'
+			createScene({[panel]})
+		then:
+			AreaComponent panelArea = panel.getComponentOfType(AreaComponent)
+			AreaComponent menuItemArea = menuItem.getComponentOfType(AreaComponent)
+
+			// Computed area is still relative to parent, viewport resolution happens on render
+			menuItemArea.x == Math.floor((panelArea.width * 0.5) - (menuItem.text.size() / 2))
+			menuItemArea.y == 1
+	}
+
+	def "Resolve panels' inventory elements with padding taken into account"() {
+		given:
+			def menuItem = new TextEntity('Menu text')
+			def panel = new PanelEntity(
+					padding: 10,
+					components: [ new InventoryComponent([menuItem]) ])
+		when: 'Scene initializer resolves panel item positions'
+			createScene({[panel]})
+		then:
+			AreaComponent menuItemArea = menuItem.getComponentOfType(AreaComponent)
+			menuItemArea.x == 10
+			menuItemArea.y == 10
+	}
+
+	def "Scene initializer resolves relative widths"() {
+		given:
+			def panelEntity = new PanelEntity(components: [new RelativeWidthComponent(50)])
+			def textEntity = new TextEntity('test text')
+			panelEntity.components.add(new InventoryComponent([textEntity]))
+		when:
+			Scene scene = createScene({[panelEntity]})
+		then:
+			AreaComponent panelArea = panelEntity.getComponentOfType(AreaComponent)
+			panelArea.width == scene.viewport.width / 2
+	}
+
+	def "Correct placement of panel with relative position and width with padding"() {
+		given:
+			def simulationHzGauge = new GaugeEntity(name: 'simulationHzGauge', components: [new TextComponent(' ')])
+			def fpsGauge = new GaugeEntity(name: 'fpsGauge', components: [new TextComponent('')])
+			PanelEntity panel = new PanelEntity(name: 'rightHudPanel', padding: 1, components: [
+					new RelativePositionComponent(100, 100),
+					new RelativeWidthComponent(20),
+					new InventoryComponent([simulationHzGauge, fpsGauge])
+			])
+
+		when: 'Scene initializer resolves panel position'
+			Scene scene = createScene({[panel]})
+		then: 'The panel is fully within the viewport'
+			AreaComponent ac = panel.getComponentOfType(AreaComponent)
+			ac.x == scene.viewport.width - ac.width
+			ac.y == scene.viewport.height - ac.height
+			ac.x + ac.width == scene.viewport.width
+			ac.y + ac.height == scene.viewport.height
+	}
+
+	// Convenience method for setting up a scene
+	Scene createScene(SceneInitializer initializer) {
+		Scene scene = new Scene("scene ${sceneId++}")
+		scene.sceneInitializer = initializer
+		scene.eventBroker = Mock(EventBroker)
+		scene.viewport = new Viewport()
+		scene.init()
+		return scene
 	}
 
 }

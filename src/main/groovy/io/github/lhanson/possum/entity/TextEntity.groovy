@@ -89,13 +89,14 @@ class TextEntity extends GameEntity {
 	// We guarantee an AreaComponent is present, create one if needed
 	private AreaComponent ensureAreaComponent() {
 		AreaComponent ac = super.getComponentOfType(AreaComponent)
-		if (!ac) {
+		if (ac) {
+			areaComponent = ac
+		} else {
 			log.debug "No AreaComponent found for text entity $name on initialization, adding one"
-			ac = new AreaComponent()
-			components << ac
+			areaComponent = new AreaComponent()
+			components << areaComponent
 			calculateArea()
 		}
-		areaComponent = ac
 		return areaComponent
 	}
 

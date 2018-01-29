@@ -3,8 +3,11 @@ package io.github.lhanson.possum.scene
 import groovy.transform.ToString
 import io.github.lhanson.possum.collision.Quadtree
 import io.github.lhanson.possum.component.AreaComponent
+import io.github.lhanson.possum.component.CameraFocusComponent
 import io.github.lhanson.possum.component.GameComponent
 import io.github.lhanson.possum.component.InventoryComponent
+import io.github.lhanson.possum.component.RelativePositionComponent
+import io.github.lhanson.possum.component.RelativeWidthComponent
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.events.ComponentAddedEvent
@@ -16,6 +19,7 @@ import io.github.lhanson.possum.events.Subscription
 import io.github.lhanson.possum.input.InputAdapter
 import io.github.lhanson.possum.input.InputContext
 import io.github.lhanson.possum.input.MappedInput
+import io.github.lhanson.possum.rendering.Viewport
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -32,6 +36,11 @@ class Scene {
 	Set<MappedInput> activeInput = []
 	/** A scene to run while we do initialization */
 	Scene loadingScene
+	/**
+	 * The area of the world visible to the player on screen.
+	 * Each scene maintains its own world and viewport.
+	 */
+	Viewport viewport
 	/** Event broker for this scene */
 	EventBroker eventBroker
 	/** Whether the scene has been initialized yet */
@@ -103,10 +112,14 @@ class Scene {
 		log.debug "Initializing scene '$id'"
 		long startTime = System.currentTimeMillis()
 
+		viewport = new Viewport()
+
 		if (!eventBroker) throw new IllegalStateException("No event broker for scene $id")
 		eventBroker.subscribe(this)
 
 		setEntities(sceneInitializer?.initScene())
+
+		resolveRelativePositions()
 
 		// Initialize quadtree
 		quadtree = new Quadtree(new AreaComponent(minX, minY, maxX, maxY))
@@ -187,6 +200,7 @@ class Scene {
 			}
 		}
 	}
+
 	@Subscription
 	void componentAdded(ComponentAddedEvent event) {
 		if (entitiesByComponentType[event.component.class] == null) {
@@ -210,14 +224,12 @@ class Scene {
 
 	@Subscription
 	void entityMoved(EntityMovedEvent event) {
-		log.trace "Handling entity moved event: {}", event
+		log.trace "Scene $id handling entity moved event: {}", event
 		def moved = quadtree.move(event.entity, event.oldPosition, event.newPosition)
 		if (!moved) {
 			if (!quadtree.getAll().contains(event.entity)) {
 				log.error ("Quadtree does not contain this entity (${event.entity})")
 			}
-			log.error ("FAILED: Moved quadtree location of {} from {} to {} (success: $moved)", event.entity, event.oldPosition, event.newPosition)
-			throw new IllegalStateException('Move failed')
 		}
 		log.debug("Moved quadtree location of {} from {} to {} (success: $moved)", event.entity, event.oldPosition, event.newPosition)
 	}
@@ -320,6 +332,89 @@ class Scene {
 				activeInput << mapped
 			}
 		}
+	}
+
+	/**
+	 * Finds relatively-positioned entities within the scene and assigns them concrete
+	 * positions relative to their enclosing areas (whether that's the viewport itself
+	 * or panels they're contained in).
+	 */
+	void resolveRelativePositions() {
+		log.debug "Resolving relatively positioned entities in scene '$id'"
+		// Center viewport on focused entity, important that this happens
+		// before resolving relatively positioned entities
+		GameEntity focusedEntity = entities.find { it.getComponentOfType(CameraFocusComponent) }
+		if (focusedEntity) {
+			AreaComponent area = focusedEntity.getComponentOfType(AreaComponent)
+			if (area) {
+				viewport.centerOn(area.position)
+			}
+		}
+
+		getEntitiesMatching([RelativePositionComponent]).each { GameEntity entity ->
+			log.debug "Initializing relatively positioned entity ${entity.name}"
+
+			// Determine parent reference
+			AreaComponent parentReference
+			if (entity.parent) {
+				parentReference = new AreaComponent(entity.parent.getComponentOfType(AreaComponent))
+			} else {
+				parentReference = new AreaComponent(viewport)
+			}
+
+			// See what components are set already
+			AreaComponent ac = entity.getComponentOfType(AreaComponent)
+			RelativePositionComponent rpc = entity.getComponentOfType(RelativePositionComponent)
+			RelativeWidthComponent rwc = entity.getComponentOfType(RelativeWidthComponent)
+			boolean newArea = false
+			if (!ac) {
+				ac = new AreaComponent()
+				newArea = true
+			}
+
+			if (rwc) {
+				// Compute relative width
+				ac.width = (rwc.width / 100.0f) * parentReference.width
+			}
+
+			if (entity instanceof PanelEntity) {
+				ac.x = constrainInt(relativeX(rpc) - (int)(ac.width / 2), 0, parentReference.width - (ac.width))
+				ac.y = constrainInt(relativeY(rpc) - (int)(ac.height / 2), 0, parentReference.height - (ac.height))
+			} else {
+				List<io.github.lhanson.possum.component.TextComponent> text =
+						entity.getComponentsOfType(io.github.lhanson.possum.component.TextComponent)
+				int xOffset = 0
+				if (text?.get(0)) {
+					// This is assuming we want to center this text around its position
+					xOffset = Math.floor(text[0].text.length() / 2)
+					ac.width = text.collect { it.text.size() }.max() // Longest string
+					// Assumes each text component is on its own line
+					ac.height = text.size()
+				}
+				ac.x = (rpc.x / 100.0f) * parentReference.width - xOffset
+				ac.y = (rpc.y / 100.0f) * parentReference.height
+			}
+
+			if (newArea) {
+				entity.components << ac
+				log.debug "Added area component for {}", entity.name
+			}
+
+			log.debug "Calculated position of {} for {}", ac, entity.name
+		}
+	}
+
+	// Returns value if it falls within the bounds, otherwise the nearest boundary
+	int constrainInt(int value, int min, int max) {
+		Math.min(Math.max(value, min), max)
+	}
+
+	int relativeX(RelativePositionComponent rpc) {
+		return (int) ((rpc.x / 100.0f) * viewport.width)
+	}
+
+	int relativeY(RelativePositionComponent rpc) {
+		return (int) ((rpc.y / 100.0f) * viewport.height)
 	}
 
 }

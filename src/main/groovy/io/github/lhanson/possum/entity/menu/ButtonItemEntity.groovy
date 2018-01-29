@@ -13,9 +13,14 @@ class ButtonItemEntity extends MenuItemEntity {
 	}
 
 	ButtonItemEntity(String label, Closure value, RelativePositionComponent rpc) {
+		this(label, value, rpc, false)
+	}
+
+	ButtonItemEntity(String label, Closure value, RelativePositionComponent rpc, boolean selected) {
 		super(label, rpc)
 		this.label = label
 		this.value = value
+		this.selected = selected
 	}
 
 	@Override

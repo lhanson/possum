@@ -114,6 +114,7 @@ class PanelEntity extends GameEntity {
 		return areaComponent
 	}
 
+	// RelativeWidthComponent must be accompanied by a RelativePositionComponent
 	private void ensureRelativePosition() {
 		if (getComponentOfType(RelativeWidthComponent) &&
 				!getComponentOfType(RelativePositionComponent)) {
@@ -122,10 +123,14 @@ class PanelEntity extends GameEntity {
 		}
 	}
 
+	// For panel inventory entities not already placed via relative positioning,
+	// we compute their vertical order and take any padding into account.
 	private void computeInventoryPositions() {
 		inventoryComponent.inventory.eachWithIndex { entity, i ->
-			entity.getComponentOfType(AreaComponent)?.x = padding
-			entity.getComponentOfType(AreaComponent)?.y = padding + i
+			if (!entity.getComponentOfType(RelativePositionComponent)) {
+				entity.getComponentOfType(AreaComponent)?.x = padding
+				entity.getComponentOfType(AreaComponent)?.y = padding + i
+			}
 		}
 	}
 

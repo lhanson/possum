@@ -49,11 +49,15 @@ class PanelEntityTest extends Specification {
 		when:
 			AreaComponent textArea1 = panelText1.getComponentOfType(AreaComponent)
 			AreaComponent textArea2 = panelText2.getComponentOfType(AreaComponent)
+			AreaComponent panelArea = panel.getComponentOfType(AreaComponent)
 		then:
 			textArea1.x == panel.padding
 			textArea1.y == panel.padding
 			textArea2.x == panel.padding
 			textArea2.y == panel.padding + 1
+			panelArea.height == textArea1.height + textArea2.height + (panel.padding * 2)
+			panelArea.width == Math.max(textArea1.width, textArea2.width) + (panel.padding * 2)
+
 	}
 
 	def "Panel without a specified area should shrink-wrap around multiple nested entities"() {

@@ -1,8 +1,11 @@
 package io.github.lhanson.possum.component
 
+import groovy.transform.ToString
+
 /**
  * Component used to represent displayed text
  */
+@ToString(includes = 'text')
 class TextComponent implements GameComponent {
 	enum Modifier {
 		BOLD

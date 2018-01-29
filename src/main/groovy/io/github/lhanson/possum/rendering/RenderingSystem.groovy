@@ -1,6 +1,5 @@
 package io.github.lhanson.possum.rendering
 
-import io.github.lhanson.possum.component.VectorComponent
 import io.github.lhanson.possum.scene.Scene
 
 /**
@@ -15,22 +14,6 @@ interface RenderingSystem {
 	 * Renders the current scene
 	 */
 	void render(Scene scene)
-
-	/**
-	 * @return the width of the current viewport
-	 */
-	int getViewportWidth()
-
-	/**
-	 * @return the width of the current viewport
-	 */
-	int getViewportHeight()
-
-	/**
-	 * Centers the viewport around the given coordinates
-	 * @param position the specified coordinates
-	 */
-	void centerViewport(VectorComponent position)
 
 	/**
 	 * Allows renderers to do scene-specific initialization before

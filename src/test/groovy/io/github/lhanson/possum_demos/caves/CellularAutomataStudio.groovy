@@ -84,10 +84,10 @@ class CellularAutomataStudio {
 					//new MenuItemEntity(text: 'Death Factor', caveGenerator.deathFactor),
 					new ButtonItemEntity('Generate Cave',
 							{
-								currentScene.uninit()
 								transition(CAVE)
 							},
-							new RelativePositionComponent(50, 80)
+							new RelativePositionComponent(50, 80),
+							true
 					),
 			])
 
