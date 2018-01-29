@@ -1,5 +1,6 @@
 package io.github.lhanson.possum.entity
 
+import io.github.lhanson.possum.collision.CollisionHandlingComponent
 import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.CameraFocusComponent
 import io.github.lhanson.possum.collision.ImpassableComponent
@@ -71,6 +72,24 @@ class GameEntityTest extends Specification {
 			entity.components << area
 		then:
 			entity.componentsByType[AreaComponent] == [area]
+	}
+
+	def "Searching for a component by type works for every Possum interface it implements"() {
+		when: "An entity has a component implementing multiple Possum interfaces"
+			def impassable = new ImpassableComponent()
+			def entity = new GameEntity(components: [impassable])
+
+		then: "the component is an instanceof multiple classes"
+			impassable instanceof GroovyObject
+			impassable instanceof ImpassableComponent
+			impassable instanceof CollisionHandlingComponent
+
+		and: "it can be looked up under any of the Possum classes"
+			entity.getComponentOfType(ImpassableComponent) == impassable
+			entity.getComponentOfType(CollisionHandlingComponent) == impassable
+
+		and: "but we don't index it under non-Possum classes"
+			entity.getComponentOfType(GroovyObject) == null
 	}
 
 	def "removeComponent updates map of components by type"() {

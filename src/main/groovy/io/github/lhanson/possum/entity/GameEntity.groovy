@@ -115,10 +115,15 @@ class GameEntity {
 		}
 
 		if (added) {
-			if (componentsByType[component.class] == null) {
-				componentsByType[component.class] = []
+			// Map it by its class and every Possum interface it implements
+			def classes = component.class.interfaces.findAll { it.name.startsWith 'io.github.lhanson.possum.'} + component.class
+			classes.each { Class clazz ->
+				logger.debug "'$name' registering component '$component' as '$clazz'"
+				if (componentsByType[clazz] == null) {
+					componentsByType[clazz] = []
+				}
+				componentsByType[clazz] << component
 			}
-			componentsByType[component.class] << component
 			if (publishEvent) {
 				eventBroker?.publish(new ComponentAddedEvent(this, component))
 			}
