@@ -53,13 +53,13 @@ class EventBroker {
 
 	/** Remove any subscriptions registered by the provided subscriber */
 	void unsubscribe(Object subscriber) {
-		subscriptionsByEventClass.values().each { List<Subscription> subscriptions ->
-			log.debug "Unsubscribing {} from {}", subscriber, subscriptions
+		subscriptionsByEventClass.each { eventType, subscriptions ->
 			// Use iterator to safely remove items; others may be iterating the list concurrently
 			Iterator<Subscription> iterator = subscriptions.iterator()
 			while (iterator.hasNext()) {
 				if (iterator.next().subscriber == subscriber) {
 					iterator.remove()
+					log.debug "Unsubscribed {} from {} notifications", subscriber, eventType
 				}
 			}
 		}
