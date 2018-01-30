@@ -229,83 +229,93 @@ class AreaComponentTest extends Specification {
 
 	def "4x4 area, remove 1x1 upper-left corner"() {
 		given:
-			def clipArea = new AreaComponent(0, 0, 4, 4)
-			def sa = new AreaComponent(0, 0, 1, 1)
+			def clipArea = new AreaComponent(10, 10, 4, 4)
+			def sa = new AreaComponent(10, 10, 1, 1)
 		when:
 			Set<AreaComponent> remainders = clipArea.subtract(sa)
 		then:
 			remainders == [
-					new AreaComponent(1, 0, 3, 1),
-					new AreaComponent(0, 1, 4, 3)
+					new AreaComponent(11, 10, 3, 1),
+					new AreaComponent(10, 11, 4, 3)
 			] as Set
 	}
 
 	def "4x4 area, remove 1x1 upper-right corner"() {
 		given:
-			def clipArea = new AreaComponent(0, 0, 4, 4)
-			def sa = new AreaComponent(3, 0, 1, 1)
+			def clipArea = new AreaComponent(10, 10, 4, 4)
+			def sa = new AreaComponent(13, 10, 1, 1)
 		when:
 			Set<AreaComponent> remainders = clipArea.subtract(sa)
 		then:
 			remainders == [
-					new AreaComponent(0, 0, 3, 1),
-					new AreaComponent(0, 1, 4, 3)
+					new AreaComponent(10, 10, 3, 1),
+					new AreaComponent(10, 11, 4, 3)
 			] as Set
 	}
 
 	def "4x4 area, remove 1x1 lower-left corner"() {
 		given:
-			def clipArea = new AreaComponent(0, 0, 4, 4)
-			def sa = new AreaComponent(0,3, 1, 1)
+			def clipArea = new AreaComponent(10, 10, 4, 4)
+			def sa = new AreaComponent(10,13, 1, 1)
 		when:
 			Set<AreaComponent> remainders = clipArea.subtract(sa)
 		then:
 			remainders == [
-					new AreaComponent(0, 0, 4, 3),
-					new AreaComponent(1, 3, 3, 1)
+					new AreaComponent(10, 10, 4, 3),
+					new AreaComponent(11, 13, 3, 1)
 			] as Set
 	}
 
 	def "4x4 area, remove 1x1 hole in middle"() {
 		given:
-			def clipArea = new AreaComponent(0, 0, 4, 4)
-			def sa = new AreaComponent(1,1, 1, 1)
+			def clipArea = new AreaComponent(10, 10, 4, 4)
+			def sa = new AreaComponent(11,11, 1, 1)
 		when:
 			Set<AreaComponent> remainders = clipArea.subtract(sa)
 		then:
 			remainders == [
-					new AreaComponent(0, 0, 4, 1),
-					new AreaComponent(0, 1, 1, 1),
-					new AreaComponent(2, 1, 2, 1),
-					new AreaComponent(0,2, 4, 2)
+					new AreaComponent(10, 10, 4, 1),
+					new AreaComponent(10, 11, 1, 1),
+					new AreaComponent(12, 11, 2, 1),
+					new AreaComponent(10,12, 4, 2)
 			] as Set
 	}
 
 	def "4x4 area, remove 4x4 partially overlapping area"() {
 		given:
-			def clipArea = new AreaComponent(0, 0, 4, 4)
-			def sa = new AreaComponent(2, -2, 4, 4)
+			def clipArea = new AreaComponent(10, 10, 4, 4)
+			def sa = new AreaComponent(12, 8, 4, 4)
 		when:
 			Set<AreaComponent> remainders = clipArea.subtract(sa)
 		then:
 			remainders == [
-					new AreaComponent(0, 0, 2, 2),
-					new AreaComponent(0, 2, 4, 2)
+					new AreaComponent(10, 10, 2, 2),
+					new AreaComponent(10, 12, 4, 2)
 			] as Set
 	}
 
 	def "4x4 area, remove top corners"() {
 		given:
-			def clipArea = new AreaComponent(0, 0, 4, 4)
-			def topLeft = new AreaComponent(0, 0, 1, 1)
-			def topRight = new AreaComponent(3, 0, 1, 1)
+			def clipArea = new AreaComponent(10, 10, 4, 4)
+			def topLeft = new AreaComponent(10, 10, 1, 1)
+			def topRight = new AreaComponent(13, 10, 1, 1)
 		when:
 			Set<AreaComponent> remainders = clipArea.subtractAll([topLeft, topRight])
 		then:
 			remainders == [
-					new AreaComponent(1, 0, 2, 1),
-					new AreaComponent(0, 1, 4, 3)
+					new AreaComponent(11, 10, 2, 1),
+					new AreaComponent(10, 11, 4, 3)
 			] as Set
+	}
+
+	def "Subtracting a large area from a small, fully-contained one results in an empty set"() {
+		given:
+			def largeArea = new AreaComponent(10, 10, 9, 1)
+			def smallArea = new AreaComponent(10, 10, 5, 1)
+		when:
+			def remainders = smallArea.subtract(largeArea)
+		then:
+			remainders.empty
 	}
 
 }

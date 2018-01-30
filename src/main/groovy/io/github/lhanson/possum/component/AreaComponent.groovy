@@ -196,7 +196,7 @@ class AreaComponent implements GameComponent {
 		}
 		// Right remainder
 		if (sa.right < right) {
-			remainders << new AreaComponent(sa.right, sa.y, width - sa.right, sa.height)
+			remainders << new AreaComponent(sa.right, sa.y, right - sa.right, sa.height)
 		}
 		// Top remainder
 		if (sa.y > y) {
