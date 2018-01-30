@@ -1,5 +1,6 @@
 target/
 application.yml
+TODO.md
 
 ### IntelliJ IDEA ###
 .idea
