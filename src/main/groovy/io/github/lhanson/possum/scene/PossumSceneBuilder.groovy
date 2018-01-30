@@ -88,6 +88,7 @@ class PossumSceneBuilder {
 		log.info "Running loading scene {}, while waiting for {} to initialize", nextScene.loadingScene, nextScene.id
 		def handler = { String nextId, SceneInitializedEvent event ->
 			if (event.sceneId == nextId) {
+				log.info "Loading scene {}, received initialization event for {}, transitioning", nextScene.loadingScene, nextScene.id
 				transition(nextId)
 			}
 		}.curry(nextScene.id)

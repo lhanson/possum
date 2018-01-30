@@ -318,4 +318,13 @@ class AreaComponentTest extends Specification {
 			remainders.empty
 	}
 
+	def "Subtraction from an area of zero width or height yields nothing"() {
+		given:
+			def area1 = new AreaComponent(0, 0, 0, 0)
+			def area2 = new AreaComponent(0, 0, 5, 1)
+		when:
+			def remainders = area1.subtract(area2)
+		then:
+			remainders.empty
+	}
 }

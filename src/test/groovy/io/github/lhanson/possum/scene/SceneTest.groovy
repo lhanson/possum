@@ -12,11 +12,11 @@ import io.github.lhanson.possum.entity.TextEntity
 import io.github.lhanson.possum.events.ComponentAddedEvent
 import io.github.lhanson.possum.events.ComponentRemovedEvent
 import io.github.lhanson.possum.events.EventBroker
-import io.github.lhanson.possum.rendering.Viewport
 import spock.lang.Specification
 
+import static io.github.lhanson.possum.scene.SceneBuilder.createScene
+
 class SceneTest extends Specification {
-	int sceneId = 1
 
 	def "Find entity by component"() {
 		given:
@@ -148,7 +148,9 @@ class SceneTest extends Specification {
 			!scene.initialized
 			scene.entities.empty
 			scene.getEntitiesMatching([AreaComponent]).empty
-			scene.eventBroker.subscriptionsByEventClass.findAll { it.value }.empty
+			scene.eventBroker.subscriptionsByEventClass.each {
+				assert it.value.empty
+			}
 			scene.quadtree.countEntities() == 0
 	}
 
@@ -368,14 +370,12 @@ class SceneTest extends Specification {
 			ac.y + ac.height == scene.viewport.height
 	}
 
-	// Convenience method for setting up a scene
-	Scene createScene(SceneInitializer initializer) {
-		Scene scene = new Scene("scene ${sceneId++}")
-		scene.sceneInitializer = initializer
-		scene.eventBroker = Mock(EventBroker)
-		scene.viewport = new Viewport()
-		scene.init()
-		return scene
+	def "Each entity is wired with a reference to its scene"() {
+		when:
+			GameEntity entity = new GameEntity()
+			Scene scene = createScene({[entity]})
+		then:
+			entity.scene == scene
 	}
 
 }

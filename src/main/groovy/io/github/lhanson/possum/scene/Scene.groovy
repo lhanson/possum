@@ -10,6 +10,7 @@ import io.github.lhanson.possum.component.RelativePositionComponent
 import io.github.lhanson.possum.component.RelativeWidthComponent
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.PanelEntity
+import io.github.lhanson.possum.entity.RerenderEntity
 import io.github.lhanson.possum.events.ComponentAddedEvent
 import io.github.lhanson.possum.events.ComponentRemovedEvent
 import io.github.lhanson.possum.events.EntityMovedEvent
@@ -174,6 +175,7 @@ class Scene {
 		}
 		entities << entity
 		entity.eventBroker = eventBroker
+		entity.scene = this
 		addEntityByComponentTypes(entity)
 		if (entity instanceof PanelEntity) {
 			panels << entity
@@ -309,11 +311,21 @@ class Scene {
 	 */
 	void entityNeedsRendering(GameEntity entity, AreaComponent previousArea = null) {
 		entitiesToBeRendered << entity
-		if (previousArea && previousArea != entity.getComponentOfType(AreaComponent)) {
-			// Need to repaint what's at the entity's previous location
-			def uncoveredEntities = findNonPanelWithin(previousArea)
-			if (uncoveredEntities) {
-				entitiesToBeRendered.addAll(uncoveredEntities)
+		AreaComponent area = entity.getComponentOfType(AreaComponent)
+		if (previousArea && previousArea != area) {
+			if (entity.parent) {
+				AreaComponent pc = entity.parent.getComponentOfType(AreaComponent)
+				AreaComponent newArea = translateChildToParent(area, pc)
+				AreaComponent oldArea = translateChildToParent(previousArea, pc)
+				oldArea.subtract(newArea).each {
+					entitiesToBeRendered << new RerenderEntity(components: [it])
+				}
+			} else {
+				// Need to repaint what's at the entity's previous location
+				def uncoveredEntities = findNonPanelWithin(previousArea)
+				if (uncoveredEntities) {
+					entitiesToBeRendered.addAll(uncoveredEntities)
+				}
 			}
 		}
 	}
@@ -416,5 +428,20 @@ class Scene {
 	int relativeY(RelativePositionComponent rpc) {
 		return (int) ((rpc.y / 100.0f) * viewport.height)
 	}
+
+	/**
+	 * Entities positioned relative to a parent need their coordinates added
+	 * to those of the parent in order to get rendering coordinates in the parent's
+	 * frame of reference.
+	 *
+	 * @param child the entity positioned relative to a parent
+	 * @param parent the entity whose coordinates determine the child's absolute position
+	 * @return an area describing the child's screen coordinates in the parent's frame of reference
+	 */
+	AreaComponent translateChildToParent(AreaComponent child, AreaComponent parent) {
+		// child + panel
+		new AreaComponent(child.x + parent.x, child.y + parent.y, child.width, child.height)
+	}
+
 
 }

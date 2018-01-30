@@ -7,6 +7,7 @@ import io.github.lhanson.possum.component.InventoryComponent
 import io.github.lhanson.possum.events.ComponentAddedEvent
 import io.github.lhanson.possum.events.ComponentRemovedEvent
 import io.github.lhanson.possum.events.EventBroker
+import io.github.lhanson.possum.scene.Scene
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -24,6 +25,9 @@ class GameEntity {
 	int id
 	/** The name of the entity */
 	String name
+	/** The scene the entity belongs to */
+	Scene scene
+
 	static boolean addInternal = true
 	/** The {@link GameComponent}s describing this entity's properties */
 	List<GameComponent> components = new ArrayList() {

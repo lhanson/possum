@@ -28,18 +28,19 @@ class MovementSystem extends GameSystem {
 	Logger log = LoggerFactory.getLogger(this.class)
 	String name = 'MovementSystem'
 	final VelocityComponent still = new VelocityComponent(0, 0, 0)
-	Set<GameEntity> movingEntities
+	Map<String, Set<GameEntity>> movingEntities = [:]
 
 	@Override
 	void doInitScene(Scene scene) {
-		movingEntities = scene
+		movingEntities[scene.id] = scene
 				.getEntitiesMatching([VelocityComponent])
 				.findAll { it.getComponentOfType(VelocityComponent) != still }
+		println "Initialized ${movingEntities[scene.id]}"
 	}
 
 	@Override
 	void doUninitScene(Scene scene) {
-		movingEntities = null
+		movingEntities[scene.id] = null
 	}
 
 	@Override
@@ -80,13 +81,16 @@ class MovementSystem extends GameSystem {
 				VelocityComponent velocity = entity.getComponentOfType(VelocityComponent)
 				velocity.vector3.add(newVelocity)
 				if (velocity != still) {
-					movingEntities.add(entity)
+					if (movingEntities[scene.id] == null) {
+						movingEntities[scene.id] = [] as Set
+					}
+					movingEntities[scene.id].add(entity)
 				}
 			}
 		}
 
 		// Move entities
-		movingEntities.each {
+		movingEntities[scene.id].each {
 			AreaComponent ac = it.getComponentOfType(AreaComponent)
 			VelocityComponent vc = it.getComponentOfType(VelocityComponent)
 			if (vc != still) {
@@ -99,7 +103,7 @@ class MovementSystem extends GameSystem {
 		}
 
 		// Resolve collisions
-		movingEntities.each { entity ->
+		movingEntities[scene.id].each { entity ->
 			AreaComponent location = entity.getComponentOfType(AreaComponent)
 			List<GameEntity> colliders = scene.findNonPanelWithin(location) - entity
 			colliders.each {
@@ -113,8 +117,10 @@ class MovementSystem extends GameSystem {
 		}
 
 		// Stop entities
-		movingEntities.each { it.getComponentOfType(VelocityComponent).vector3.setValues(0, 0, 0) }
-		movingEntities.clear()
+		movingEntities[scene.id].each {
+			it.getComponentOfType(VelocityComponent).vector3.setValues(0, 0, 0)
+		}
+		movingEntities[scene.id]?.clear()
 	}
 
 	/**

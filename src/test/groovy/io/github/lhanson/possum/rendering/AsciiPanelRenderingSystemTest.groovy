@@ -6,29 +6,20 @@ import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.events.EventBroker
 import io.github.lhanson.possum.scene.Scene
-import io.github.lhanson.possum.scene.SceneInitializer
-import io.github.lhanson.possum.scene.SceneTest
+import io.github.lhanson.possum.scene.SceneBuilder
 import spock.lang.Specification
 
 
 class AsciiPanelRenderingSystemTest extends Specification {
 	AsciiPanelRenderingSystem renderer
 	Scene scene
-	SceneTest sceneTest
 
 	def setup() {
-		sceneTest = new SceneTest()
-
-		scene = createScene()
+		scene = SceneBuilder.createScene()
 		renderer = new AsciiPanelRenderingSystem()
 		renderer.makeVisible = false // don't flash a blank JPanel during tests
 		renderer.scene = scene
 		renderer.init()
-	}
-
-	// We reuse the Scene creation from SceneTest
-	def createScene(SceneInitializer initializer) {
-		sceneTest.createScene(initializer)
 	}
 
 	def "Write ignores objects outside the viewport"() {
@@ -45,7 +36,7 @@ class AsciiPanelRenderingSystemTest extends Specification {
 
 	def "Track initialized scenes"() {
 		given:
-			Scene scene2 = createScene()
+			Scene scene2 = SceneBuilder.createScene()
 		when:
 			renderer.initScene(scene)
 			renderer.initScene(scene2)
@@ -65,7 +56,7 @@ class AsciiPanelRenderingSystemTest extends Specification {
 	def "Panel areas are stored and loaded by scene"() {
 		given:
 			PanelEntity panel = new PanelEntity(components: [new AreaComponent(0, 0, 10, 10)])
-			Scene scene2 = createScene({[panel]})
+			Scene scene2 = SceneBuilder.createScene({[panel]})
 		and:
 			renderer.initScene(scene2)
 		when:
@@ -78,7 +69,7 @@ class AsciiPanelRenderingSystemTest extends Specification {
 	def "Panel areas are reloaded with their scene"() {
 		given:
 			PanelEntity panel = new PanelEntity(components: [new AreaComponent(0, 0, 10, 10)])
-			Scene scene2 = createScene({[panel]})
+			Scene scene2 = SceneBuilder.createScene({[panel]})
 			renderer.initScene(scene2)
 		and:
 			// This updates the renderer's scenePanelAreas for the new, empty scene
@@ -93,7 +84,7 @@ class AsciiPanelRenderingSystemTest extends Specification {
 		given:
 			GameEntity entity = new GameEntity(components: [new AreaComponent(0, 0, 1, 1)])
 			PanelEntity panel = new PanelEntity(components: [new AreaComponent(0, 0, 10, 10)])
-			Scene scene = createScene({[entity, panel]})
+			Scene scene = SceneBuilder.createScene({[entity, panel]})
 			scene.eventBroker = new EventBroker()
 			scene.init()
 		when:

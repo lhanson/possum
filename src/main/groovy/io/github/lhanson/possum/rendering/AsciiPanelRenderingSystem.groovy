@@ -24,7 +24,7 @@ import java.util.List
 class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	Logger logger = LoggerFactory.getLogger(this.class)
 	AsciiPanel terminal
-	Map<Scene, List<AreaComponent>> panelAreasByScene = [:]
+	Map<String, List<AreaComponent>> panelAreasBySceneId = [:]
 	// Panel areas in the scene, sorted by x, y coordinates
 	List<AreaComponent> scenePanelAreas
 	// Scenes currently initialized and running
@@ -71,7 +71,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		this.scene = scene
 		if (runningScenes.contains(scene)) {
 			logger.debug "Scene was not uninitialized, skipping initialization {}", scene
-			scenePanelAreas = panelAreasByScene[scene]
+			scenePanelAreas = panelAreasBySceneId[scene.id]
 		} else {
 			logger.debug "Initializing scene {}", scene
 			long startTime = System.currentTimeMillis()
@@ -81,7 +81,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 			// Store a list of the panel areas in the scene sorted by x,y coordinates for faster reference
 			scenePanelAreas = scene.panels.findResults { it.getComponentOfType(AreaComponent) }
 			scenePanelAreas.sort { a, b -> a.x <=> b.y ?: a.y <=> b.y }
-			panelAreasByScene[scene] = scenePanelAreas
+			panelAreasBySceneId[scene.id] = scenePanelAreas
 
 			setVisible(makeVisible)
 			logger.debug "Renderer initialization took ${System.currentTimeMillis() - startTime} ms"
@@ -95,7 +95,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	@Override
 	void uninitScene(Scene scene) {
 		scenePanelAreas = null
-		panelAreasByScene.remove(scene)
+		panelAreasBySceneId.remove(scene.id)
 		runningScenes.remove(scene)
 	}
 
@@ -139,12 +139,17 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 			if (entity instanceof PanelEntity) {
 				dirtyRectangles << renderPanelBorders(entity)
 			} else if (entity instanceof RerenderEntity) {
-				fullScreenRefresh = true
-				terminal.clear(' ' as char, 0, 0, scene.viewport.width, scene.viewport.height)
+				AreaComponent rerenderArea = entity.getComponentOfType(AreaComponent)
+				if (rerenderArea) {
+					terminal.clear(' ' as char, rerenderArea.x, rerenderArea.y, rerenderArea.width, rerenderArea.height)
+				} else {
+					fullScreenRefresh = true
+					terminal.clear(' ' as char, 0, 0, scene.viewport.width, scene.viewport.height)
+				}
 			} else if (entity.parent) {
 				TextComponent tc = entity.getComponentOfType(TextComponent)
 				AreaComponent pc = entity.parent.getComponentOfType(AreaComponent)
-				AreaComponent ac = translateChildToParent(entity.getComponentOfType(AreaComponent), pc)
+				AreaComponent ac = scene.translateChildToParent(entity.getComponentOfType(AreaComponent), pc)
 				AreaComponent dirtyRect = translateTerminalToPixels(ac)
 				dirtyRectangles << dirtyRect
 				write(tc, ac.x, ac.y)
@@ -183,7 +188,11 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 			boolean pauseForHints = false
 			stopwatch.start('rendering debug hints')
 			scene.entitiesToBeRendered.findAll { !(it instanceof GaugeEntity) }.each { entity ->
-				AreaComponent area = translateWorldToAsciiPanel(entity.getComponentOfType(AreaComponent), scene.viewport)
+				AreaComponent area = entity.getComponentOfType(AreaComponent)
+				// RerenderEntities are already given in AsciiPanel coordinates, otherwise translate
+				if (!(entity instanceof RerenderEntity)) {
+					area = translateWorldToAsciiPanel(area, scene.viewport)
+				}
 				logger.debug "Hinting clearing {}", area
 				// Draw a red block where we're clearing (▓)
 				def red = new Color(255, 0, 0, 100)
@@ -252,19 +261,6 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 				ac.y * terminal.charHeight,
 				ac.width * terminal.charWidth,
 				ac.height * terminal.charHeight)
-	}
-
-	/**
-	 * Entities positioned relative to a parent need their coordinates added
-	 * to those of the parent in order to get screen rendering coordinates.
-	 *
-	 * @param child the entity positioned relative to a parent
-	 * @param parent the entity whose coordinates determine the child's absolute position
-	 * @return an area describing the child's absolute screen coordinates for rendering
-	 */
-	AreaComponent translateChildToParent(AreaComponent child, AreaComponent parent) {
-		// child + panel
-		new AreaComponent(child.x + parent.x, child.y + parent.y, child.width, child.height)
 	}
 
 	/**

@@ -219,7 +219,6 @@ class BasicCaveExplorer {
 					simulationHzGauge.text = "$formatted Hz"
 				}
 				def fpsGauge = new GaugeEntity(name: 'fpsGauge')
-				fpsGauge.components << new AreaComponent(0, 1, 0, 1)
 				fpsGauge.update = {
 					// The number of ticks being simulated doesn't reflect rendering
 					// frequency, so we get the actual timing from the main loop.

@@ -181,33 +181,38 @@ class AreaComponent implements GameComponent {
 	 * @return a set of areas remaining within the clip area after subtractedArea is removed
 	 */
 	Set<AreaComponent> subtract(AreaComponent subjectArea) {
-		if (!subjectArea || !this.overlaps(subjectArea)) {
-			return [this] as Set
-		}
-		// Clip subject to our area
-		AreaComponent sa = clip(subjectArea)
-
 		// Up to 4 remainders if it leaves a hole: left, above, right, below
 		Set<AreaComponent> remainders = []
 
-		// Left remainder
-		if (sa.x > x) {
-			remainders << new AreaComponent(x, sa.y, sa.x - x, sa.height)
-		}
-		// Right remainder
-		if (sa.right < right) {
-			remainders << new AreaComponent(sa.right, sa.y, right - sa.right, sa.height)
-		}
-		// Top remainder
-		if (sa.y > y) {
-			remainders << new AreaComponent(x, y, width, sa.y - y)
-		}
-		// Bottom remainder
-		if (sa.bottom < bottom) {
-			remainders << new AreaComponent(x, sa.bottom, width, bottom - sa.bottom)
+		if (!subjectArea || !this.overlaps(subjectArea)) {
+			// If no argument or it doesn't overlap us, return this
+			remainders << this
+		} else {
+			// Clip subject to our area
+			AreaComponent sa = clip(subjectArea)
+
+			// Left remainder
+			if (sa.x > x) {
+				remainders << new AreaComponent(x, sa.y, sa.x - x, sa.height)
+			}
+			// Right remainder
+			if (sa.right < right) {
+				remainders << new AreaComponent(sa.right, sa.y, right - sa.right, sa.height)
+			}
+			// Top remainder
+			if (sa.y > y) {
+				remainders << new AreaComponent(x, y, width, sa.y - y)
+			}
+			// Bottom remainder
+			if (sa.bottom < bottom) {
+				remainders << new AreaComponent(x, sa.bottom, width, bottom - sa.bottom)
+			}
 		}
 
-		return remainders
+		// Trim off any zero-size areas
+		return remainders.findAll {
+			it.width > 0 && it.height > 0
+		}
 	}
 
 	/**

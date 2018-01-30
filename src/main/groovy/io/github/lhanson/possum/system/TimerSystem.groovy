@@ -14,26 +14,26 @@ import org.springframework.stereotype.Component
 class TimerSystem extends GameSystem {
 	@Autowired EventBroker eventBroker
 	String name = 'timerSystem'
-	List<GameEntity> timers
+	Map<String, List<GameEntity>> timers = [:]
 	boolean removingComponent = false
 
 	@Override
 	void doInitScene(Scene scene) {
 		eventBroker.subscribe(this)
-		timers = scene.entities.findAll {
+		timers[scene.id] = scene.entities.findAll {
 			it.components.findAll { it instanceof TimerComponent }
 		}
 	}
 
 	@Override
 	void doUninitScene(Scene scene) {
-		timers = null
+		timers[scene.id] = null
 		eventBroker.unsubscribe(this)
 	}
 
 	@Override
 	void doUpdate(Scene scene, double ticks) {
-		timers.each { entity ->
+		timers[scene.id].each { entity ->
 			def expiredTimers = []
 			entity.getComponentsOfType(TimerComponent)
 					.each { TimerComponent tc ->
@@ -54,14 +54,14 @@ class TimerSystem extends GameSystem {
 	void componentAdded(ComponentAddedEvent event) {
 		if (event.component instanceof TimerComponent) {
 			log.debug("Added {} to timer lookup list", event.entity)
-			timers.add(event.entity)
+			timers[event.entity.scene.id].add(event.entity)
 		}
 	}
 
 	@Subscription
 	void componentRemoved(ComponentRemovedEvent event) {
 		if (!removingComponent && event.component instanceof TimerComponent) {
-			timers.remove(event.entity)
+			timers[event.entity.scene.id].remove(event.entity)
 		}
 		log.debug("Removed {} from timer lookup list", event.entity)
 	}

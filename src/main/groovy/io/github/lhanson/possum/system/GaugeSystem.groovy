@@ -1,5 +1,6 @@
 package io.github.lhanson.possum.system
 
+import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.InventoryComponent
 import io.github.lhanson.possum.entity.GaugeEntity
 import io.github.lhanson.possum.events.ComponentAddedEvent
@@ -14,7 +15,7 @@ import org.springframework.stereotype.Component
 class GaugeSystem extends GameSystem {
 	@Autowired EventBroker eventBroker
 	String name = 'GaugeSystem'
-	List<GaugeEntity> gauges
+	Map<String, List<GaugeEntity>> gauges = [:]
 
 	@Override
 	void doInitScene(Scene scene) {
@@ -22,31 +23,32 @@ class GaugeSystem extends GameSystem {
 
 		// Locate GaugeEntities in the scene, from both the top-level entities list
 		//  as well as entities nested in InventoryComponents
-		gauges = scene.entities.findAll { it instanceof GaugeEntity }
+		gauges[scene.id] = scene.entities.findAll { it instanceof GaugeEntity }
 		def inventories = scene.getComponents(InventoryComponent)
 		def inventoryGauges = inventories?.findResults { InventoryComponent ic ->
 			ic.inventory.findAll { it instanceof GaugeEntity }
 		}?.flatten()
 		if (inventoryGauges) {
-			gauges.addAll(inventoryGauges)
-			gauges.flatten()
+			gauges[scene.id].addAll(inventoryGauges)
+			gauges[scene.id].flatten()
 		}
 	}
 
 	@Override
 	void doUninitScene(Scene scene) {
-		gauges = null
+		gauges[scene.id] = null
 		eventBroker.unsubscribe(this)
 	}
 
 	@Override
 	void doUpdate(Scene scene, double elapsed) {
-		gauges.each { GaugeEntity gauge ->
-			def before = gauge.text
+		gauges[scene.id].each { GaugeEntity gauge ->
+			def beforeText = gauge.text
+			def previousArea = new AreaComponent(gauge.getComponentOfType(AreaComponent))
 			gauge.update(elapsed)
-			if (gauge.text != before) {
-				log.trace "Gauge {} value changed", gauge.name
-				scene.entityNeedsRendering(gauge)
+			if (gauge.text != beforeText) {
+				log.trace "Gauge {} value changed in scene {}", gauge.name, scene.id
+				scene.entityNeedsRendering(gauge, previousArea)
 			}
 		}
 	}
@@ -54,17 +56,20 @@ class GaugeSystem extends GameSystem {
 	@Subscription
 	void componentAdded(ComponentAddedEvent event) {
 		if (event.entity instanceof GaugeEntity) {
-			log.debug("Added {} to gauge lookup list", event.entity)
-			gauges.add(event.entity)
+			log.debug("Added {} to gauge lookup list for scene {}", event.entity, event.entity.scene)
+			if (gauges[event.entity.scene.id] == null) {
+				gauges[event.entity.scene.id] = []
+			}
+			gauges[event.entity.scene.id].add(event.entity)
 		}
 	}
 
 	@Subscription
 	void componentRemoved(ComponentRemovedEvent event) {
 		if (event.entity instanceof GaugeEntity) {
-			gauges.remove(event.entity)
+			gauges[event.entity.scene.id].remove(event.entity)
 		}
-		log.debug("Removed {} from gauge lookup list", event.entity)
+		log.debug("Removed {} from gauge lookup list for scene {}", event.entity, event.entity.scene)
 	}
 
 }

@@ -18,24 +18,24 @@ import java.awt.Color
 class AnimationSystem extends GameSystem {
 	@Autowired EventBroker eventBroker
 	String name = 'AnimationSystem'
-	List<GameEntity> animatedEntities
+	Map<String, List<GameEntity>> animatedEntities = [:]
 	boolean removingComponent = false
 
 	@Override
 	void doInitScene(Scene scene) {
 		eventBroker.subscribe(this)
-		animatedEntities =  scene.getEntitiesMatching([AnimatedComponent])
+		animatedEntities[scene.id] = scene.getEntitiesMatching([AnimatedComponent])
 	}
 
 	@Override
 	void doUninitScene(Scene scene) {
-		animatedEntities = null
+		animatedEntities[scene.id] = null
 		eventBroker.unsubscribe(this)
 	}
 
 	@Override
 	void doUpdate(Scene scene, double elapsed) {
-		animatedEntities.each { entity ->
+		animatedEntities[scene.id].each { entity ->
 			AnimatedComponent ac = entity.getComponentOfType(AnimatedComponent)
 			ColorComponent cc = entity.getComponentOfType(ColorComponent)
 
@@ -96,14 +96,17 @@ class AnimationSystem extends GameSystem {
 	void componentAdded(ComponentAddedEvent event) {
 		if (event.component instanceof AnimatedComponent) {
 			log.debug("Added {} to animated lookup list", event.entity)
-			animatedEntities.add(event.entity)
+			if (animatedEntities[event.entity.scene.id] == null) {
+				animatedEntities[event.entity.scene.id] == []
+			}
+			animatedEntities[event.entity.scene.id].add(event.entity)
 		}
 	}
 
 	@Subscription
 	void componentRemoved(ComponentRemovedEvent event) {
 		if (!removingComponent && event.component instanceof AnimatedComponent) {
-			animatedEntities.remove(event.entity)
+			animatedEntities[event.entity.scene.id].remove(event.entity)
 		}
 		log.debug("Removed {} from animated lookup list", event.entity)
 	}
