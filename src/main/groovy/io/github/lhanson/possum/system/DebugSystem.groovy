@@ -25,8 +25,12 @@ class DebugSystem extends GameSystem {
 					log.debug "Increased debug pause to ${scene.debugPauseMillis}"
 					break
 				case (MappedInput.DECREASE_DEBUG_PAUSE):
-					scene.debugPauseMillis -= 200
-					log.debug "Decreased debug pause to ${scene.debugPauseMillis}"
+					if (scene.debugPauseMillis >= 200) {
+						scene.debugPauseMillis -= 200
+						log.debug "Decreased debug pause to ${scene.debugPauseMillis}"
+					} else {
+						log.debug "Can't decrease debug pause any further (${scene.debugPauseMillis})"
+					}
 					break
 			}
 		}
