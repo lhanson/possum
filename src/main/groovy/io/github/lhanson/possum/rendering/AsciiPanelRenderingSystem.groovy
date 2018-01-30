@@ -182,17 +182,13 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		if (scene.debug) {
 			boolean pauseForHints = false
 			stopwatch.start('rendering debug hints')
-			scene.entitiesToBeRendered
-					.findAll { !(it instanceof GaugeEntity) }
-					.each { entity ->
-				if (entity instanceof RerenderEntity) {
-					AreaComponent area = translateWorldToAsciiPanel(entity.getComponentOfType(AreaComponent), scene.viewport)
-					logger.debug "Hinting clearing {}", area
-					// Draw a red block where we're clearing (▓)
-					def red = new Color(255, 0, 0, 100)
-					terminal.clear((char) 178, area.x, area.y, area.width, area.height, red, Color.black)
-					pauseForHints = true
-				}
+			scene.entitiesToBeRendered.findAll { !(it instanceof GaugeEntity) }.each { entity ->
+				AreaComponent area = translateWorldToAsciiPanel(entity.getComponentOfType(AreaComponent), scene.viewport)
+				logger.debug "Hinting clearing {}", area
+				// Draw a red block where we're clearing (▓)
+				def red = new Color(255, 0, 0, 100)
+				terminal.clear((char) 178, area.x, area.y, area.width, area.height, red, Color.black)
+				pauseForHints = true
 			}
 
 			drawQuadtreeOutline(scene.quadtree, new Color(50, 50, 50))
@@ -207,9 +203,9 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	}
 
 	void drawQuadtreeOutline(Quadtree quadtree, Color color) {
-		AreaComponent bounds = translateWorldToAsciiPanel(quadtree.bounds, scene.viewport)
+		AreaComponent bounds = translateTerminalToPixels(translateWorldToAsciiPanel(quadtree.bounds, scene.viewport))
 		Graphics g = terminal.offscreenGraphics
-		g.drawRect(bounds.x * terminal.charWidth, bounds.y * terminal.charHeight, bounds.width * terminal.charWidth, bounds.height * terminal.charHeight)
+		g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height)
 		if (quadtree.nodes[0]) {
 			quadtree.nodes.each {
 				drawQuadtreeOutline(it, color)
