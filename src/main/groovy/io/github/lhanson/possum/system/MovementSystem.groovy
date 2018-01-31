@@ -35,7 +35,6 @@ class MovementSystem extends GameSystem {
 		movingEntities[scene.id] = scene
 				.getEntitiesMatching([VelocityComponent])
 				.findAll { it.getComponentOfType(VelocityComponent) != still }
-		println "Initialized ${movingEntities[scene.id]}"
 	}
 
 	@Override
