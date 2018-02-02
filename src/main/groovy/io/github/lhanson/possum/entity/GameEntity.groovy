@@ -119,8 +119,17 @@ class GameEntity {
 		}
 
 		if (added) {
-			// Map it by its class and every Possum interface it implements
-			def classes = component.class.interfaces.findAll { it.name.startsWith 'io.github.lhanson.possum.'} + component.class
+			// Map it by its class,
+			def classes = [component.class]
+			// every Possum interface it implements,
+			classes.addAll(component.class.interfaces.findAll { it.name.startsWith 'io.github.lhanson.possum.'})
+			// or every Possum class it extends
+			Class superclass = component.class.superclass
+			while (superclass.name.startsWith('io.github.lhanson.possum.')) {
+				classes << superclass
+				classes.addAll(superclass.interfaces.findAll { it.name.startsWith 'io.github.lhanson.possum.'})
+				superclass = superclass.superclass
+			}
 			classes.each { Class clazz ->
 				logger.debug "'$name' registering component '$component' as '$clazz'"
 				if (componentsByType[clazz] == null) {

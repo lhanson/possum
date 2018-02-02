@@ -4,8 +4,11 @@ import io.github.lhanson.possum.collision.CollisionHandlingComponent
 import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.CameraFocusComponent
 import io.github.lhanson.possum.collision.ImpassableComponent
+import io.github.lhanson.possum.component.GameComponent
 import io.github.lhanson.possum.component.InventoryComponent
 import io.github.lhanson.possum.component.TextComponent
+import io.github.lhanson.possum.component.java2d.Java2DComponent
+import io.github.lhanson.possum.component.java2d.Java2DRectangleComponent
 import io.github.lhanson.possum.events.ComponentAddedEvent
 import io.github.lhanson.possum.events.EventBroker
 import io.github.lhanson.possum.events.Subscription
@@ -87,6 +90,25 @@ class GameEntityTest extends Specification {
 		and: "it can be looked up under any of the Possum classes"
 			entity.getComponentOfType(ImpassableComponent) == impassable
 			entity.getComponentOfType(CollisionHandlingComponent) == impassable
+
+		and: "but we don't index it under non-Possum classes"
+			entity.getComponentOfType(GroovyObject) == null
+	}
+
+	def "Searching for a component by type works for every Possum superclass it extends"() {
+		when: "An entity has a component which extends a Possum superclass"
+			def j2dRectangle = new Java2DRectangleComponent()
+			def entity = new GameEntity(components: [j2dRectangle])
+
+		then: "the component is an instanceof multiple classes"
+			j2dRectangle instanceof GroovyObject
+			j2dRectangle instanceof Java2DComponent
+			j2dRectangle instanceof GameComponent
+
+		and: "it can be looked up under any of the Possum classes"
+			entity.getComponentOfType(Java2DRectangleComponent) == j2dRectangle
+			entity.getComponentOfType(Java2DComponent) == j2dRectangle
+			entity.getComponentOfType(GameComponent) == j2dRectangle
 
 		and: "but we don't index it under non-Possum classes"
 			entity.getComponentOfType(GroovyObject) == null
