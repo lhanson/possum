@@ -1,10 +1,10 @@
 package io.github.lhanson.possum.rendering
 
 import asciiPanel.AsciiPanel
-import io.github.lhanson.possum.collision.Quadtree
 import io.github.lhanson.possum.component.*
+import io.github.lhanson.possum.component.java2d.Java2DComponent
+import io.github.lhanson.possum.component.java2d.Java2DRectangleComponent
 import io.github.lhanson.possum.entity.GameEntity
-import io.github.lhanson.possum.entity.GaugeEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.RerenderEntity
 import io.github.lhanson.possum.scene.Scene
@@ -20,10 +20,13 @@ import java.awt.*
 import java.awt.image.BufferedImage
 import java.util.List
 
+import static io.github.lhanson.possum.component.AreaComponent.FrameOfReference.*
+
 @Component
 class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	Logger logger = LoggerFactory.getLogger(this.class)
 	AsciiPanel terminal
+	AreaComponent asciiPanelBounds
 	Map<String, List<AreaComponent>> panelAreasBySceneId = [:]
 	// Panel areas in the scene, sorted by x, y coordinates
 	List<AreaComponent> scenePanelAreas
@@ -38,6 +41,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	void init() {
 		logger.trace "Initializing"
 		terminal = new AsciiPanel(100, 40)
+		asciiPanelBounds = new AreaComponent(0, 0, terminal.widthInCharacters, terminal.heightInCharacters)
 		logger.debug "Created terminal with fairly arbitrary 100x40 dimensions and should probably parameterize that"
 
 		boolean isOSX = false
@@ -119,7 +123,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		}
 
 		// Hint to the render method that we can use one large dirty rectangle
-		scene.entityNeedsRendering(new RerenderEntity(name: 'fullSceneRepaintRenderer'))
+		scene.entityNeedsRendering(new RerenderEntity(name: 'fullSceneRepaintRenderer', scene: scene))
 	}
 
 	@Override
@@ -130,15 +134,26 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		checkScrollBoundaries(scene)
 		stopwatch.stop()
 
-		renderDebugHints(scene, stopwatch)
-
 		stopwatch.start('processing each entity')
+		// The AsciiPanel-referenced areas which the underlying Java2D API needs to draw again
 		def dirtyRectangles = []
 		boolean fullScreenRefresh = false
-		scene.entitiesToBeRendered.each { entity ->
+		def debugPause = false
+		def renderEntities
+		// Determine if we're rendering a normal frame or a debug-hinting frame
+		if (scene.debugEntitiesToBeRendered.empty) {
+			renderEntities = scene.entitiesToBeRendered
+		} else {
+			renderEntities = scene.debugEntitiesToBeRendered
+			debugPause = true
+		}
+		if (renderEntities.size() > 0)
+		renderEntities.each { entity ->
 			if (entity instanceof PanelEntity) {
+				/* Render panel borders */
 				dirtyRectangles << renderPanelBorders(entity)
 			} else if (entity instanceof RerenderEntity) {
+				/* Render background color (partial or full-screen) */
 				AreaComponent rerenderArea = entity.getComponentOfType(AreaComponent)
 				if (rerenderArea) {
 					terminal.clear(' ' as char, rerenderArea.x, rerenderArea.y, rerenderArea.width, rerenderArea.height)
@@ -147,29 +162,39 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 					terminal.clear(' ' as char, 0, 0, scene.viewport.width, scene.viewport.height)
 				}
 			} else if (entity.parent) {
-				TextComponent tc = entity.getComponentOfType(TextComponent)
-				AreaComponent pc = entity.parent.getComponentOfType(AreaComponent)
-				AreaComponent ac = scene.translateChildToParent(entity.getComponentOfType(AreaComponent), pc)
-				AreaComponent dirtyRect = translateTerminalToPixels(ac)
+				/* Resolve parent positioning and render AsciiPanel */
+				AreaComponent ac = scene.translateChildToParent(
+						entity.getComponentOfType(AreaComponent),
+						entity.parent.getComponentOfType(AreaComponent))
+				AreaComponent dirtyRect = translateAsciiPanelToPixels(ac)
 				dirtyRectangles << dirtyRect
-				write(tc, ac.x, ac.y)
-			} else {
-				// Generic renderer
-				if (isVisible(entity)) {
-					Color color = entity.getComponentOfType(ColorComponent)?.color ?: terminal.defaultForegroundColor
-					TextComponent tc = entity.getComponentOfType(TextComponent)
+				write(entity.getComponentOfType(TextComponent), ac.x, ac.y)
+			} else if (isVisible(entity)) {
+				/* General case, determine what type of entity it is */
+				Color color = entity.getComponentOfType(ColorComponent)?.color ?: terminal.defaultForegroundColor
+				TextComponent tc = entity.getComponentOfType(TextComponent)
+				if (tc) {
+					// Text component, render with AsciiPanel
 					AreaComponent panelArea = translateWorldToAsciiPanel(entity.getComponentOfType(AreaComponent), scene.viewport)
 					write(tc, panelArea.x, panelArea.y, color)
-					AreaComponent pixelArea = translateTerminalToPixels(panelArea)
-					dirtyRectangles << pixelArea
+					dirtyRectangles << translateAsciiPanelToPixels(panelArea)
+				} else if (entity.getComponentOfType(Java2DComponent)) {
+					// Java 2D component, it will draw itself
+					AreaComponent ap = translateWorldToAsciiPanel(entity.getComponentOfType(AreaComponent), scene.viewport)
+					AreaComponent drawArea = translateAsciiPanelToPixels(ap)
+					Java2DRectangleComponent j2d = entity.getComponentOfType(Java2DRectangleComponent)
+					j2d.draw(terminal.offscreenGraphics, drawArea)
+					dirtyRectangles << drawArea
 				}
+			} else {
+				logger.debug "Not rendering invisible entity '{}'", entity
 			}
 		}
 		stopwatch.stop()
 
 		stopwatch.start('terminal render')
 		int entitiesRerendered = scene.entitiesToBeRendered.size()
-		scene.entitiesToBeRendered.clear()
+		renderEntities.clear()
 		if (fullScreenRefresh) {
 			dirtyRectangles.clear()
 			dirtyRectangles << new AreaComponent(0, 0, scene.viewport.width * terminal.charWidth, scene.viewport.height * terminal.charHeight)
@@ -181,55 +206,22 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		if (entitiesRerendered > 2 || dirtyRectangles.size() > 0) {
 			logger.trace "Render complete, {} entities with {} dirty rectangles. {}", entitiesRerendered, dirtyRectangles.size(), stopwatch
 		}
-	}
 
-	void renderDebugHints(Scene scene, StopWatch stopwatch) {
-		if (scene.debug) {
-			boolean pauseForHints = false
-			stopwatch.start('rendering debug hints')
-			scene.entitiesToBeRendered.findAll { !(it instanceof GaugeEntity) }.each { entity ->
-				AreaComponent area = entity.getComponentOfType(AreaComponent)
-				// RerenderEntities are already given in AsciiPanel coordinates, otherwise translate
-				if (!(entity instanceof RerenderEntity)) {
-					area = translateWorldToAsciiPanel(area, scene.viewport)
-				}
-				logger.debug "Hinting clearing {}", area
-				// Draw a red block where we're clearing (▓)
-				def red = new Color(255, 0, 0, 100)
-				terminal.clear((char) 178, area.x, area.y, area.width, area.height, red, Color.black)
-				pauseForHints = true
-			}
-
-			drawQuadtreeOutline(scene.quadtree, new Color(50, 50, 50))
-
-			if (pauseForHints) {
-				terminal.paintImmediately(0, 0, terminal.width, terminal.height)
-				logger.debug "Pausing to display render hints for ${scene.debugPauseMillis} ms"
-				Thread.sleep(scene.debugPauseMillis)
-			}
-			stopwatch.stop()
-		}
-	}
-
-	void drawQuadtreeOutline(Quadtree quadtree, Color color) {
-		AreaComponent bounds = translateTerminalToPixels(translateWorldToAsciiPanel(quadtree.bounds, scene.viewport))
-		Graphics g = terminal.offscreenGraphics
-		g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height)
-		if (quadtree.nodes[0]) {
-			quadtree.nodes.each {
-				drawQuadtreeOutline(it, color)
-			}
+		if (debugPause) {
+			logger.debug "Pausing to display render hints for 200 ms"
+			Thread.sleep(200)
 		}
 	}
 
 	boolean isVisible(GameEntity entity) {
 		boolean visible = false
 		AreaComponent area = entity.getComponentOfType(AreaComponent)
-		if (area) {
-			// When detecting overlap with panels, we translate the entity's coordinates to
-			// be viewport-based rather than world-based.
-			AreaComponent viewportArea = translateWorldToAsciiPanel(area, scene.viewport)
-			visible = area.overlaps(scene.viewport) && !scenePanelAreas.any { viewportArea.overlaps(it) }
+		if (area?.frameOfReference == WORLD) {
+			visible = area.overlaps(scene.viewport)
+		} else if (area.frameOfReference == ASCII_PANEL) {
+			visible = area.overlaps(asciiPanelBounds)
+		} else {
+			logger.error "Not sure how to test visibility of entity '{}'", entity
 		}
 		return visible
 	}
@@ -244,23 +236,24 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 	 */
 	AreaComponent translateWorldToAsciiPanel(AreaComponent ac, AreaComponent viewport) {
 		// world - viewport
-		new AreaComponent(ac.x - viewport.x, ac.y - viewport.y, ac.width, ac.height)
+		new AreaComponent(ac.x - viewport.x, ac.y - viewport.y, ac.width, ac.height, ASCII_PANEL)
 	}
 
 	/**
 	 * Takes a cell-based area suitable for having AsciiPanel write characters
-	 * and returns the pixel-based dirty rectangle required for the underlying
-	 * Java2D surface to update.
+	 * and returns the pixel-based rectangle representing the underlying
+	 * Java2D surface area.
 	 *
 	 * @param ac AsciiPanel writing coordinate
 	 * @return an area describing the screen area for a Java2D render update
 	 */
-	AreaComponent translateTerminalToPixels(AreaComponent ac) {
+	AreaComponent translateAsciiPanelToPixels(AreaComponent ac) {
 		new AreaComponent(
 				ac.x * terminal.charWidth,
 				ac.y * terminal.charHeight,
 				ac.width * terminal.charWidth,
-				ac.height * terminal.charHeight)
+				ac.height * terminal.charHeight,
+				SCREEN_PIXEL)
 	}
 
 	/**
@@ -275,7 +268,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 				Viewport viewport = scene.viewport
 				def scrollToX
 				def scrollToY
-				def threshX = scene.viewport.width * 0.2
+				def threshX = viewport.width * 0.2
 				def threshY = viewport.height * 0.2
 				if (ac.x < viewport.x + threshX || ac.x > viewport.x + viewport.width - threshX) {
 					scrollToX = ac.x
@@ -373,7 +366,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		// Bottom border
 		terminal.write(ll + ("$h" * (ac.width - 2)) + lr, ac.x, ac.y + (ac.height - 1))
 
-		return translateTerminalToPixels(ac)
+		return translateAsciiPanelToPixels(ac)
 	}
 
 }

@@ -14,6 +14,7 @@ import io.github.lhanson.possum.entity.RerenderEntity
 import io.github.lhanson.possum.events.ComponentAddedEvent
 import io.github.lhanson.possum.events.ComponentRemovedEvent
 import io.github.lhanson.possum.events.EntityMovedEvent
+import io.github.lhanson.possum.events.EntityPreRenderEvent
 import io.github.lhanson.possum.events.EventBroker
 import io.github.lhanson.possum.events.SceneInitializedEvent
 import io.github.lhanson.possum.events.Subscription
@@ -23,6 +24,8 @@ import io.github.lhanson.possum.input.MappedInput
 import io.github.lhanson.possum.rendering.Viewport
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+
+import static io.github.lhanson.possum.component.AreaComponent.FrameOfReference.ASCII_PANEL
 
 /**
  * A Scene encapsulates entities and input representing
@@ -46,12 +49,6 @@ class Scene {
 	EventBroker eventBroker
 	/** Whether the scene has been initialized yet */
 	boolean initialized = false
-	/** Whether the simulation is in debug mode */
-	volatile boolean debug = false
-	/** If we're in debug mode, how long to pause while showing rendering hints */
-	volatile int debugPauseMillis = 1000
-	/** Whether the simulation is paused */
-	volatile boolean paused = false
 
 	List<GameEntity> panels = []
 	private Logger log = LoggerFactory.getLogger(this.class)
@@ -62,13 +59,16 @@ class Scene {
 	// Input contexts for this scene
 	private List<InputContext> inputContexts = []
 	private Map<Class, List<GameEntity>> entitiesByComponentType = [:]
-	// A set of entities modified in such a way as to require re-rendering
-	private SortedSet<GameEntity> entitiesToBeRendered = new TreeSet({ GameEntity a, GameEntity b ->
+	private Comparator zOrderComparator = { GameEntity a, GameEntity b ->
 		AreaComponent acA = a.getComponentOfType(AreaComponent)
 		AreaComponent acB = b.getComponentOfType(AreaComponent)
 		// Order by z-axis if they differ, otherwise use natural object comparator
 		return acA?.position?.z <=> acB?.position?.z ?: a <=> b
-	})
+	}
+	// A set of entities modified in such a way as to require re-rendering
+	private SortedSet<GameEntity> entitiesToBeRendered = new TreeSet(zOrderComparator)
+	// A set of entities representing rendering hints when in debug mode
+	private SortedSet<GameEntity> debugEntitiesToBeRendered = new TreeSet(zOrderComparator)
 	private int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE,
 	            maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE
 	Quadtree quadtree = new Quadtree()
@@ -310,24 +310,45 @@ class Scene {
 	 * @param entity an entity which has been updated such that it needs to be re-rendered
 	 */
 	void entityNeedsRendering(GameEntity entity, AreaComponent previousArea = null) {
-		entitiesToBeRendered << entity
+		def entities = [entity]
 		AreaComponent area = entity.getComponentOfType(AreaComponent)
 		if (previousArea && previousArea != area) {
 			if (entity.parent) {
+				// Rerender background of the parent if applicable
 				AreaComponent pc = entity.parent.getComponentOfType(AreaComponent)
 				AreaComponent newArea = translateChildToParent(area, pc)
 				AreaComponent oldArea = translateChildToParent(previousArea, pc)
 				oldArea.subtract(newArea).each {
-					entitiesToBeRendered << new RerenderEntity(components: [it])
+					it.frameOfReference = ASCII_PANEL
+					log.debug "Adding render task; background for previous location of entity '${entity.name}' at $it"
+					entities << new RerenderEntity(name: "Background for ${entity.name}", components: [it], scene: this)
 				}
 			} else {
 				// Need to repaint what's at the entity's previous location
 				def uncoveredEntities = findNonPanelWithin(previousArea)
 				if (uncoveredEntities) {
+					log.debug "Adding render task for uncovered entities: {}", uncoveredEntities
 					entitiesToBeRendered.addAll(uncoveredEntities)
 				}
 			}
 		}
+
+		entities.each { it ->
+			// We publish the event before adding the entity to the queue so that
+			// listeners can check for its presence on the queue as a sign that
+			// they've already processed updates to this entity, because systems
+			// can be updated more than once before a render is done.
+			eventBroker.publish(new EntityPreRenderEvent(it, previousArea))
+			entitiesToBeRendered << it
+		}
+	}
+
+	void debugEntityNeedsRendering(GameEntity entity) {
+		debugEntitiesToBeRendered << entity
+	}
+
+	boolean queuedForRendering(GameEntity entity) {
+		entitiesToBeRendered.contains(entity)
 	}
 
 	/**
@@ -442,6 +463,5 @@ class Scene {
 		// child + panel
 		new AreaComponent(child.x + parent.x, child.y + parent.y, child.width, child.height)
 	}
-
 
 }

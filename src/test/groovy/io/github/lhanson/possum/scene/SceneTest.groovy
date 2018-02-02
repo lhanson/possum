@@ -11,7 +11,9 @@ import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.TextEntity
 import io.github.lhanson.possum.events.ComponentAddedEvent
 import io.github.lhanson.possum.events.ComponentRemovedEvent
+import io.github.lhanson.possum.events.EntityPreRenderEvent
 import io.github.lhanson.possum.events.EventBroker
+import io.github.lhanson.possum.events.Subscription
 import spock.lang.Specification
 
 import static io.github.lhanson.possum.scene.SceneBuilder.createScene
@@ -228,6 +230,21 @@ class SceneTest extends Specification {
 			scene.entitiesToBeRendered.size() == 2
 	}
 
+	def "Scene will report whether an entity is queued for rendering"() {
+		given:
+			GameEntity entity = new GameEntity()
+			Scene scene = new Scene('testId', {[entity]})
+			scene.eventBroker = new EventBroker()
+			scene.init()
+
+		when:
+			scene.entityNeedsRendering(entity)
+
+		then:
+			scene.queuedForRendering(entity)
+			!scene.queuedForRendering(new GameEntity())
+	}
+
 	def "adding an area component triggers addition to the quadtree"() {
 		given:
 			def entity = new GameEntity()
@@ -376,6 +393,24 @@ class SceneTest extends Specification {
 			Scene scene = createScene({[entity]})
 		then:
 			entity.scene == scene
+	}
+
+	def "Scene notifies of EntityPreRenderEvent before adding entity to render queue"() {
+		boolean queuedBeforeNotified = false
+		given: 'A subscription to EntityPreRenderEvents'
+			GameEntity entity = new GameEntity()
+			Scene scene = createScene({[entity]})
+			def subscriber = new Object() {
+				@Subscription
+				void notify(EntityPreRenderEvent event) {
+					queuedBeforeNotified = scene.queuedForRendering(entity)
+				}
+			}
+			scene.eventBroker.subscribe(subscriber)
+		when: 'An entity pre-render notification is sent'
+			scene.entityNeedsRendering(entity)
+		then: 'It is sent before the entity is added to the render queue'
+			!queuedBeforeNotified
 	}
 
 }
