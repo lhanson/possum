@@ -7,6 +7,9 @@ import io.github.lhanson.possum.component.RelativeWidthComponent
 import io.github.lhanson.possum.events.EventBroker
 import spock.lang.Specification
 
+import static io.github.lhanson.possum.component.AreaComponent.FrameOfReference.ASCII_PANEL
+import static io.github.lhanson.possum.component.AreaComponent.FrameOfReference.PARENT
+
 class PanelEntityTest extends Specification {
 	def text = 'Panel Text'
 
@@ -93,6 +96,26 @@ class PanelEntityTest extends Specification {
 		then:
 			panel.getComponentOfType(RelativePositionComponent)
 			panel.getComponentOfType(AreaComponent)
+	}
+
+	def "Panel coordinates default to the AsciiPanel frame of reference"() {
+		when:
+			def panel = new PanelEntity()
+		then:
+			AreaComponent ac = panel.getComponentOfType(AreaComponent)
+			ac.frameOfReference == ASCII_PANEL
+	}
+
+	def "Panels initialize their inventories with coordinates relative to the panel"() {
+		when:
+			def panel = new PanelEntity(name: 'panel', padding: 1)
+			panel.components.add(new InventoryComponent([new TextEntity(), new TextEntity()]))
+		then:
+			panel.inventoryComponent.inventory.every {
+				AreaComponent ac = it.getComponentOfType(AreaComponent)
+				ac.frameOfReference == PARENT
+				it.parent == panel
+			}
 	}
 
 }

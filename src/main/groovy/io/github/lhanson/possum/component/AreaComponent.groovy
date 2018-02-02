@@ -2,6 +2,8 @@ package io.github.lhanson.possum.component
 
 import groovy.transform.Canonical
 
+import static io.github.lhanson.possum.component.AreaComponent.FrameOfReference.*
+
 /**
  * An area represented by x, y, (z) coordinates and its dimensions.
  *
@@ -13,6 +15,19 @@ import groovy.transform.Canonical
 class AreaComponent implements GameComponent {
 	VectorComponent position
 	VectorComponent size
+	/** What coordinate system this area references */
+	FrameOfReference frameOfReference = WORLD
+
+	enum FrameOfReference {
+		/** Virtual console coordinates relative to the screen. (Renderer-specific) */
+		ASCII_PANEL,
+		/** Oriented relative to a parent or containing entity */
+		PARENT,
+		/** Onscreen pixel coordinates */
+		SCREEN_PIXEL,
+		/** Game world coordinates */
+		WORLD
+	}
 
 	AreaComponent() {
 		position = new VectorComponent()
@@ -22,11 +37,13 @@ class AreaComponent implements GameComponent {
 	AreaComponent(AreaComponent copy) {
 		position = new VectorComponent(copy.position)
 		size = new VectorComponent(copy.size)
+		frameOfReference = copy.frameOfReference
 	}
 
-	AreaComponent(int x, int y, int width, int height) {
+	AreaComponent(int x, int y, int width, int height, FrameOfReference reference = WORLD) {
 		position = new VectorComponent(x, y)
 		size = new VectorComponent(width, height)
+		this.frameOfReference = reference
 	}
 
 	AreaComponent(int x, int y, int z, int width, int height) {
@@ -244,7 +261,7 @@ class AreaComponent implements GameComponent {
 
 	@Override
 	String toString() {
-		"location [$x, $y, $z], size [$width, $height]"
+		"location [$x, $y, $z], size [$width, $height] ($frameOfReference)"
 	}
 
 }

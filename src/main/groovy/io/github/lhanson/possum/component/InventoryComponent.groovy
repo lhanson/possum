@@ -12,6 +12,10 @@ class InventoryComponent implements GameComponent {
 	InventoryComponent(List<GameEntity> inventory) {
 		if (inventory) {
 			this.inventory = inventory
+			this.inventory.each { GameEntity entity ->
+				AreaComponent ac = entity.getComponentOfType(AreaComponent)
+				ac.frameOfReference = AreaComponent.FrameOfReference.PARENT
+			}
 		} else {
 			this.inventory = []
 		}

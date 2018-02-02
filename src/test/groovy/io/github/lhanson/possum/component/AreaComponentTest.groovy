@@ -2,6 +2,8 @@ package io.github.lhanson.possum.component
 
 import spock.lang.Specification
 
+import static io.github.lhanson.possum.component.AreaComponent.FrameOfReference.WORLD
+
 class AreaComponentTest extends Specification {
 
 	def "basic equality"() {
@@ -327,4 +329,12 @@ class AreaComponentTest extends Specification {
 		then:
 			remainders.empty
 	}
+
+	def "AreaComponent defaults to referencing world coordinates"() {
+		when:
+			def area = new AreaComponent()
+		then:
+			area.frameOfReference == WORLD
+	}
+
 }

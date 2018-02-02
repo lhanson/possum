@@ -10,6 +10,9 @@ import io.github.lhanson.possum.events.Subscription
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+import static io.github.lhanson.possum.component.AreaComponent.FrameOfReference.ASCII_PANEL
+import static io.github.lhanson.possum.component.AreaComponent.FrameOfReference.PARENT
+
 /**
  * Representing a visible UI container, PanelEntity is treated specially by renderers.
  * AreaComponent and InventoryComponent are guaranteed to be present, so defaults are
@@ -106,6 +109,7 @@ class PanelEntity extends GameEntity {
 			ac = new AreaComponent()
 			components << ac
 		}
+		ac.frameOfReference = ASCII_PANEL
 		areaComponent = ac
 		if (!inventoryComponent) {
 			ensureInventoryComponent()
@@ -127,6 +131,8 @@ class PanelEntity extends GameEntity {
 	// we compute their vertical order and take any padding into account.
 	private void computeInventoryPositions() {
 		inventoryComponent.inventory.eachWithIndex { entity, i ->
+			AreaComponent ac = entity.getComponentOfType(AreaComponent)
+			ac.frameOfReference = PARENT
 			if (!entity.getComponentOfType(RelativePositionComponent)) {
 				entity.getComponentOfType(AreaComponent)?.x = padding
 				entity.getComponentOfType(AreaComponent)?.y = padding + i
