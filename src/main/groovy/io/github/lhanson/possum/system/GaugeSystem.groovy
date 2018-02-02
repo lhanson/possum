@@ -36,7 +36,7 @@ class GaugeSystem extends GameSystem {
 
 	@Override
 	void doUninitScene(Scene scene) {
-		gauges[scene.id] = null
+		gauges.remove(scene.id)
 		eventBroker.unsubscribe(this)
 	}
 

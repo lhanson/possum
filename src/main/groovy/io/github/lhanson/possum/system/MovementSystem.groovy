@@ -39,7 +39,7 @@ class MovementSystem extends GameSystem {
 
 	@Override
 	void doUninitScene(Scene scene) {
-		movingEntities[scene.id] = null
+		movingEntities.remove(scene.id)
 	}
 
 	@Override

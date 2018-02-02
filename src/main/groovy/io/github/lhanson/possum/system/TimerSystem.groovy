@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component
 @Component
 class TimerSystem extends GameSystem {
 	@Autowired EventBroker eventBroker
-	String name = 'timerSystem'
+	String name = 'TimerSystem'
 	Map<String, List<GameEntity>> timers = [:]
 	boolean removingComponent = false
 
@@ -27,7 +27,7 @@ class TimerSystem extends GameSystem {
 
 	@Override
 	void doUninitScene(Scene scene) {
-		timers[scene.id] = null
+		timers.remove(scene.id)
 		eventBroker.unsubscribe(this)
 	}
 

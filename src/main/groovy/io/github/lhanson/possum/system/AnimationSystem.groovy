@@ -29,7 +29,7 @@ class AnimationSystem extends GameSystem {
 
 	@Override
 	void doUninitScene(Scene scene) {
-		animatedEntities[scene.id] = null
+		animatedEntities.remove(scene.id)
 		eventBroker.unsubscribe(this)
 	}
 
@@ -63,7 +63,8 @@ class AnimationSystem extends GameSystem {
 				}
 			}
 			if (needsUpdate) {
-				scene.entityNeedsRendering(entity, entity.getComponentOfType(AreaComponent))
+				log.trace "Adding entity for rerendering because of animation change: {}", entity
+				scene.entityNeedsRendering(entity)
 			}
 		}
 	}
