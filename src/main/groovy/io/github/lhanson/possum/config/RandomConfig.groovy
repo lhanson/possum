@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 class RandomConfig {
 	Logger log = LoggerFactory.getLogger(this.class)
-	@Value('${random-seed}')
+	@Value('${random-seed:}')
 	Long seed
 
 	/**
