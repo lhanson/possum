@@ -44,6 +44,11 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		asciiPanelBounds = new AreaComponent(0, 0, terminal.widthInCharacters, terminal.heightInCharacters)
 		logger.debug "Created terminal with fairly arbitrary 100x40 dimensions and should probably parameterize that"
 
+		// Set icon image
+		BufferedImage image = ImageIO.read(ClassLoader.getResourceAsStream('/possum.jpg'))
+		setIconImage(image)
+
+		// OS X specific
 		boolean isOSX = false
 		try {
 			String className = "com.apple.eawt.Application"
@@ -51,7 +56,6 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 			isOSX = true
 			Object application = cls.newInstance().getClass().getMethod("getApplication")
 					.invoke(null)
-			BufferedImage image = ImageIO.read(ClassLoader.getResourceAsStream('/possum.jpg'))
 			application.getClass().getMethod("setDockIconImage", java.awt.Image)
 					.invoke(application, image)
 		}
