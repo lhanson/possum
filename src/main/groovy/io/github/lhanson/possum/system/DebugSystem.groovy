@@ -29,6 +29,7 @@ import static io.github.lhanson.possum.component.AreaComponent.FrameOfReference.
 class DebugSystem extends GameSystem {
 	@Autowired EventBroker eventBroker
 	String name = 'DebugSystem'
+	static final String QuadtreeOutlineName = 'QuadtreeOutline'
 	/** The entities being specifically managed by the DebugSystem (rendering hints, etc.) */
 	Map<String, List<GameEntity>> debugEntities = [:]
 	/** Contains scene IDs for which debugging is enabled */
@@ -113,15 +114,32 @@ class DebugSystem extends GameSystem {
 				}
 			} else {
 				// An entity already in ASCII_PANEL or pixel coordinates, pass a hint directly to rendering queue
-				GameEntity debugEntity = new TextEntity(
+				GameEntity debugHint = new TextEntity(
 						name: "Debug hint for ${entity.name}",
 						parent: entity.parent,
 						components: [
 								new TextComponent(String.valueOf((char) 178) * area.width),
 								new ColorComponent(renderHintColor),
 								area])
-				entity.scene.debugEntityNeedsRendering(debugEntity)
+				entity.scene.debugEntityNeedsRendering(debugHint)
 			}
+
+			// Repaint the quadtree outlines where they may have been obscured.
+			// NOTE: this paints every node from the root down to the lowest level
+			// the entity is contained in, but we're not too worried about efficiency here.
+			// ALSO NOTE: This isn't perfect yet, when an entity moves away from a boundary
+			// edge, the boundary may be painted and then overwritten shortly after by
+			// whatever was behind the entity (e.g., a floor tile). Good enough for now.
+			if (entity.name != QuadtreeOutlineName) {
+				entity.scene.quadtree.getAllNodeBoundsWithin(area)
+						.collect { AreaComponent ac ->
+					entity.scene.debugEntityNeedsRendering(
+							new GameEntity(name: QuadtreeOutlineName,
+									components: [ac, new Java2DRectangleComponent(),
+									             new ColorComponent(Color.RED)]))
+				}
+			}
+
 			pauseFor.add(event.entity.scene.id)
 		}
 	}
@@ -136,10 +154,10 @@ class DebugSystem extends GameSystem {
 			def nodeBoundaryEntities = scene.quadtree
 					.getAllNodeBoundsWithin(scene.viewport)
 					.collect { AreaComponent ac ->
-						new GameEntity(components: [ac, new Java2DRectangleComponent(), new ColorComponent(java.awt.Color.RED)])
+						new GameEntity(name: QuadtreeOutlineName, components: [ac, new Java2DRectangleComponent(), new ColorComponent(Color.RED)])
 					}
 			debugEntities[scene.id].addAll(nodeBoundaryEntities)
-			debugEntities[scene.id].each { scene.entityNeedsRendering(it) }
+			debugEntities[scene.id].each { scene.debugEntityNeedsRendering(it) }
 		}
 		log.debug "Toggled debug mode to ${debugEnabled.contains(scene.id)}"
 	}

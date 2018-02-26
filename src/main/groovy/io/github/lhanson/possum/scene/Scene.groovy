@@ -2,22 +2,11 @@ package io.github.lhanson.possum.scene
 
 import groovy.transform.ToString
 import io.github.lhanson.possum.collision.Quadtree
-import io.github.lhanson.possum.component.AreaComponent
-import io.github.lhanson.possum.component.CameraFocusComponent
-import io.github.lhanson.possum.component.GameComponent
-import io.github.lhanson.possum.component.InventoryComponent
-import io.github.lhanson.possum.component.RelativePositionComponent
-import io.github.lhanson.possum.component.RelativeWidthComponent
+import io.github.lhanson.possum.component.*
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.RerenderEntity
-import io.github.lhanson.possum.events.ComponentAddedEvent
-import io.github.lhanson.possum.events.ComponentRemovedEvent
-import io.github.lhanson.possum.events.EntityMovedEvent
-import io.github.lhanson.possum.events.EntityPreRenderEvent
-import io.github.lhanson.possum.events.EventBroker
-import io.github.lhanson.possum.events.SceneInitializedEvent
-import io.github.lhanson.possum.events.Subscription
+import io.github.lhanson.possum.events.*
 import io.github.lhanson.possum.input.InputAdapter
 import io.github.lhanson.possum.input.InputContext
 import io.github.lhanson.possum.input.MappedInput
@@ -343,6 +332,10 @@ class Scene {
 		}
 	}
 
+	/**
+	 * Queues the given entity as a debug hint.
+	 * @param entity a render debug hint
+	 */
 	void debugEntityNeedsRendering(GameEntity entity) {
 		debugEntitiesToBeRendered << entity
 	}

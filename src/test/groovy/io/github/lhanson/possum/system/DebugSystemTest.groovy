@@ -68,7 +68,7 @@ class DebugSystemTest extends Specification {
 			debugSystem.debugEntities[scene2.id].empty
 	}
 
-	def "Render hints for a given entity are added only per frame"() {
+	def "Render hints for a given entity are added only once per frame"() {
 		given: 'A scene in debug mode with an entity ready to render'
 			GameEntity entity = new GameEntity(components: [new AreaComponent(10, 10, 1, 1)])
 			scene.eventBroker.subscribe(debugSystem)

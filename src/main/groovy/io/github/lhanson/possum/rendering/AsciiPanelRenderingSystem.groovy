@@ -151,7 +151,6 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 			renderEntities = scene.debugEntitiesToBeRendered
 			debugPause = true
 		}
-		if (renderEntities.size() > 0)
 		renderEntities.each { entity ->
 			if (entity instanceof PanelEntity) {
 				/* Render panel borders */
@@ -187,7 +186,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 					AreaComponent ap = translateWorldToAsciiPanel(entity.getComponentOfType(AreaComponent), scene.viewport)
 					AreaComponent drawArea = translateAsciiPanelToPixels(ap)
 					Java2DRectangleComponent j2d = entity.getComponentOfType(Java2DRectangleComponent)
-					j2d.draw(terminal.offscreenGraphics, drawArea)
+					j2d.draw(terminal.offscreenGraphics, drawArea, color)
 					dirtyRectangles << drawArea
 				}
 			} else {

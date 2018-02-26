@@ -136,7 +136,7 @@ class Quadtree {
 
 		if (!bounds.contains(location)) {
 			if (level == 0) {
-				log.info("Inserting entity {} which is outside present bounds {}; expanding tree", entity, bounds)
+				log.debug("Inserting entity {} which is outside present bounds {}; expanding tree", entity, bounds)
 				long startTime = System.currentTimeMillis()
 
 				// The point farthest outside the existing bounds
@@ -158,7 +158,7 @@ class Quadtree {
 				newRoot.insertAll(allEntities)
 				nodes = newRoot.nodes
 				entities = newRoot.entities
-				log.info "Rebalancing to $bounds completed in ${System.currentTimeMillis() - startTime} ms"
+				log.debug "Rebalancing to $bounds completed in ${System.currentTimeMillis() - startTime} ms"
 			} else {
 				return false
 			}
@@ -207,6 +207,20 @@ class Quadtree {
 		def results = entities.getAllEntities()
 		if (haveSubnodes()) {
 			nodes.each { results << it.getAll() }
+		}
+		return results.flatten()
+	}
+
+	/**
+	 * @return a list of all node bounds in the quadtree
+	 */
+	List<Quadtree> getAllNodeBoundsWithin(AreaComponent outerBounds) {
+		def results = []
+		if (bounds.overlaps(outerBounds)) {
+			results << bounds
+			if (haveSubnodes()) {
+				nodes.each { results << it.getAllNodeBoundsWithin(outerBounds) }
+			}
 		}
 		return results.flatten()
 	}
@@ -336,4 +350,5 @@ class Quadtree {
 	boolean haveSubnodes() {
 		nodes[0] // if we've allocated any nodes we've allocated them all
 	}
+
 }

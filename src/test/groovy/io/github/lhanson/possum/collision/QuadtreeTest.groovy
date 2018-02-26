@@ -378,4 +378,19 @@ class QuadtreeTest extends Specification {
 			quadtree.retrieve(location) == [entity]
 	}
 
+	def "Quadtree can return a list of all nodes it contains"() {
+		when:
+			quadtree.maxObjects = 1 // Force splits
+			quadtree.insert(new GameEntity(components: [new AreaComponent(0, 0, 1,1)]))
+			// Cause a split
+			quadtree.insert(new GameEntity(components: [new AreaComponent(9,9, 1,1)]))
+			// Causes three splits because the entities are so close
+			quadtree.insert(new GameEntity(components: [new AreaComponent(9,8, 1,1)]))
+			// Yet a third split
+			quadtree.insert(new GameEntity(components: [new AreaComponent(9, 7, 1,1)]))
+
+		then:
+			quadtree.getAllNodeBoundsWithin(quadtree.bounds)
+	}
+
 }

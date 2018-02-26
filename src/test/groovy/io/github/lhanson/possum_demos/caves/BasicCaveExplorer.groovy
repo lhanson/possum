@@ -201,7 +201,7 @@ class BasicCaveExplorer {
 				def playerPositionGauge = new GaugeEntity(name: 'playerPositionGauge')
 				playerPositionGauge.update = { ticks ->
 					AreaComponent ac = hero.getComponentOfType(AreaComponent)
-					playerPositionGauge.text = "${ac.position}"
+					playerPositionGauge.text = "${ac.position} (${ac.frameOfReference})"
 				}
 				leftHudPanel.components.addAll([
 						new RelativePositionComponent(0, 100),
