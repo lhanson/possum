@@ -48,9 +48,9 @@ class CellularAutomatonCaveGenerator {
 					if (isBorder(x, y) ||
 							(grid[x][y] == 0 && livingNeighbors >= 5) ||
 							(grid[x][y] == 1 && livingNeighbors >= 4)) {
-						nextGrid[x][y] = 1
+						nextGrid[x][y] = 1 // wall
 					} else {
-						nextGrid[x][y] = 0
+						nextGrid[x][y] = 0 // floor
 					}
 				}
 			}
@@ -137,7 +137,7 @@ class CellularAutomatonCaveGenerator {
 				}
 			}
 		}
-		log.debug "Grid is $width * $height = ${width * height} toatal cells. " +
+		log.debug "Grid is $width * $height = ${width * height} total cells. " +
 				"${(emptyCells / (width * height)) * 100}% open with $emptyCells empty cells"
 		def roomSizes = rooms.collect { it.size() }.sort().reverse()
 		log.debug "Grid contains ${rooms.size()} distinct rooms. " +
@@ -156,6 +156,8 @@ class CellularAutomatonCaveGenerator {
 			def roomCells = cell.floodFind()
 			rooms.add roomCells
 			openCells.removeAll(roomCells)
+			// Adjacent rooms may share walls; make sure we include those cells in each room
+			roomCells.each { it.visited = false }
 		}
 		return rooms
 	}

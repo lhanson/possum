@@ -127,6 +127,8 @@ class GridCellComponent implements GameComponent {
 					.each { examineCell(it) }
 				current = current.east
 			}
+			// Examine that last non-matching cell in this row
+			examineCell(current)
 			// Check for a wall on the right
 			if (current?.east && !current.east.visited) {
 				current.east.visited = true
