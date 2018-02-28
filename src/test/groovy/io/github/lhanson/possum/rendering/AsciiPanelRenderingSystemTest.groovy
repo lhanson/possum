@@ -2,6 +2,7 @@ package io.github.lhanson.possum.rendering
 
 import asciiPanel.AsciiPanel
 import io.github.lhanson.possum.component.AreaComponent
+import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.scene.Scene
 import io.github.lhanson.possum.scene.SceneBuilder
@@ -75,6 +76,20 @@ class AsciiPanelRenderingSystemTest extends Specification {
 			renderer.initScene(scene2)
 		then:
 			renderer.scenePanelAreas == [panel.getComponentOfType(AreaComponent)]
+	}
+
+	def "Regular entities are obscured by panels"() {
+		given:
+			GameEntity hiddenEntity = new GameEntity(components: [new AreaComponent(0, 0, 0, 0)])
+			GameEntity visibleEntity = new GameEntity(components: [new AreaComponent(20, 20, 0, 0)])
+			PanelEntity panel = new PanelEntity(components: [new AreaComponent(0, 0, 10, 10)])
+			scene.setEntities([hiddenEntity, visibleEntity, panel])
+		when:
+			renderer.initScene(scene)
+		then:
+			!renderer.isVisible(hiddenEntity)
+			renderer.isVisible(visibleEntity)
+			renderer.isVisible(panel)
 	}
 
 }

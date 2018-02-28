@@ -220,7 +220,10 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		boolean visible = false
 		AreaComponent area = entity.getComponentOfType(AreaComponent)
 		if (area?.frameOfReference == WORLD) {
-			visible = area.overlaps(scene.viewport)
+			AreaComponent asciiPanelArea = translateWorldToAsciiPanel(area, scene.viewport)
+			visible = area.overlaps(scene.viewport) &&
+					// Panels obscure regular entities. Doesn't take z-axis into position at the moment.
+					!scenePanelAreas.any { it.overlaps asciiPanelArea }
 		} else if (area.frameOfReference == ASCII_PANEL) {
 			visible = area.overlaps(asciiPanelBounds)
 		} else {
