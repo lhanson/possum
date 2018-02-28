@@ -166,7 +166,6 @@ class GameEntityTest extends Specification {
 		when:
 			panel.components.add(new InventoryComponent([panelText]))
 		then:
-			panel.getComponentsOfType(AreaComponent).size() == 1
 			panel.getComponentsOfType(InventoryComponent).size() == 1
 			panel.getComponentOfType(InventoryComponent).inventory == [panelText]
 	}
