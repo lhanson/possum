@@ -1,8 +1,11 @@
 package io.github.lhanson.possum.collision
 
 import io.github.lhanson.possum.entity.GameEntity
+import io.github.lhanson.possum.events.CollisionEvent
+import io.github.lhanson.possum.events.EventBroker
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 /**
@@ -12,6 +15,7 @@ import org.springframework.stereotype.Component
  */
 @Component
 class CollisionSystem {
+	@Autowired EventBroker eventBroker
 	Logger log = LoggerFactory.getLogger(this.class)
 
 	/**
@@ -21,6 +25,7 @@ class CollisionSystem {
 	 */
 	void collide(GameEntity entity, GameEntity collider) {
 		log.trace "Collision detected between $entity and $collider"
+		eventBroker.publish(new CollisionEvent(entity, collider))
 		collider.getComponentOfType(CollisionHandlingComponent)?.handleCollision(entity)
 	}
 }
