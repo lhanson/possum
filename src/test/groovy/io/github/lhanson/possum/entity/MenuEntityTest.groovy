@@ -3,7 +3,7 @@ package io.github.lhanson.possum.entity
 import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.InventoryComponent
 import io.github.lhanson.possum.component.PlayerInputAwareComponent
-import io.github.lhanson.possum.component.RelativePositionComponent
+import io.github.lhanson.possum.component.layout.RelativePositionComponent
 import io.github.lhanson.possum.component.TextComponent
 import io.github.lhanson.possum.entity.menu.IntegerItemEntity
 import io.github.lhanson.possum.entity.menu.MenuEntity
@@ -18,7 +18,7 @@ class MenuEntityTest extends Specification {
 					new RelativePositionComponent(50, 50),
 					[new MenuItemEntity(), new MenuItemEntity()])
 		then:
-			menu.getComponentOfType(InventoryComponent).inventory.size() == 2
+			menu.getComponentOfType(InventoryComponent).size() == 2
 			menu.getComponentOfType(RelativePositionComponent)
 	}
 
@@ -32,8 +32,8 @@ class MenuEntityTest extends Specification {
 		when:
 			AreaComponent ac = menu.getComponentOfType(AreaComponent)
 		then:
-			ac.height == 3 + (menu.padding * 2)
-			ac.width == 'Option X'.length() + (menu.padding * 2)
+			ac.height == 3 + menu.padding.height
+			ac.width == 'Option X'.length() + menu.padding.width
 	}
 
 	def "Menus compute inventories just like panels do"() {
@@ -47,13 +47,11 @@ class MenuEntityTest extends Specification {
 					new MenuItemEntity(text: 'Death Factor'),
 					new MenuItemEntity(text: 'Generate'),
 			]
-			int padding = 3
-			MenuEntity menu = new MenuEntity(new RelativePositionComponent(50, 50), padding, menuItems)
+			MenuEntity menu = new MenuEntity(new RelativePositionComponent(50, 50), menuItems)
 		when:
-			menu.sceneInitialized(null)
 			AreaComponent area = menu.getComponentOfType(AreaComponent)
 		then:
-			area.height == menuItems.size() + (padding * 2)
+			area.height == menuItems.size() + menu.padding.height
 	}
 
 	def "Menus come with a PlayerInputAwareComponent by default"() {
@@ -137,13 +135,12 @@ class MenuEntityTest extends Specification {
 	def "Menu item values are right-justified according to panel size"() {
 		given:
 			MenuEntity menu = new MenuEntity([new IntegerItemEntity('Label', 100)])
-			menu.padding = 2
 			AreaComponent area = menu.getComponentOfType(AreaComponent)
 		when:
 			area.width = 100
 			TextComponent tc = menu.items[0].getComponentOfType(TextComponent)
 		then:
-			tc.text.length() == (area.width - (menu.padding * 2))
+			tc.text.length() == area.width - menu.padding.width
 			tc.text.startsWith('Label')
 			tc.text.endsWith('100')
 	}
@@ -152,14 +149,13 @@ class MenuEntityTest extends Specification {
 		given:
 			IntegerItemEntity item = new IntegerItemEntity('Label', 10)
 			MenuEntity menu = new MenuEntity([item])
-			menu.padding = 2
 			AreaComponent area = menu.getComponentOfType(AreaComponent)
 		when:
 			area.width = 100
 			TextComponent tc = item.getComponentOfType(TextComponent)
 			int length = tc.text.length()
 		then:
-			length == (area.width - (menu.padding * 2))
+			length == area.width - menu.padding.width
 			tc.text.startsWith('Label')
 			tc.text.endsWith('10')
 

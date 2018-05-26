@@ -1,7 +1,7 @@
 package io.github.lhanson.possum_demos.viewport
 
 import io.github.lhanson.possum.MainLoop
-import io.github.lhanson.possum.component.RelativePositionComponent
+import io.github.lhanson.possum.component.layout.RelativePositionComponent
 import io.github.lhanson.possum.component.TextComponent
 import io.github.lhanson.possum.component.VectorComponent
 import io.github.lhanson.possum.entity.GameEntity

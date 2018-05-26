@@ -9,6 +9,7 @@ import io.github.lhanson.possum.component.InventoryComponent
 import io.github.lhanson.possum.component.TextComponent
 import io.github.lhanson.possum.component.java2d.Java2DComponent
 import io.github.lhanson.possum.component.java2d.Java2DRectangleComponent
+import io.github.lhanson.possum.component.layout.PaddingComponent
 import io.github.lhanson.possum.events.ComponentAddedEvent
 import io.github.lhanson.possum.events.EventBroker
 import io.github.lhanson.possum.events.Subscription
@@ -90,6 +91,8 @@ class GameEntityTest extends Specification {
 		and: "it can be looked up under any of the Possum classes"
 			entity.getComponentOfType(ImpassableComponent) == impassable
 			entity.getComponentOfType(CollisionHandlingComponent) == impassable
+		and: "except GameComponent, because it's already in a collection of GameComponents"
+			entity.getComponentOfType(GameComponent) == null
 
 		and: "but we don't index it under non-Possum classes"
 			entity.getComponentOfType(GroovyObject) == null
@@ -161,13 +164,13 @@ class GameEntityTest extends Specification {
 
 	def "Adding inventory component multiple times aggregates contents in a single instance"() {
 		given:
-			def panel = new PanelEntity(name: 'panel', padding: 10, eventBroker: new EventBroker())
+			def panel = new PanelEntity(name: 'panel', padding: new PaddingComponent(10), eventBroker: new EventBroker())
 			def panelText = new TextEntity('text')
 		when:
 			panel.components.add(new InventoryComponent([panelText]))
 		then:
 			panel.getComponentsOfType(InventoryComponent).size() == 1
-			panel.getComponentOfType(InventoryComponent).inventory == [panelText]
+			panel.getComponentOfType(InventoryComponent) == [panelText]
 	}
 
 }

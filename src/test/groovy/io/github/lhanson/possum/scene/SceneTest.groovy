@@ -2,8 +2,9 @@ package io.github.lhanson.possum.scene
 
 import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.InventoryComponent
-import io.github.lhanson.possum.component.RelativePositionComponent
-import io.github.lhanson.possum.component.RelativeWidthComponent
+import io.github.lhanson.possum.component.layout.PaddingComponent
+import io.github.lhanson.possum.component.layout.RelativeAreaComponent
+import io.github.lhanson.possum.component.layout.RelativePositionComponent
 import io.github.lhanson.possum.component.TextComponent
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.GaugeEntity
@@ -16,6 +17,8 @@ import io.github.lhanson.possum.events.EventBroker
 import io.github.lhanson.possum.events.Subscription
 import spock.lang.Specification
 
+import static io.github.lhanson.possum.component.AreaComponent.FrameOfReference.PARENT
+import static io.github.lhanson.possum.component.AreaComponent.FrameOfReference.WORLD
 import static io.github.lhanson.possum.scene.SceneBuilder.createScene
 
 class SceneTest extends Specification {
@@ -315,7 +318,7 @@ class SceneTest extends Specification {
 			AreaComponent panelArea = panel.getComponentOfType(AreaComponent)
 		then:
 			panelArea.height == 2 // At minimum it's a top border and a bottom border
-			panelArea.width == panel.padding * 2
+			panelArea.width == panel.padding.width
 			panelArea.x == (scene.viewport.width * 0.5) - (panelArea.width / 2)
 			panelArea.y == (scene.viewport.height * 0.5) - (panelArea.height / 2)
 	}
@@ -341,23 +344,9 @@ class SceneTest extends Specification {
 			menuItemArea.y == 1
 	}
 
-	def "Resolve panels' inventory elements with padding taken into account"() {
-		given:
-			def menuItem = new TextEntity('Menu text')
-			def panel = new PanelEntity(
-					padding: 10,
-					components: [ new InventoryComponent([menuItem]) ])
-		when: 'Scene initializer resolves panel item positions'
-			createScene({[panel]})
-		then:
-			AreaComponent menuItemArea = menuItem.getComponentOfType(AreaComponent)
-			menuItemArea.x == 10
-			menuItemArea.y == 10
-	}
-
 	def "Scene initializer resolves relative widths"() {
 		given:
-			def panelEntity = new PanelEntity(components: [new RelativeWidthComponent(50)])
+			def panelEntity = new PanelEntity(components: [new RelativeAreaComponent(relativeWidth: 50)])
 			def textEntity = new TextEntity('test text')
 			panelEntity.components.add(new InventoryComponent([textEntity]))
 		when:
@@ -371,9 +360,9 @@ class SceneTest extends Specification {
 		given:
 			def simulationHzGauge = new GaugeEntity(name: 'simulationHzGauge', components: [new TextComponent(' ')])
 			def fpsGauge = new GaugeEntity(name: 'fpsGauge', components: [new TextComponent('')])
-			PanelEntity panel = new PanelEntity(name: 'rightHudPanel', padding: 1, components: [
+			PanelEntity panel = new PanelEntity(name: 'rightHudPanel', padding: new PaddingComponent(1), components: [
 					new RelativePositionComponent(100, 100),
-					new RelativeWidthComponent(20),
+					new RelativeAreaComponent(relativeWidth: 20),
 					new InventoryComponent([simulationHzGauge, fpsGauge])
 			])
 
@@ -411,6 +400,39 @@ class SceneTest extends Specification {
 			scene.entityNeedsRendering(entity)
 		then: 'It is sent before the entity is added to the render queue'
 			!queuedBeforeNotified
+	}
+
+	def "Translate area from child to parent frame of reference"() {
+		given: 'A parent entity containing a relatively-positioned child entity'
+			def childArea = new AreaComponent(0, 0, 1, 1, PARENT)
+			def parentArea = new AreaComponent(100, 100, 10, 10, WORLD)
+			def parent = new GameEntity(components: [parentArea])
+			def child = new GameEntity(components: [childArea])
+			child.parent = parent
+		when: 'translating from child to parent coordinates'
+			AreaComponent translated = createScene({[parent, child]}).translateChildToParent(child)
+		then: 'relative coordinates are turned into world coordinates'
+			translated.x == parentArea.x + childArea.x
+			translated.y == parentArea.y + childArea.y
+			translated.width == childArea.width
+			translated.height == childArea.height
+	}
+
+	def "Translate child to parent with simple padding"() {
+		given: 'A parent entity containing a relatively-positioned child entity'
+			def childArea = new AreaComponent(0, 0, 1, 1, PARENT)
+			def parentArea = new AreaComponent(100, 100, 10, 10, WORLD)
+			def padding = new PaddingComponent(1)
+			def parent = new GameEntity(components: [parentArea, padding])
+			def child = new GameEntity(components: [childArea])
+			child.parent = parent
+		when: 'translating from child to parent coordinates'
+			AreaComponent translated = createScene({[parent, child]}).translateChildToParent(child)
+		then: 'relative coordinates are turned into world coordinates'
+			translated.x == parentArea.x + childArea.x + padding.left
+			translated.y == parentArea.y + childArea.y + padding.top
+			translated.width == childArea.width
+			translated.height == childArea.height
 	}
 
 }

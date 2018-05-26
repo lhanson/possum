@@ -2,8 +2,9 @@ package io.github.lhanson.possum.entity
 
 import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.InventoryComponent
-import io.github.lhanson.possum.component.RelativePositionComponent
-import io.github.lhanson.possum.component.RelativeWidthComponent
+import io.github.lhanson.possum.component.layout.PaddingComponent
+import io.github.lhanson.possum.component.layout.RelativeAreaComponent
+import io.github.lhanson.possum.component.layout.RelativePositionComponent
 import io.github.lhanson.possum.events.EventBroker
 import spock.lang.Specification
 
@@ -18,7 +19,14 @@ class PanelEntityTest extends Specification {
 			def panel = new PanelEntity(name: 'panel')
 		then:
 			panel.getComponentOfType(AreaComponent)
-			panel.getComponentOfType(InventoryComponent)
+			panel.getComponentOfType(InventoryComponent).empty
+	}
+
+	def "AreaComponent shorthand property also generates default if necessary"() {
+		when:
+			def panel = new PanelEntity(name: 'panel')
+		then:
+			panel.area
 	}
 
 	def "Shorthand constructor automatically creates an InventoryComponent"() {
@@ -26,7 +34,29 @@ class PanelEntityTest extends Specification {
 			TextEntity textEntity = new TextEntity('text')
 			PanelEntity panel = new PanelEntity(textEntity)
 		then:
-			panel.getComponentOfType(InventoryComponent).inventory.contains(textEntity)
+			panel.inventory.contains(textEntity)
+	}
+
+	def "PaddingComponent shorthand property also generates default if necessary"() {
+		when:
+			def panel = new PanelEntity(name: 'panel')
+		then:
+			panel.padding
+	}
+
+	def "Shorthand constructor automatically creates a PaddingComponent"() {
+		when:
+			TextEntity textEntity = new TextEntity('text')
+			PanelEntity panel = new PanelEntity(textEntity)
+		then:
+			panel.padding
+	}
+
+	def "Padding can be set in the panel's component list"() {
+		when:
+			def panel = new PanelEntity(components: [new PaddingComponent(0)])
+		then:
+			panel.padding
 	}
 
 	def "Panel without a specified area should shrink-wrap around a nested entity"() {
@@ -39,27 +69,27 @@ class PanelEntityTest extends Specification {
 		then:
 			textArea.height == 1
 			textArea.width == text.length()
-			panelArea.width == textArea.width + panel.padding * 2
-			panelArea.height == textArea.height + panel.padding * 2
+			panelArea.width == textArea.width + panel.padding.width
+			panelArea.height == textArea.height + panel.padding.height
 	}
 
 	def "Panel without a specified area should shrink-wrap around a nested entity with padding"() {
 		given:
 			def panelText1 = new TextEntity(text)
 			def panelText2 = new TextEntity(text + ' 2')
-			def panel = new PanelEntity(name: 'panel', padding: 10, eventBroker: new EventBroker(),
+			def panel = new PanelEntity(name: 'panel', padding: new PaddingComponent(10), eventBroker: new EventBroker(),
 					components: [new InventoryComponent([panelText1, panelText2])])
 		when:
 			AreaComponent textArea1 = panelText1.getComponentOfType(AreaComponent)
 			AreaComponent textArea2 = panelText2.getComponentOfType(AreaComponent)
 			AreaComponent panelArea = panel.getComponentOfType(AreaComponent)
 		then:
-			textArea1.x == panel.padding
-			textArea1.y == panel.padding
-			textArea2.x == panel.padding
-			textArea2.y == panel.padding + 1
-			panelArea.height == textArea1.height + textArea2.height + (panel.padding * 2)
-			panelArea.width == Math.max(textArea1.width, textArea2.width) + (panel.padding * 2)
+			textArea1.x == panel.padding.left
+			textArea1.y == panel.padding.top
+			textArea2.x == panel.padding.left
+			textArea2.y == panel.padding.top + 1
+			panelArea.height == textArea1.height + textArea2.height + panel.padding.height
+			panelArea.width == Math.max(textArea1.width, textArea2.width) + panel.padding.width
 
 	}
 
@@ -72,13 +102,13 @@ class PanelEntityTest extends Specification {
 		when:
 			AreaComponent panelArea = panel.getComponentOfType(AreaComponent)
 		then:
-			panelArea.width == (text.length() * 2) + (panel.padding * 2)
-			panelArea.height == 2 + (panel.padding * 2)
+			panelArea.width == (text.length() * 2) + panel.padding.width
+			panelArea.height == 2 + panel.padding.height
 	}
 
 	def "Panel without a specified area should shrink-wrap around multiple nested entities and respect padding"() {
 		given:
-			def panel = new PanelEntity(name: 'panel', padding: 1)
+			def panel = new PanelEntity(name: 'panel', padding: new PaddingComponent(1))
 			def child1 = new TextEntity(text)
 			def child2 = new TextEntity(text * 2)
 			panel.components.add(new InventoryComponent([child1, child2]))
@@ -90,9 +120,35 @@ class PanelEntityTest extends Specification {
 			panelArea.height == 2 + 2
 	}
 
+	def "Panel with a fixed width specified only shrink-wraps vertically around its contents"() {
+		given:
+			def panel = new PanelEntity(name: 'panel', components:[
+					new InventoryComponent([new TextEntity(text), new TextEntity(text)]),
+					new RelativeAreaComponent(width: 20)
+			])
+		when:
+			AreaComponent panelArea = panel.getComponentOfType(AreaComponent)
+		then:
+			panelArea.width == 20
+			panelArea.height == 2 + panel.padding.height
+	}
+
+	def "Panel with a fixed height specified only shrink-wraps horizontally around its contents"() {
+		given:
+			def panel = new PanelEntity(name: 'panel', components:[
+					new InventoryComponent([new TextEntity(text), new TextEntity(text)]),
+					new RelativeAreaComponent(height: 20)
+			])
+		when:
+			AreaComponent panelArea = panel.getComponentOfType(AreaComponent)
+		then:
+			panelArea.width == text.size() + panel.padding.width
+			panelArea.height == 20
+	}
+
 	def "Panels with a relative width specified but no area should have a default relative area added"() {
 		when:
-			def panel = new PanelEntity(components: [new RelativeWidthComponent(50)])
+			def panel = new PanelEntity(components: [new RelativeAreaComponent(relativeWidth: 50)])
 		then:
 			panel.getComponentOfType(RelativePositionComponent)
 			panel.getComponentOfType(AreaComponent)
@@ -108,10 +164,10 @@ class PanelEntityTest extends Specification {
 
 	def "Panels initialize their inventories with coordinates relative to the panel"() {
 		when:
-			def panel = new PanelEntity(name: 'panel', padding: 1)
+			def panel = new PanelEntity(name: 'panel', padding: new PaddingComponent(1))
 			panel.components.add(new InventoryComponent([new TextEntity(), new TextEntity()]))
 		then:
-			panel.inventoryComponent.inventory.every {
+			panel.inventory.every {
 				AreaComponent ac = it.getComponentOfType(AreaComponent)
 				ac.frameOfReference == PARENT
 				it.parent == panel

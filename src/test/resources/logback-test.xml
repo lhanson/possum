@@ -6,5 +6,5 @@
 
 	<root level="warn"/>
 
-	<!--<logger name="io.github.lhanson.possum" level="debug" />-->
+	<logger name="io.github.lhanson.possum" level="debug" />
 </configuration>

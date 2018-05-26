@@ -2,7 +2,9 @@ package io.github.lhanson.possum.rendering
 
 import asciiPanel.AsciiPanel
 import io.github.lhanson.possum.component.AreaComponent
+import io.github.lhanson.possum.component.InventoryComponent
 import io.github.lhanson.possum.entity.GameEntity
+import io.github.lhanson.possum.entity.GaugeEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.scene.Scene
 import io.github.lhanson.possum.scene.SceneBuilder
@@ -76,6 +78,20 @@ class AsciiPanelRenderingSystemTest extends Specification {
 			renderer.initScene(scene2)
 		then:
 			renderer.scenePanelAreas == [panel.getComponentOfType(AreaComponent)]
+	}
+
+	def "Panel inventories queued for rendering on scene initialization"() {
+		given:
+			GaugeEntity gauge = new GaugeEntity()
+			PanelEntity panel = new PanelEntity(components: [
+					new AreaComponent(0, 0, 10, 10),
+					new InventoryComponent([gauge])
+			])
+			scene.addEntity(panel)
+		when:
+			renderer.initScene(scene)
+		then:
+			scene.entitiesToBeRendered.contains(gauge)
 	}
 
 	def "Regular entities are obscured by panels"() {

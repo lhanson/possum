@@ -1,6 +1,6 @@
 package io.github.lhanson.possum.entity.menu
 
-import io.github.lhanson.possum.component.RelativePositionComponent
+import io.github.lhanson.possum.component.layout.RelativePositionComponent
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.input.MappedInput
 

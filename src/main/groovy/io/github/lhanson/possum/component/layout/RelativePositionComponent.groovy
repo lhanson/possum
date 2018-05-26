@@ -1,4 +1,6 @@
-package io.github.lhanson.possum.component
+package io.github.lhanson.possum.component.layout
+
+import io.github.lhanson.possum.component.VectorComponent
 
 /**
  * Represents a component able to be positioned by relative coordinates.
@@ -11,6 +13,4 @@ class RelativePositionComponent extends VectorComponent {
 	RelativePositionComponent(int x, int y) {
 		super(x, y)
 	}
-
-
 }

@@ -3,6 +3,9 @@ package io.github.lhanson.possum.scene
 import groovy.transform.ToString
 import io.github.lhanson.possum.collision.Quadtree
 import io.github.lhanson.possum.component.*
+import io.github.lhanson.possum.component.layout.PaddingComponent
+import io.github.lhanson.possum.component.layout.RelativeAreaComponent
+import io.github.lhanson.possum.component.layout.RelativePositionComponent
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.PanelEntity
 import io.github.lhanson.possum.entity.RerenderEntity
@@ -187,7 +190,7 @@ class Scene {
 			}
 
 			if (component instanceof InventoryComponent) {
-				component.inventory.each { addEntity(it) }
+				component.each { addEntity(it) }
 			}
 		}
 	}
@@ -305,8 +308,9 @@ class Scene {
 			if (entity.parent) {
 				// Rerender background of the parent if applicable
 				AreaComponent pc = entity.parent.getComponentOfType(AreaComponent)
-				AreaComponent newArea = translateChildToParent(area, pc)
+				AreaComponent newArea = translateChildToParent(entity)
 				AreaComponent oldArea = translateChildToParent(previousArea, pc)
+				println "Painting $entity at $newArea"
 				oldArea.subtract(newArea).each {
 					it.frameOfReference = ASCII_PANEL
 					log.debug "Adding render task; background for previous location of entity '${entity.name}' at $it"
@@ -391,16 +395,26 @@ class Scene {
 			// See what components are set already
 			AreaComponent ac = entity.getComponentOfType(AreaComponent)
 			RelativePositionComponent rpc = entity.getComponentOfType(RelativePositionComponent)
-			RelativeWidthComponent rwc = entity.getComponentOfType(RelativeWidthComponent)
+			RelativeAreaComponent rac = entity.getComponentOfType(RelativeAreaComponent)
 			boolean newArea = false
 			if (!ac) {
 				ac = new AreaComponent()
 				newArea = true
 			}
 
-			if (rwc) {
-				// Compute relative width
-				ac.width = (rwc.width / 100.0f) * parentReference.width
+			if (rac) {
+				// Compute width
+				if (rac.width != null) {
+					ac.width = rac.width
+				} else if (rac.relativeWidth != null) {
+					ac.width = (rac.relativeWidth / 100.0f) * parentReference.width
+				}
+				// Compute height
+				if (rac.height != null) {
+					ac.height = rac.height
+				} else if (rac.relativeHeight != null) {
+					ac.height = (rac.relativeHeight / 100.0f) * parentReference.height
+				}
 			}
 
 			if (entity instanceof PanelEntity) {
@@ -448,13 +462,38 @@ class Scene {
 	 * to those of the parent in order to get rendering coordinates in the parent's
 	 * frame of reference.
 	 *
-	 * @param child the entity positioned relative to a parent
-	 * @param parent the entity whose coordinates determine the child's absolute position
+	 * @param child the entity positioned relative to its parent
+	 * @return an area describing the child's screen coordinates in the parent's frame of reference
+	 */
+	AreaComponent translateChildToParent(GameEntity child) {
+		AreaComponent childArea = child.getComponentOfType(AreaComponent)
+		AreaComponent parentArea = child.parent.getComponentOfType(AreaComponent)
+		PaddingComponent padding = child.parent.getComponentOfType(PaddingComponent)
+
+		// child + parent + padding
+		new AreaComponent(
+				childArea.x + parentArea.x + (padding?.left ?: 0),
+				childArea.y + parentArea.y + (padding?.top ?: 0),
+				childArea.width,
+				childArea.height)
+	}
+
+	/**
+	 * Entities positioned relative to a parent need their coordinates added
+	 * to those of the parent in order to get rendering coordinates in the parent's
+	 * frame of reference.
+	 *
+	 * @param child the area positioned relative to a parent
+	 * @param parent the area whose coordinates determine the child's absolute position
 	 * @return an area describing the child's screen coordinates in the parent's frame of reference
 	 */
 	AreaComponent translateChildToParent(AreaComponent child, AreaComponent parent) {
-		// child + panel
-		new AreaComponent(child.x + parent.x, child.y + parent.y, child.width, child.height)
+		// child + parent
+		new AreaComponent(
+				child.x + parent.x,
+				child.y + parent.y,
+				child.width,
+				child.height)
 	}
 
 }

@@ -2,7 +2,7 @@ package io.github.lhanson.possum.entity
 
 import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.GameComponent
-import io.github.lhanson.possum.component.RelativePositionComponent
+import io.github.lhanson.possum.component.layout.RelativePositionComponent
 import io.github.lhanson.possum.component.TextComponent
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -15,8 +15,8 @@ import org.slf4j.LoggerFactory
 class TextEntity extends GameEntity {
 	Logger log = LoggerFactory.getLogger(this.class)
 	// Local references to components we need easy access to
-	private AreaComponent areaComponent
-	private TextComponent textComponent
+	protected AreaComponent areaComponent
+	protected TextComponent textComponent
 
 	TextEntity() {
 		this('', null)
@@ -67,7 +67,7 @@ class TextEntity extends GameEntity {
 		calculateArea()
 	}
 
-	private void calculateArea() {
+	protected void calculateArea() {
 		ensureAreaComponent()
 		ensureTextComponent()
 		areaComponent.width = textComponent.text.size()

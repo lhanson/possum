@@ -13,10 +13,20 @@ class InventoryComponentTest extends Specification {
 					new GameEntity(components: [new AreaComponent(10, 10, 1, 1)])
 			])
 		then:
-			ic.inventory.every {
+			ic.size() == 1
+			ic.every {
 				AreaComponent ac = it.getComponentOfType(AreaComponent)
 				ac.frameOfReference == PARENT
 			}
+	}
+
+	def "Inventory component is a delegate for a collection of entities"() {
+		given:
+			InventoryComponent ic = new InventoryComponent()
+		when:
+			ic.addAll([new GameEntity(), new GameEntity(), new GameEntity()])
+		then:
+			ic.size() == 3
 	}
 
 }

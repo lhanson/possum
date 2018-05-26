@@ -2,7 +2,7 @@ package io.github.lhanson.possum.entity.menu
 
 import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.GameComponent
-import io.github.lhanson.possum.component.RelativePositionComponent
+import io.github.lhanson.possum.component.layout.RelativePositionComponent
 import io.github.lhanson.possum.component.TextComponent
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.TextEntity
@@ -36,7 +36,7 @@ class MenuItemEntity extends TextEntity {
 			// value according to the panel size.
 			AreaComponent ac = getComponentOfType(AreaComponent)
 			AreaComponent pac = parent.getComponentOfType(AreaComponent)
-			int spacing = (pac.width - (parent.padding * 2)) - ac.width + 1
+			int spacing = (pac.width - (parent.padding.width)) - ac.width + 1
 			result.text = label + (' ' * Math.max(1, spacing)) + value
 			log.debug "Right justifying value '$value' for item {}, introduced $spacing spaces, overall text length is {}", label, result.text.length()
 		}

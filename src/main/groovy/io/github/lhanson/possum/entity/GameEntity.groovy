@@ -103,17 +103,17 @@ class GameEntity {
 	 *        we're being called from setComponents which happens before initialization is complete
 	 * @return whether the component was added to our components collection
 	 */
-	private boolean addComponentInternal(GameComponent component, boolean publishEvent) {
+	boolean addComponentInternal(GameComponent component, boolean publishEvent) {
 		boolean added = true
 		if (component instanceof InventoryComponent) {
-			if (!component.is(this?.inventoryComponent)) {
+			if (!component.is(this?.inventory)) {
 				// An inventory component is automatically created in the constructor, don't add another one
 				logger.debug "Entity {} already has an inventory, copying new entities to existing one", name
-				this?.inventoryComponent.inventory.addAll(component.inventory)
+				this.inventory.addAll(component)
 				added = false
 			}
 			// Create link to the inventory items' parent
-			component.inventory.each {
+			component.each {
 				it.parent = this
 			}
 		}
@@ -131,7 +131,7 @@ class GameEntity {
 				superclass = superclass.superclass
 			}
 			classes.each { Class clazz ->
-				logger.debug "'$name' registering component '$component' as '$clazz'"
+				logger.trace "'$name' registering component '$component' as '$clazz'"
 				if (componentsByType[clazz] == null) {
 					componentsByType[clazz] = []
 				}

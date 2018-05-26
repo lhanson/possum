@@ -1,7 +1,8 @@
 package io.github.lhanson.possum.entity.menu
 
 import io.github.lhanson.possum.component.PlayerInputAwareComponent
-import io.github.lhanson.possum.component.RelativePositionComponent
+import io.github.lhanson.possum.component.layout.PaddingComponent
+import io.github.lhanson.possum.component.layout.RelativePositionComponent
 import io.github.lhanson.possum.component.TextComponent
 import io.github.lhanson.possum.entity.GameEntity
 import io.github.lhanson.possum.entity.PanelEntity
@@ -30,12 +31,17 @@ class MenuEntity extends PanelEntity {
 
 	MenuEntity(RelativePositionComponent rpc, Integer padding, List<MenuItemEntity> menuItems) {
 		super(menuItems)
+		println "Constructor for menu with ${menuItems.size()} items"
 		if (padding != null) {
-			this.padding = padding
+			println "Padding"
+			this.padding = new PaddingComponent(padding)
+			components.add(this.padding)
 		}
 		if (rpc) {
+			println "Adding components"
 			components.add(rpc)
 		}
+		println "Adding player input aware component"
 		components.add(new PlayerInputAwareComponent())
 		items = new ArrayList(menuItems)
 		selectedItemIndex = items.findIndexOf { it.selected }

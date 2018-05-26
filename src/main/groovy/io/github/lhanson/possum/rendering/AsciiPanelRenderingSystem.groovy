@@ -123,7 +123,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 		scene.panels.each {
 			scene.entityNeedsRendering(it)
 			InventoryComponent ic = it.getComponentOfType(InventoryComponent)
-			ic.inventory.each { item -> scene.entityNeedsRendering(item) }
+			ic.each { item -> scene.entityNeedsRendering(item) }
 		}
 
 		// Hint to the render method that we can use one large dirty rectangle
@@ -166,9 +166,7 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 				}
 			} else if (entity.parent) {
 				/* Resolve parent positioning and render AsciiPanel */
-				AreaComponent ac = scene.translateChildToParent(
-						entity.getComponentOfType(AreaComponent),
-						entity.parent.getComponentOfType(AreaComponent))
+				AreaComponent ac = scene.translateChildToParent(entity)
 				AreaComponent dirtyRect = translateAsciiPanelToPixels(ac)
 				dirtyRectangles << dirtyRect
 				write(entity.getComponentOfType(TextComponent), ac.x, ac.y)
@@ -226,6 +224,11 @@ class AsciiPanelRenderingSystem extends JFrame implements RenderingSystem {
 					!scenePanelAreas.any { it.overlaps asciiPanelArea }
 		} else if (area.frameOfReference == ASCII_PANEL) {
 			visible = area.overlaps(asciiPanelBounds)
+		} else if (area.frameOfReference == PARENT) {
+			// TODO: We need to determine visibility of a parent-oriented component; the problem
+			// TODO: right now is that we currently resolve relative positions at scene initialization;
+			// TODO: we can repaint panel children but they appear at their relatively positioned location
+			visible = true
 		} else {
 			logger.error "Not sure how to test visibility of entity '{}'", entity
 		}

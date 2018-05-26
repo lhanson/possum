@@ -8,8 +8,9 @@ import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.CameraFocusComponent
 import io.github.lhanson.possum.component.InventoryComponent
 import io.github.lhanson.possum.component.PlayerInputAwareComponent
-import io.github.lhanson.possum.component.RelativePositionComponent
-import io.github.lhanson.possum.component.RelativeWidthComponent
+import io.github.lhanson.possum.component.layout.PaddingComponent
+import io.github.lhanson.possum.component.layout.RelativeAreaComponent
+import io.github.lhanson.possum.component.layout.RelativePositionComponent
 import io.github.lhanson.possum.component.TextComponent
 import io.github.lhanson.possum.component.TimerComponent
 import io.github.lhanson.possum.component.VelocityComponent
@@ -125,9 +126,9 @@ class BasicCaveExplorer {
 							new RelativePositionComponent(50, 50))
 					def menuOverlayPanel = new PanelEntity(
 							name: 'menuOverlay',
-							padding: 0,
+							padding: new PaddingComponent(1),
 							components: [new RelativePositionComponent(50, 50),
-							             new RelativeWidthComponent(50),
+							             new RelativeAreaComponent(relativeWidth: 50),
 							             new InventoryComponent([menuText])
 							]
 					)
@@ -197,7 +198,7 @@ class BasicCaveExplorer {
 								}
 						])
 
-				def leftHudPanel = new PanelEntity(name: 'leftHudPanel', padding: 1)
+				def leftHudPanel = new PanelEntity(name: 'leftHudPanel', padding: new PaddingComponent(1))
 				def playerPositionGauge = new GaugeEntity(name: 'playerPositionGauge')
 				playerPositionGauge.update = { ticks ->
 					AreaComponent ac = hero.getComponentOfType(AreaComponent)
@@ -205,12 +206,12 @@ class BasicCaveExplorer {
 				}
 				leftHudPanel.components.addAll([
 						new RelativePositionComponent(0, 100),
-						new RelativeWidthComponent(80),
+						new RelativeAreaComponent(relativeWidth: 80),
 						new InventoryComponent([playerPositionGauge])
 				])
 				entities << leftHudPanel
 
-				def rightHudPanel = new PanelEntity(name: 'rightHudPanel', padding: 1)
+				def rightHudPanel = new PanelEntity(name: 'rightHudPanel', padding: new PaddingComponent(1))
 				def simulationHzGauge
 				simulationHzGauge = new GaugeEntity(name: 'simulationHzGauge')
 				simulationHzGauge.update = { ticks ->
@@ -228,7 +229,7 @@ class BasicCaveExplorer {
 				}
 				rightHudPanel.components.addAll([
 						new RelativePositionComponent(100, 100),
-						new RelativeWidthComponent(20),
+						new RelativeAreaComponent(relativeWidth: 20),
 						new InventoryComponent([simulationHzGauge, fpsGauge])
 				])
 				entities << rightHudPanel

@@ -7,8 +7,9 @@ import io.github.lhanson.possum.component.AreaComponent
 import io.github.lhanson.possum.component.CameraFocusComponent
 import io.github.lhanson.possum.component.InventoryComponent
 import io.github.lhanson.possum.component.PlayerInputAwareComponent
-import io.github.lhanson.possum.component.RelativePositionComponent
-import io.github.lhanson.possum.component.RelativeWidthComponent
+import io.github.lhanson.possum.component.layout.PaddingComponent
+import io.github.lhanson.possum.component.layout.RelativeAreaComponent
+import io.github.lhanson.possum.component.layout.RelativePositionComponent
 import io.github.lhanson.possum.component.TextComponent
 import io.github.lhanson.possum.component.TimerComponent
 import io.github.lhanson.possum.component.VelocityComponent
@@ -147,7 +148,7 @@ class CellularAutomataStudio {
 						])
 				entities << hero
 
-				def rightHudPanel = new PanelEntity(name: 'rightHudPanel', padding: 1)
+				def rightHudPanel = new PanelEntity(name: 'rightHudPanel', padding: new PaddingComponent(1))
 				def simulationHzGauge
 				simulationHzGauge = new GaugeEntity(name: 'simulationHzGauge')
 				simulationHzGauge.update = { ticks ->
@@ -166,7 +167,7 @@ class CellularAutomataStudio {
 				}
 				rightHudPanel.components.addAll([
 						new RelativePositionComponent(100, 100),
-						new RelativeWidthComponent(20),
+						new RelativeAreaComponent(relativeWidth: 20),
 						new InventoryComponent([simulationHzGauge, fpsGauge])
 				])
 				entities << rightHudPanel

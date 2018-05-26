@@ -1,7 +1,6 @@
 package io.github.lhanson.possum.system
 
 import io.github.lhanson.possum.component.AreaComponent
-import io.github.lhanson.possum.component.InventoryComponent
 import io.github.lhanson.possum.entity.GaugeEntity
 import io.github.lhanson.possum.events.ComponentAddedEvent
 import io.github.lhanson.possum.events.ComponentRemovedEvent
@@ -21,17 +20,8 @@ class GaugeSystem extends GameSystem {
 	void doInitScene(Scene scene) {
 		eventBroker.subscribe(this)
 
-		// Locate GaugeEntities in the scene, from both the top-level entities list
-		//  as well as entities nested in InventoryComponents
+		// Locate GaugeEntities in the scene
 		gauges[scene.id] = scene.entities.findAll { it instanceof GaugeEntity }
-		def inventories = scene.getComponents(InventoryComponent)
-		def inventoryGauges = inventories?.findResults { InventoryComponent ic ->
-			ic.inventory.findAll { it instanceof GaugeEntity }
-		}?.flatten()
-		if (inventoryGauges) {
-			gauges[scene.id].addAll(inventoryGauges)
-			gauges[scene.id].flatten()
-		}
 	}
 
 	@Override
